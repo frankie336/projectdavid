@@ -31,7 +31,7 @@ setup(
         "anyio", "certifi", "h11", "httpcore", "httpx", "idna", "sniffio",
         "fastapi", "databases", "uvicorn", "sqlalchemy",
         "pydantic", "starlette", "asgiref", "click", "pymysql", "cryptography",
-        "typing_extensions", "python-dotenv",'sentence_transformers', 'SentenceTransformer',
+        "typing_extensions", "python-dotenv",'sentence_transformers'
         'validators', 'pdfplumber', 'asyncio'
     ],
     extras_require={
