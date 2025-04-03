@@ -6,15 +6,11 @@ from typing import List, Dict, Optional, Any, Union
 
 import httpx
 from dotenv import load_dotenv
-
-
-from entities.clients.file_processor import FileProcessor
-
-
 from entities_common import UtilsInterface
 from entities_common.utils import IdentifierService
 from entities_common.validation import ValidationInterface
 
+from entities.clients.file_processor import FileProcessor
 from entities.clients.vector_store_manager import VectorStoreManager
 
 load_dotenv()
@@ -418,7 +414,7 @@ class VectorStoreClient:
 
             response_data = await self._request_with_retries("GET", f"/v1/vector-stores/{vector_store_id}/files")
             # Assuming API returns a list of file objects conforming to VectorStoreFileRead
-            return [ValidationInterface.VectorStoreFileRead.model_validate(item) for item in response_data]
+            return [ValidationInterface.VectorStoreRead.model_validate(item) for item in response_data]
         except Exception as api_error:
             logging_utility.error("Failed to list files for store '%s' via API: %s", vector_store_id, str(api_error))
             raise api_error
