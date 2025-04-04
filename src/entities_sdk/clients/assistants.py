@@ -67,10 +67,15 @@ class AssistantsClient:
                 else:
                     raise
 
-    def create_assistant(self, model: str = "", name: str = "", description: str = "", instructions: str = "",
-                         meta_data: Dict[str, Any] = None, top_p: float = 1.0, temperature: float = 1.0,
-                         response_format: str = "auto", assistant_id: Optional[str] = None) -> ent_validator.AssistantRead:
-        """Creates an assistant."""
+    def create_assistant(self, model: str = "", name: str = "",
+                         description: str = "", instructions: str = "",
+                         meta_data: Dict[str, Any] = None, top_p: float = 1.0,
+                         temperature: float = 1.0, response_format: str = "auto",
+                         assistant_id: Optional[str] = None) -> ent_validator.AssistantRead:
+
+        """Creates an assistant.
+        :type response_format: object
+        """
         assistant_data = {
             "id": assistant_id,
             "name": name,
@@ -146,7 +151,7 @@ class AssistantsClient:
     def disassociate_assistant_from_user(self, user_id: str, assistant_id: str) -> Dict[str, Any]:
         """Disassociates an assistant from a user."""
         logging_utility.info("Disassociating assistant %s from user %s", assistant_id, user_id)
-        response = self._request_with_retries("DELETE", f"/v1/users/{user_id}/assistants/{assistant_id}")
+        self._request_with_retries("DELETE", f"/v1/users/{user_id}/assistants/{assistant_id}")
         return {"message": "Assistant disassociated from user successfully"}
 
     def list_assistants_by_user(self, user_id: str) -> List[ent_validator.AssistantRead]:

@@ -1,4 +1,3 @@
-from entities_common.services.logging_service import LoggingUtility
 import asyncio
 import json
 import time
@@ -133,7 +132,8 @@ class InferenceClient:
             api_key: Optional[str] = None
     ) -> AsyncGenerator[dict, None]:
         """
-        Initiates an asynchronous streaming request to the completions endpoint and yields each response chunk as a dict.
+        Initiates an asynchronous streaming request to the completions
+        endpoint and yields each response chunk as a dict.
         """
         payload = {
             "provider": provider,

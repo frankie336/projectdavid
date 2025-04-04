@@ -28,7 +28,6 @@ class FileProcessor:
         self.chunk_size = min(chunk_size, self.effective_max_length * 4)
         logging_utility.info("Initialized optimized FileProcessor")
 
-
     def validate_file(self, file_path: Path):
         """Pre-process validation checks"""
         max_size = 100 * 1024 * 1024  # 100MB
@@ -179,8 +178,13 @@ class FileProcessor:
             )
             return text, {}, []
 
-    def _extract_pdf_text(self, file_path: Path) -> tuple[
-        list[list[LiteralString | int | list[Any]]], dict[str, int | str | Any]]:
+    def _extract_pdf_text(
+            self,
+            file_path: Path
+    ) -> tuple[
+        list[list[LiteralString | int | list[Any]]],
+        dict[str, int | str | Any]
+    ]:
         """PDF extraction with line number tracking"""
         page_chunks = []
         metadata = {}
@@ -198,7 +202,7 @@ class FileProcessor:
                 text_buffer = []
                 line_numbers = []
 
-                for line in sorted(lines, key=lambda l: l['top']):
+                for line in sorted(lines, key=lambda lined: lined['top']):
                     line_text = line['text'].strip()
                     if line_text:
                         text_buffer.append(line_text)
@@ -350,7 +354,7 @@ class FileProcessor:
             return None
         try:
             return url.split('//')[-1].split('/')[0].lower()
-        except:
+        except Exception:
             return None
 
     def process_csv_dynamic(self, file_path: Union[str, Path], text_field: str = "description") -> Dict[str, Any]:

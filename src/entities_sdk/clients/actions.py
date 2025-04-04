@@ -14,11 +14,9 @@ load_dotenv()
 
 
 class ActionsClient:
-    def __init__(
-        self,
-        base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"),
-        api_key: Optional[str] = None
-    ):
+    def __init__(self,
+                 base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"),
+                 api_key: Optional[str] = None):
         """
         Initialize with base URL and API key for authentication.
         """

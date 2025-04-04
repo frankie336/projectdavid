@@ -48,7 +48,8 @@ class ThreadsClient:
             logging_utility.error("An error occurred while creating user: %s", str(e))
             raise
 
-    def create_thread(self, participant_ids: List[str], meta_data: Optional[Dict[str, Any]] = None) -> validator.ThreadRead:
+    def create_thread(self, participant_ids: List[str],
+                      meta_data: Optional[Dict[str, Any]] = None) -> validator.ThreadRead:
         meta_data = meta_data or {}
         thread_data = validator.ThreadCreate(participant_ids=participant_ids, meta_data=meta_data).model_dump()
         logging_utility.info("Creating thread with %d participants", len(participant_ids))

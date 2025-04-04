@@ -69,7 +69,8 @@ class VectorStoreClient:
 
         for attempt in range(retries):
             try:
-                response = await client.request(method, url, **kwargs) if is_async else client.request(method, url, **kwargs)
+                response = await client.request(method, url, **kwargs) \
+                    if is_async else client.request(method, url, **kwargs)
                 return await self._parse_response(response)
             except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as e:
                 last_exception = e
@@ -146,7 +147,8 @@ class VectorStoreClient:
             return ValidationInterface.VectorStoreRead.model_validate(response_data)
         except Exception as api_error:
             # Rollback Qdrant creation if API registration fails
-            logging_utility.error("API registration failed for store '%s' (ID: %s). Rolling back Qdrant collection. Error: %s",
+            logging_utility.error("API registration failed for store '%s' (ID: %s). "
+                                  "Rolling back Qdrant collection. Error: %s",
                                   name, shared_id, str(api_error))
             try:
                 self.vector_manager.delete_store(collection_name)
@@ -238,7 +240,8 @@ class VectorStoreClient:
                              file_path.name, file_record_id, vector_store_id)
         try:
             # Correct API endpoint: /v1/vector-stores/{vector_store_id}/files
-            response_data = await self._request_with_retries("POST", f"/v1/vector-stores/{vector_store_id}/files", json=api_payload)
+            response_data = await (self._request_with_retries
+                                   ("POST", f"/v1/vector-stores/{vector_store_id}/files", json=api_payload))
             logging_utility.info("Successfully registered file '%s' via API.", file_path.name)
             return ValidationInterface.VectorStoreRead.model_validate(response_data)
         except Exception as api_error:
@@ -277,11 +280,6 @@ class VectorStoreClient:
         except VectorStoreClientError:
             logging_utility.error(f"Vector store {vector_store_id} not found via API.")
             raise
-
-        # 1. Embed the query text (assuming FileProcessor can embed single strings)
-        # Reuse file processor instance or create one
-
-        embedding_model_name = "paraphrase-MiniLM-L6-v2"  # Get from store_info or config
 
         try:
             query_vector = self.file_processor.embedding_model.encode(query_text).tolist()
@@ -326,7 +324,8 @@ class VectorStoreClient:
         except Exception as e:
             # If permanent deletion is requested, failing Qdrant delete is serious.
             # If soft delete, maybe we can proceed with API call? Depends on requirements.
-            logging_utility.error("Qdrant collection deletion failed for '%s': %s. Proceeding with API call might leave orphaned data.",
+            logging_utility.error("Qdrant collection deletion failed for '%s': %s. "
+                                  "Proceeding with API call might leave orphaned data.",
                                   collection_name, str(e))
             if permanent:
                 raise VectorStoreClientError(f"Failed to delete vector store backend: {str(e)}") from e
@@ -423,13 +422,19 @@ class VectorStoreClient:
     async def attach_vector_store_to_assistant(self, vector_store_id: str, assistant_id: str) -> bool:
         logging_utility.info("Attaching vector store %s to assistant %s via API", vector_store_id, assistant_id)
 
-        response = await self._request_with_retries("POST", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach")
+        response = \
+            await (self._request_with_retries
+                   ("POST", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach"))
+
         return bool(response)
 
     async def detach_vector_store_from_assistant(self, vector_store_id: str, assistant_id: str) -> bool:
         logging_utility.info("Detaching vector store %s from assistant %s via API", vector_store_id, assistant_id)
 
-        response = await self._request_with_retries("DELETE", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/detach")
+        response = await (self._request_with_retries
+                          ("DELETE", f"/v1/assistants/"
+                                     f"{assistant_id}/vector-stores/{vector_store_id}/detach"))
+
         return bool(response)
 
     async def get_vector_stores_for_assistant(self, assistant_id: str) -> List[ValidationInterface.VectorStoreRead]:
@@ -460,5 +465,9 @@ class VectorStoreClient:
         """Retrieves vector store metadata by its collection name via API."""
         logging_utility.info("Retrieving vector store by collection name %s via API", collection_name)
 
-        response = await self._request_with_retries("GET", f"/v1/vector-stores/lookup/collection", params={"name": collection_name})
+        response = await self._request_with_retries(
+            "GET", "/v1/vector-stores/lookup/collection",
+            params={"name": collection_name}
+        )
+
         return ValidationInterface.VectorStoreRead.model_validate(response)

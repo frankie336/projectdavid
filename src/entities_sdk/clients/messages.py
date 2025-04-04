@@ -1,4 +1,3 @@
-from entities_common.services.logging_service import LoggingUtility
 from typing import List, Dict, Any, Optional
 
 import httpx

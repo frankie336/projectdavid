@@ -1,12 +1,14 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
+from entities_common import UtilsInterface
 from ollama import Client as OllamaAPIClient
 
 # Use relative imports for modules within your package.
 from .clients.actions import ActionsClient
 from .clients.assistants import AssistantsClient
+from .clients.files import FileClient
 from .clients.inference import InferenceClient
 from .clients.messages import MessagesClient
 from .clients.runs import RunsClient
@@ -14,12 +16,8 @@ from .clients.synchronous_inference_stream import SynchronousInferenceStream
 from .clients.threads import ThreadsClient
 from .clients.tools import ToolsClient
 from .clients.users import UsersClient
-from .clients.files import FileClient
 from .clients.vectors import VectorStoreClient
-
 from .utils.run_monitor import HttpRunMonitor
-from entities_common import UtilsInterface
-
 
 # Load environment variables from .env file.
 load_dotenv()
