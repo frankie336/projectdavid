@@ -1,9 +1,10 @@
 from .entities import Entities
+from .events import EventsInterface
+from ._version import SDK_VERSION, MIN_COMPATIBLE_API_VERSION
 
-__all__ = ['Entities']
-
-try:
-    from setuptools_scm import get_version
-    __version__ = get_version(root='..', relative_to=__file__)
-except Exception:
-    __version__ = "unknown"
+__all__ = [
+    "Entities",
+    "EventsInterface",
+    "SDK_VERSION",
+    "MIN_COMPATIBLE_API_VERSION"
+]
