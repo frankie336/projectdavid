@@ -1,4 +1,4 @@
-# src/entities/__init__.py
+# src/entities_sdk/__init__.py
 
 from .entities import Entities
 from .events import EventsInterface
