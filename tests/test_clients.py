@@ -1,8 +1,9 @@
-import httpx
-from httpx import Response
 from unittest.mock import patch
 
-from src.entities_sdk.entities import Entities
+from httpx import Response
+
+from entities_sdk import Entities
+
 
 def test_users_client_mocked_response():
     client = Entities(base_url="http://fake-url", api_key="key")
