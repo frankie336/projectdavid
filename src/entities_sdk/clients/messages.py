@@ -1,3 +1,4 @@
+from entities_common.services.logging_service import LoggingUtility
 from typing import List, Dict, Any, Optional
 
 import httpx
@@ -9,7 +10,6 @@ ent_validator = ValidationInterface()
 
 
 load_dotenv()
-from entities_common.services.logging_service import LoggingUtility
 
 logging_utility = UtilsInterface.LoggingUtility()
 

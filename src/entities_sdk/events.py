@@ -1,6 +1,7 @@
 from entities_sdk.utils.run_monitor import HttpRunMonitor
 from entities_sdk.utils.monitor_launcher import MonitorLauncher
 
+
 class EventsInterface:
     """
     Exposes core event monitoring utilities for tracking assistant run lifecycle events.

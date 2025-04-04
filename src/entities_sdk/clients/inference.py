@@ -1,3 +1,4 @@
+from entities_common.services.logging_service import LoggingUtility
 import asyncio
 import json
 import time
@@ -11,7 +12,6 @@ from pydantic import ValidationError
 ent_validator = ValidationInterface()
 
 load_dotenv()
-from entities_common.services.logging_service import LoggingUtility
 
 logging_utility = UtilsInterface.LoggingUtility()
 

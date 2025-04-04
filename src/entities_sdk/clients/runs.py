@@ -1,3 +1,6 @@
+from entities_common.services.logging_service import LoggingUtility
+from entities_common import ValidationInterface
+from entities_common import UtilsInterface
 import time
 from typing import List, Dict, Any, Optional
 
@@ -7,12 +10,9 @@ from pydantic import ValidationError
 
 
 load_dotenv()
-from entities_common import UtilsInterface
 logging_utility = UtilsInterface.LoggingUtility()
-from entities_common import ValidationInterface
 ent_validator = ValidationInterface()
 
-from entities_common.services.logging_service import LoggingUtility
 
 logging_utility = UtilsInterface.LoggingUtility()
 

@@ -1,3 +1,4 @@
+from entities_common.services.logging_service import LoggingUtility
 import os
 from typing import List
 
@@ -11,7 +12,6 @@ ent_validator = ValidationInterface()
 
 load_dotenv()
 # Initialize logging utility
-from entities_common.services.logging_service import LoggingUtility
 
 logging_utility = UtilsInterface.LoggingUtility()
 
@@ -111,5 +111,3 @@ class UsersClient:
         except Exception as e:
             logging_utility.error("An error occurred while retrieving assistants: %s", str(e))
             raise
-
-

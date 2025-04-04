@@ -1,17 +1,16 @@
 import asyncio
-import re
 import csv
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Union, List, Tuple
+from typing import Dict, Any, Union, List, Tuple, LiteralString
 
 import numpy as np
 import pdfplumber
 import validators
-from sentence_transformers import SentenceTransformer
-
 from entities_common.utilities.logging_service import LoggingUtility
+from sentence_transformers import SentenceTransformer
 
 logging_utility = LoggingUtility()
 
@@ -19,7 +18,8 @@ logging_utility = LoggingUtility()
 class FileProcessor:
 
     def __init__(self, max_workers: int = 4, chunk_size: int = 512):
-        self.embedding_model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+        self.embedding_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
         self.embedding_model_name = 'paraphrase-MiniLM-L6-v2'
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self.max_seq_length = self.embedding_model.get_max_seq_length()
@@ -27,6 +27,7 @@ class FileProcessor:
         self.effective_max_length = self.max_seq_length - self.special_tokens_count
         self.chunk_size = min(chunk_size, self.effective_max_length * 4)
         logging_utility.info("Initialized optimized FileProcessor")
+
 
     def validate_file(self, file_path: Path):
         """Pre-process validation checks"""
@@ -178,7 +179,8 @@ class FileProcessor:
             )
             return text, {}, []
 
-    def _extract_pdf_text(self, file_path: Path) -> Tuple[List[Tuple[str, int, List[int]]], dict]:
+    def _extract_pdf_text(self, file_path: Path) -> tuple[
+        list[list[LiteralString | int | list[Any]]], dict[str, int | str | Any]]:
         """PDF extraction with line number tracking"""
         page_chunks = []
         metadata = {}
@@ -203,7 +205,7 @@ class FileProcessor:
                         line_numbers.append(line['line_number'])
 
                 if text_buffer:
-                    page_chunks.append(('\n'.join(text_buffer), page_num, line_numbers))
+                    page_chunks.append(['\n'.join(text_buffer), page_num, line_numbers])
 
                 page.flush_cache()
 

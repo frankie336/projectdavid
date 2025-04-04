@@ -2,17 +2,21 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 from qdrant_client import QdrantClient
 
+
 class VectorStoreError(Exception):
     """Base exception for all vector store operations."""
     pass
+
 
 class StoreExistsError(VectorStoreError):
     """Raised when attempting to create a store that already exists."""
     pass
 
+
 class StoreNotFoundError(VectorStoreError):
     """Raised when a store is not found."""
     pass
+
 
 class BaseVectorStore(ABC):
     @abstractmethod

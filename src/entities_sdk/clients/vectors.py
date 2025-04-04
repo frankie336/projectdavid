@@ -16,9 +16,11 @@ from entities_sdk.clients.vector_store_manager import VectorStoreManager
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
+
 class VectorStoreClientError(Exception):
     """Custom exception for VectorStoreClient errors."""
     pass
+
 
 class VectorStoreClient:
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None,
@@ -30,8 +32,8 @@ class VectorStoreClient:
 
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
         # Use AsyncClient for potential async operations like file processing
-        self.api_client = httpx.AsyncClient(base_url=self.base_url, headers=headers, timeout=30.0) # Increased timeout
-        self.sync_api_client = httpx.Client(base_url=self.base_url, headers=headers, timeout=30.0) # For sync methods
+        self.api_client = httpx.AsyncClient(base_url=self.base_url, headers=headers, timeout=30.0)  # Increased timeout
+        self.sync_api_client = httpx.Client(base_url=self.base_url, headers=headers, timeout=30.0)  # For sync methods
 
         self.vector_store_host = vector_store_host
         self.vector_manager = VectorStoreManager(vector_store_host=self.vector_store_host)
@@ -47,12 +49,13 @@ class VectorStoreClient:
 
     async def _parse_response(self, response: httpx.Response) -> Any:
         try:
-            response.raise_for_status() # Raise exception for 4xx/5xx errors
-            if response.status_code == 204: # No Content
+            response.raise_for_status()  # Raise exception for 4xx/5xx errors
+            if response.status_code == 204:  # No Content
                 return None
             return response.json()
         except httpx.HTTPStatusError as e:
-            logging_utility.error("API request failed: Status %d, Response: %s", e.response.status_code, e.response.text)
+            logging_utility.error("API request failed: Status %d, Response: %s",
+                                  e.response.status_code, e.response.text)
             # You could parse the error detail from response.json() if available
             raise VectorStoreClientError(f"API Error: {e.response.status_code} - {e.response.text}") from e
         except Exception as e:
@@ -72,35 +75,34 @@ class VectorStoreClient:
                 last_exception = e
                 # Only retry on 5xx errors or network issues
                 should_retry = isinstance(e, (httpx.TimeoutException, httpx.NetworkError)) or \
-                               (isinstance(e, httpx.HTTPStatusError) and e.response.status_code >= 500)
+                    (isinstance(e, httpx.HTTPStatusError) and e.response.status_code >= 500)
 
                 if should_retry and attempt < retries - 1:
                     wait_time = 2 ** attempt
                     logging_utility.warning("Retrying request (attempt %d/%d) to %s %s after %d s. Error: %s",
                                             attempt + 1, retries, method, url, wait_time, str(e))
-                    await asyncio.sleep(wait_time) # Use asyncio.sleep for async client
+                    await asyncio.sleep(wait_time)  # Use asyncio.sleep for async client
                     continue
                 else:
-                     # Log final failure before raising
+                    # Log final failure before raising
                     logging_utility.error("API Request failed permanently after %d attempts to %s %s. Last Error: %s",
                                           attempt + 1, method, url, str(e))
                     # Re-raise the caught exception or a custom one
                     if isinstance(e, httpx.HTTPStatusError):
-                         raise VectorStoreClientError(f"API Error: {e.response.status_code} - {e.response.text}") from e
+                        raise VectorStoreClientError(f"API Error: {e.response.status_code} - {e.response.text}") from e
                     else:
-                         raise VectorStoreClientError(f"API Communication Error: {str(e)}") from e
-            except Exception as e: # Catch other unexpected errors during request/parsing
-                 logging_utility.error("Unexpected error during API request to %s %s: %s", method, url, str(e))
-                 raise VectorStoreClientError(f"Unexpected API Client Error: {str(e)}") from e
+                        raise VectorStoreClientError(f"API Communication Error: {str(e)}") from e
+            except Exception as e:  # Catch other unexpected errors during request/parsing
+                logging_utility.error("Unexpected error during API request to %s %s: %s", method, url, str(e))
+                raise VectorStoreClientError(f"Unexpected API Client Error: {str(e)}") from e
         # This part should technically be unreachable due to re-raising in the loop
         raise VectorStoreClientError("Request failed after retries.") from last_exception
-
 
     async def create_vector_store(
         self, name: str,
         user_id: str,
-        vector_size: int = 384, # Default or fetch from config
-        distance_metric: str = "Cosine", # Use models.Distance.COSINE if using qdrant client models
+        vector_size: int = 384,  # Default or fetch from config
+        distance_metric: str = "Cosine",  # Use models.Distance.COSINE if using qdrant client models
         config: Optional[Dict[str, Any]] = None
     ) -> ValidationInterface.VectorStoreRead:
         """
@@ -109,19 +111,19 @@ class VectorStoreClient:
         2. Creates the collection in Qdrant.
         3. Registers the store metadata via API call.
         """
-        shared_id = self.identifier_service.generate_vector_id() # e.g., vs_...
-        collection_name = shared_id # Use the same ID for Qdrant collection
+        shared_id = self.identifier_service.generate_vector_id()  # e.g., vs_...
+        collection_name = shared_id  # Use the same ID for Qdrant collection
 
         logging_utility.info("Attempting to create Qdrant collection '%s'", collection_name)
         try:
             # Ensure distance metric is valid for Qdrant (using string directly here)
             qdrant_success = self.vector_manager.create_store(
-                store_name=collection_name, # Use unique ID for Qdrant
+                store_name=collection_name,  # Use unique ID for Qdrant
                 vector_size=vector_size,
-                distance=distance_metric.upper() # Qdrant expects uppercase usually
+                distance=distance_metric.upper()  # Qdrant expects uppercase usually
             )
-            if not qdrant_success: # Assuming create_store returns bool or raises error
-                 raise VectorStoreClientError(f"Failed to create Qdrant collection '{collection_name}'")
+            if not qdrant_success:  # Assuming create_store returns bool or raises error
+                raise VectorStoreClientError(f"Failed to create Qdrant collection '{collection_name}'")
             logging_utility.info("Successfully created Qdrant collection '%s'", collection_name)
         except Exception as e:
             logging_utility.error("Qdrant collection creation failed for '%s': %s", collection_name, str(e))
@@ -150,17 +152,17 @@ class VectorStoreClient:
                 self.vector_manager.delete_store(collection_name)
                 logging_utility.info("Rolled back Qdrant collection '%s'", collection_name)
             except Exception as rollback_error:
-                logging_utility.error("Failed to rollback Qdrant collection '%s': %s", collection_name, str(rollback_error))
+                logging_utility.error("Failed to rollback Qdrant collection '%s': %s",
+                                      collection_name, str(rollback_error))
                 # Log this critical state failure
-            raise api_error # Re-raise the original API error
-
+            raise api_error  # Re-raise the original API error
 
     async def add_file_to_vector_store(
         self,
         vector_store_id: str,
         file_path: Union[str, Path],
         chunk_size: int = 512,
-        embedding_model_name: str = "paraphrase-MiniLM-L6-v2", # Make configurable
+        embedding_model_name: str = "paraphrase-MiniLM-L6-v2",  # Make configurable
         user_metadata: Optional[Dict[str, Any]] = None,
         # source_url: Optional[str] = None # Add if needed
     ) -> ValidationInterface.VectorStoreRead:
@@ -184,7 +186,6 @@ class VectorStoreClient:
 
         # 1. Process file (chunk, embed)
 
-
         logging_utility.info("Processing file: %s", file_path)
         try:
             # Assuming process_file handles reading and embedding
@@ -193,7 +194,7 @@ class VectorStoreClient:
             vectors = processed_data["vectors"]
             # Create metadata for each chunk (important: include original file_path)
             base_metadata = user_metadata or {}
-            base_metadata["source"] = str(file_path) # Use file_path for Qdrant filter key 'source'
+            base_metadata["source"] = str(file_path)  # Use file_path for Qdrant filter key 'source'
             base_metadata["file_name"] = file_path.name
 
             chunk_metadata = [
@@ -210,10 +211,10 @@ class VectorStoreClient:
                              len(texts), file_path.name, collection_name)
         try:
             qdrant_result = self.vector_manager.add_to_store(
-                store_name=collection_name, # Use collection_name for Qdrant
+                store_name=collection_name,  # Use collection_name for Qdrant
                 texts=texts,
                 vectors=vectors,
-                metadata=chunk_metadata # Ensure metadata includes 'source': file_path
+                metadata=chunk_metadata  # Ensure metadata includes 'source': file_path
             )
             # Check qdrant_result for success/failure if possible
             logging_utility.info("Successfully uploaded chunks to Qdrant for '%s'. Result: %s",
@@ -229,9 +230,9 @@ class VectorStoreClient:
         api_payload = {
             "file_id": file_record_id,
             "file_name": file_path.name,
-            "file_path": str(file_path), # Store the path used in Qdrant metadata['source']
-            "status": "completed", # Assuming success if we reached here
-            "meta_data": user_metadata or {} # Store user metadata if provided
+            "file_path": str(file_path),  # Store the path used in Qdrant metadata['source']
+            "status": "completed",  # Assuming success if we reached here
+            "meta_data": user_metadata or {}  # Store user metadata if provided
         }
         logging_utility.info("Registering file '%s' (ID: %s) in vector store '%s' via API",
                              file_path.name, file_record_id, vector_store_id)
@@ -253,7 +254,6 @@ class VectorStoreClient:
             # self.delete_file_from_vector_store(vector_store_id, str(file_path)) # This might hide the root cause
             raise api_error
 
-
     async def search_vector_store(
         self,
         vector_store_id: str,
@@ -266,9 +266,9 @@ class VectorStoreClient:
         # score_boosts: Optional[Dict[str, float]] = None,
         # search_type: Optional[str] = None,
         # explain: bool = False
-    ) -> List[Dict[str, Any]]: # Return type likely Qdrant search results
+    ) -> List[Dict[str, Any]]:  # Return type likely Qdrant search results
         """Performs semantic search directly against Qdrant."""
-         # 0. Get Vector Store details (needed for collection_name and vector size/model)
+        # 0. Get Vector Store details (needed for collection_name and vector size/model)
         try:
             # Use sync client for potentially faster lookup if needed before async embedding
             store_info = self.retrieve_vector_store_sync(vector_store_id)
@@ -281,13 +281,13 @@ class VectorStoreClient:
         # 1. Embed the query text (assuming FileProcessor can embed single strings)
         # Reuse file processor instance or create one
 
-        embedding_model_name = "paraphrase-MiniLM-L6-v2" # Get from store_info or config
+        embedding_model_name = "paraphrase-MiniLM-L6-v2"  # Get from store_info or config
 
         try:
             query_vector = self.file_processor.embedding_model.encode(query_text).tolist()
         except Exception as e:
-             logging_utility.error("Failed to embed query text: %s", str(e))
-             raise VectorStoreClientError(f"Query embedding failed: {str(e)}") from e
+            logging_utility.error("Failed to embed query text: %s", str(e))
+            raise VectorStoreClientError(f"Query embedding failed: {str(e)}") from e
 
         # 2. Query Qdrant
         logging_utility.info("Searching Qdrant collection '%s' with top_k=%d", collection_name, top_k)
@@ -297,7 +297,7 @@ class VectorStoreClient:
                 store_name=collection_name,
                 query_vector=query_vector,
                 top_k=top_k,
-                filters=filters # Pass Qdrant compatible filters if provided
+                filters=filters  # Pass Qdrant compatible filters if provided
                 # Add other params like score_threshold, offset, limit etc.
             )
             logging_utility.info("Qdrant search completed. Found %d results.", len(search_results))
@@ -324,13 +324,13 @@ class VectorStoreClient:
             logging_utility.info("Qdrant delete result for collection '%s': %s", collection_name, qdrant_result)
             # Note: delete_store might return True/False or raise error on failure
         except Exception as e:
-             # If permanent deletion is requested, failing Qdrant delete is serious.
-             # If soft delete, maybe we can proceed with API call? Depends on requirements.
-             logging_utility.error("Qdrant collection deletion failed for '%s': %s. Proceeding with API call might leave orphaned data.",
-                                   collection_name, str(e))
-             if permanent:
-                 raise VectorStoreClientError(f"Failed to delete vector store backend: {str(e)}") from e
-             # If not permanent, log warning and continue to mark deleted in DB
+            # If permanent deletion is requested, failing Qdrant delete is serious.
+            # If soft delete, maybe we can proceed with API call? Depends on requirements.
+            logging_utility.error("Qdrant collection deletion failed for '%s': %s. Proceeding with API call might leave orphaned data.",
+                                  collection_name, str(e))
+            if permanent:
+                raise VectorStoreClientError(f"Failed to delete vector store backend: {str(e)}") from e
+            # If not permanent, log warning and continue to mark deleted in DB
 
         # 2. Call API to delete/mark deleted in DB
         logging_utility.info("Calling API to %s delete vector store '%s'",
@@ -346,15 +346,14 @@ class VectorStoreClient:
                 "vector_store_id": vector_store_id,
                 "status": "deleted",
                 "permanent": permanent,
-                "qdrant_result": qdrant_result, # Include Qdrant status if available
-                "api_result": api_response # Include API status if available
+                "qdrant_result": qdrant_result,  # Include Qdrant status if available
+                "api_result": api_response  # Include API status if available
             }
         except Exception as api_error:
             logging_utility.error("API delete call failed for vector store '%s'. Qdrant status: %s. Error: %s",
                                   vector_store_id, qdrant_result, str(api_error))
             # If Qdrant delete succeeded but API failed, DB state is inconsistent.
-            raise api_error # Re-raise API error
-
+            raise api_error  # Re-raise API error
 
     async def delete_file_from_vector_store(self, vector_store_id: str, file_path: str) -> Dict[str, Any]:
         """
@@ -385,10 +384,10 @@ class VectorStoreClient:
         try:
             # API endpoint: DELETE /v1/vector-stores/{vector_store_id}/files?file_path={file_path}
             # URL encode file_path
-            encoded_file_path = httpx.URL(file_path).path # Basic encoding
+            encoded_file_path = httpx.URL(file_path).path  # Basic encoding
             api_response = await self._request_with_retries(
                 "DELETE", f"/v1/vector-stores/{vector_store_id}/files",
-                params={"file_path": encoded_file_path} # Pass file_path as query param
+                params={"file_path": encoded_file_path}  # Pass file_path as query param
             )
             logging_utility.info("API delete call successful for file record '%s'.", file_path)
             return {
@@ -421,7 +420,6 @@ class VectorStoreClient:
 
     # --- Assistant & User Methods ---
 
-
     async def attach_vector_store_to_assistant(self, vector_store_id: str, assistant_id: str) -> bool:
         logging_utility.info("Attaching vector store %s to assistant %s via API", vector_store_id, assistant_id)
 
@@ -451,14 +449,12 @@ class VectorStoreClient:
         response = await self._request_with_retries("GET", f"/v1/vector-stores/{vector_store_id}")
         return ValidationInterface.VectorStoreRead.model_validate(response)
 
-
     def retrieve_vector_store_sync(self, vector_store_id: str) -> ValidationInterface.VectorStoreRead:
         """Synchronous version of retrieve_vector_store."""
         logging_utility.info("Retrieving vector store %s via sync API", vector_store_id)
         response = self.sync_api_client.get(f"{self.base_url}/v1/vector-stores/{vector_store_id}")
-        response.raise_for_status() # Handle errors
+        response.raise_for_status()  # Handle errors
         return ValidationInterface.VectorStoreRead.model_validate(response.json())
-
 
     async def retrieve_vector_store_by_collection(self, collection_name: str) -> ValidationInterface.VectorStoreRead:
         """Retrieves vector store metadata by its collection name via API."""

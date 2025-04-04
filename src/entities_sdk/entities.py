@@ -27,6 +27,7 @@ load_dotenv()
 # Initialize logging utility.
 logging_utility = UtilsInterface.LoggingUtility()
 
+
 class Entities:
     def __init__(
         self,
@@ -94,7 +95,6 @@ class Entities:
             self._messages_client = MessagesClient(base_url=self.base_url, api_key=self.api_key)
         return self._messages_client
 
-
     def submit_function_call_output(self, thread, assistant_id, tool_id, content):
 
         self._messages_client.submit_tool_output(thread, assistant_id, tool_id, content)
@@ -104,7 +104,6 @@ class Entities:
         if self._runs_client is None:
             self._runs_client = RunsClient(base_url=self.base_url, api_key=self.api_key)
         return self._runs_client
-
 
     @property
     def actions(self) -> ActionsClient:
@@ -124,7 +123,6 @@ class Entities:
             self._synchronous_inference_stream = SynchronousInferenceStream(self.inference)
         return self._synchronous_inference_stream
 
-
     @property
     def files(self) -> FileClient:
         if self._file_client is None:
@@ -136,5 +134,4 @@ class Entities:
         if self._vectors_client is None:
             self._vectors_client = VectorStoreClient(base_url=self.base_url, api_key=self.api_key)
 
-        return  self._vectors_client
-
+        return self._vectors_client

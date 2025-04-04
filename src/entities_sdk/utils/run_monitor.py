@@ -4,6 +4,7 @@ from typing import Callable, Optional, Any, List, Dict
 
 from entities_sdk.constants.platform import ACTION_REQUIRED_STATUS, TERMINAL_STATUSES
 
+
 class HttpRunMonitor:
     """
     Monitors the lifecycle of a run using the HTTP-based SDK clients (RunsClient + ActionsClient).

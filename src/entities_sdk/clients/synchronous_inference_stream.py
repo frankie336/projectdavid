@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import suppress
 
+
 class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)

@@ -67,4 +67,3 @@ class LoggingUtility:
         # Perform actions or send notifications for critical logs
         print("Intercepted Critical Log:")
         print(message % args)
-

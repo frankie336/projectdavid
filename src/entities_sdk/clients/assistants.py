@@ -39,7 +39,8 @@ class AssistantsClient:
         """Closes the HTTP client session."""
         self.client.close()
 
-    def _parse_response(self, response):
+    @staticmethod
+    def _parse_response(response):
         """Parses JSON responses safely."""
         try:
             return response.json()
@@ -52,13 +53,14 @@ class AssistantsClient:
 
     def _request_with_retries(self, method: str, url: str, **kwargs):
         """Handles retries for transient failures."""
+        global response
         retries = 3
         for attempt in range(retries):
             try:
                 response = self.client.request(method, url, **kwargs)
                 response.raise_for_status()
                 return response
-            except httpx.HTTPStatusError as e:
+            except httpx.HTTPStatusError:
                 if response.status_code in {500, 503} and attempt < retries - 1:
                     logging_utility.warning("Retrying request due to server error (attempt %d)", attempt + 1)
                     time.sleep(2 ** attempt)  # Exponential backoff
@@ -138,7 +140,7 @@ class AssistantsClient:
     def associate_assistant_with_user(self, user_id: str, assistant_id: str) -> Dict[str, Any]:
         """Associates an assistant with a user."""
         logging_utility.info("Associating assistant %s with user %s", assistant_id, user_id)
-        response = self._request_with_retries("POST", f"/v1/users/{user_id}/assistants/{assistant_id}")
+        self._request_with_retries("POST", f"/v1/users/{user_id}/assistants/{assistant_id}")
         return {"message": "Assistant associated with user successfully"}
 
     def disassociate_assistant_from_user(self, user_id: str, assistant_id: str) -> Dict[str, Any]:

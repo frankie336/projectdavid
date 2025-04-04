@@ -14,7 +14,11 @@ load_dotenv()
 
 
 class ActionsClient:
-    def __init__(self, base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"), api_key: Optional[str] = None):
+    def __init__(
+        self,
+        base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"),
+        api_key: Optional[str] = None
+    ):
         """
         Initialize with base URL and API key for authentication.
         """
@@ -113,7 +117,8 @@ class ActionsClient:
     def get_actions_by_status(self, run_id: str, status: str = "pending") -> List[Dict[str, Any]]:
         """Retrieve actions by run_id and status."""
         try:
-            logging_utility.debug("Retrieving actions for run_id: %s with status: %s", run_id, status or 'not specified')
+            logging_utility.debug("Retrieving actions for run_id: %s with status: %s",
+                                  run_id, status or 'not specified')
             response = self.client.get(f"/v1/runs/{run_id}/actions/status", params={"status": status})
             response.raise_for_status()
             if response.headers.get("Content-Type") == "application/json":
@@ -127,7 +132,8 @@ class ActionsClient:
             logging_utility.error("Error requesting actions for run_id %s: %s", run_id, str(e))
             raise ValueError(f"Request error: {str(e)}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error during actions retrieval for run_id %s with status %s: %s", run_id, status, str(e))
+            logging_utility.error(
+                "HTTP error during actions retrieval for run_id %s with status %s: %s", run_id, status, str(e))
             raise ValueError(f"HTTP error during actions retrieval: {str(e)}")
 
     def get_pending_actions(self, run_id: str) -> List[Dict[str, Any]]:
