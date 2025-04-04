@@ -1,3 +1,7 @@
+![Build](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml/badge.svg)
+![Test](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml/badge.svg)
+![Lint](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml/badge.svg)
+
 # Entities SDK
 
 The **Entities** SDK provides a Pythonic interface to the [Entities AI API](https://github.com/frankie336/entities_api).  
