@@ -1,0 +1,43 @@
+# .github/workflows/tag.yml
+name: Tag and Release
+
+description: >
+  Automatically bumps the version, tags it, and optionally creates a GitHub release
+  based on conventional commit messages (feat/fix/breaking change).
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Semantic Version Tagging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✨ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🚀 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔧 Install semantic-release and plugins
+        run: |
+          npm install -g semantic-release \
+            @semantic-release/git \
+            @semantic-release/changelog \
+            @semantic-release/github \
+            conventional-changelog-conventionalcommits
+
+      - name: 🔢 Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
