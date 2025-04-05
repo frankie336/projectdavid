@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1] - 2025-04-05
+
+### Added
+- Trusted publishing setup for PyPI and TestPyPI, including GitHub Actions workflow with tag-based trigger.
+- `scripts/pin_entities_common.py`: utility to pin latest commit SHA from `entities_common` into `pyproject.toml` and `requirements.txt`.
+- CI workflow `pin-dependencies.yml` that auto-pins `entities_common` on each push to `main`.
+
+### Fixed
+- Flake8 linting issues across `file_processor.py` due to missing typing imports.
+- `LiteralString` fallback import for Python < 3.11 environments.
+- Typos and inconsistencies in GitHub workflow tags (`test-v*` vs `v*`) that prevented job execution.
+
+### Changed
+- Replaced dynamic `entities_common` Git dependency with pinned SHA references.
+- Made the `publish` workflow fully conformant with [Trusted Publishing](https://docs.pypi.org/trusted-publishers/).
+
+
+
 ## [0.3.0] - 2025-04-04
 
 ### Added
