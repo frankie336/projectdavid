@@ -1,8 +1,8 @@
 # 🧠 Entities SDK
 
-[![Build](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml)
-[![Test](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml)
-[![Lint](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml)
+[![Build](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml)
+[![Test](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml)
+[![Lint](https://github.com/frankie336/entitites_sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/lint.yml)
 
 The **Entities SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
 
