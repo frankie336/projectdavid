@@ -34,8 +34,6 @@ Local inference is fully supported via [Ollama](https://github.com/ollama).
 ```bash
 pip install entities
 
-pip install entities_common  # shared model definitions
-
 ```
 
 ---
@@ -112,4 +110,6 @@ for chunk in stream:
 ## 🌍 Related Repositories
 
 - 🔌 [Entities API](https://github.com/frankie336/entities_api) — containerized API backend
-- 📚 [entities_common](https://github.com/frankie336/entities_common) — shared validation and schemas
+- 
+- 📚 [entities_common](https://github.com/frankie336/entities_common) — shared validation, schemas, utilities, and tools.
+      This package is auto installed as dependency of entities SDK or entities API.
