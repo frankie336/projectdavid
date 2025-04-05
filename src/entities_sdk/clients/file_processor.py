@@ -4,7 +4,11 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Union, List, Tuple, LiteralString
+
+try:
+    from typing import LiteralString  # Python 3.11+
+except ImportError:
+    from typing_extensions import LiteralString  # For Python 3.10 and below
 
 import numpy as np
 import pdfplumber
