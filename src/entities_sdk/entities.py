@@ -3,7 +3,6 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from entities_common import UtilsInterface
-from ollama import Client as OllamaAPIClient
 
 # Use relative imports for modules within your package.
 from .clients.actions import ActionsClient
@@ -39,9 +38,6 @@ class Entities:
         """
         self.base_url = base_url or os.getenv('ASSISTANTS_BASE_URL', 'http://localhost:9000/')
         self.api_key = api_key or os.getenv('API_KEY', 'your_api_key')
-
-        # Initialize the Ollama API client.
-        self.ollama_client: OllamaAPIClient = OllamaAPIClient()
 
         logging_utility.info("Entities initialized with base_url: %s", self.base_url)
 

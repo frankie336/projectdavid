@@ -17,9 +17,9 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv>=1.0",
     "aiofiles>=23.2.1",
-    # Added ollama dependency
+
     "ollama >= 0.3.0", # Adjust version constraint as needed
-    # Explicitly added @main - consider using a specific tag or commit hash instead for better stability
+
     "entities_common @ git+https://github.com/frankie336/entities_common.git"
 ]
 
