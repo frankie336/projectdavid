@@ -1,4 +1,6 @@
-name: test
+# .github/workflows/test.yml
+
+name: Test Package
 
 on: [push, pull_request]
 
@@ -6,22 +8,45 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false # Don't cancel other jobs if one Python version fails
       matrix:
+        # Test against supported Python versions
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip # The default pip cache directory
+          # Create a unique key based on OS, Python version, pyproject.toml, and requirements.txt
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
 
-      - name: Run tests
+      - name: Install dependencies and package
         run: |
-          pytest
+          python -m pip install --upgrade pip setuptools wheel
+          # Install the package itself in editable mode (-e)
+          # This makes `import entities_sdk` work correctly from the src/ layout
+          pip install -e .
+          # Install test dependencies (assuming pytest etc. are in requirements.txt)
+          # If you have optional test dependencies in pyproject.toml ([project.optional-dependencies]),
+          # you could potentially combine this: pip install -e ".[test]"
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt not found, skipping."
+          fi
+
+      - name: Run tests with pytest
+        run: |
+          pytest tests/ # Be explicit about the test directory
