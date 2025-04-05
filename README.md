@@ -1,14 +1,18 @@
-![Build](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml/badge.svg)
-![Test](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml/badge.svg)
-![Lint](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml/badge.svg)
+# 🧠 Entities SDK
 
-# Entities SDK
+[![Build](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/build.yml)
+[![Test](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/test.yml)
+[![Lint](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/frankie336/entities_sdk/actions/workflows/lint.yml)
 
-The **Entities** SDK provides a Pythonic interface to the [Entities AI API](https://github.com/frankie336/entities_api).  
-It offers a unified abstraction for building applications that interact with open-source and cloud-based LLMs, including local inference via [Ollama](https://github.com/ollama).
+The **Entities SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
 
-It supports advanced capabilities like multi-turn dialogue, [function calling](/docs/function_calling.md), [code interpretation](/docs/code_interpretation.md), and streaming—all through a consistent API surface.
+It unifies:
 
+- Users, threads, assistants, messages, runs
+- **Function calling**, **code interpretation**, and **structured streaming**
+- Vector memory, file uploads, and secure tool orchestration
+
+Local inference is fully supported via [Ollama](https://github.com/ollama).
 
 ---
 
@@ -16,35 +20,94 @@ It supports advanced capabilities like multi-turn dialogue, [function calling](/
 
 | Provider                                         | Type                        |
 |--------------------------------------------------|-----------------------------|
-| [Ollama](https://github.com/ollama)              | **Local** (Self-Hosted)     |
-| [DeepSeek](https://platform.deepseek.com/)       | **Cloud** (Open-Source)     |
-| [Hyperbolic](https://hyperbolic.xyz/)            | **Cloud** (Proprietary)     |
-| [OpenAI](https://platform.openai.com/)           | **Cloud** (Proprietary)     |
-| [Together AI](https://www.together.ai/)          | **Cloud** (Aggregated)      |
-| [MS Azure Foundry](https://azure.microsoft.com)  | **Cloud** (Enterprise)      |
+| [Ollama](https://github.com/ollama)              | 🧠 **Local** (Self-Hosted)  |
+| [DeepSeek](https://platform.deepseek.com/)       | ☁️ **Cloud** (Open-Source)  |
+| [Hyperbolic](https://hyperbolic.xyz/)            | ☁️ **Cloud** (Proprietary)  |
+| [OpenAI](https://platform.openai.com/)           | ☁️ **Cloud** (Proprietary)  |
+| [Together AI](https://www.together.ai/)          | ☁️ **Cloud** (Aggregated)   |
+| [Azure Foundry](https://azure.microsoft.com)     | ☁️ **Cloud** (Enterprise)   |
 
 ---
 
-## 🧠 Why Entities API?
+## 📦 Installation
 
-The modern inference landscape is fragmented—each provider offers its own keys, schemas, endpoints, and semantics.
-
-**Entities** abstracts this chaos into a unified, state-aware assistant framework.  
-You gain consistency and flexibility across providers, with tools that help you orchestrate assistants, tools, messages, runs, threads, and memory.
+```bash
+pip install entities_sdk
+pip install entities_common  # shared model definitions
+```
 
 ---
 
-## 🧾 Dialogue State Management
+## 🚀 Quick Start
 
-LLM applications require explicit management of multi-turn dialogue state.
+```python
+from entities_sdk import Entities
+import os
+from dotenv import load_dotenv
 
-Example:
+load_dotenv()
 
-```json
-[
-  {"role": "system", "content": "You are a helpful assistant."},
-  {"role": "user", "content": "What’s the capital of France?"},
-  {"role": "assistant", "content": "The capital of France is Paris."},
-  {"role": "user", "content": "What’s the population of Paris?"},
-  {"role": "assistant", "content": "As of the latest data, the population of Paris is approximately 2.1 million."}
-]
+client = Entities(
+    base_url='http://localhost:9000',
+    api_key=os.getenv("API_KEY")
+)
+
+user = client.users.create_user(name="demo_user")
+thread = client.threads.create_thread(participant_ids=[user.id])
+assistant = client.assistants.create_assistant(name="Demo Assistant")
+
+message = client.messages.create_message(
+    thread_id=thread.id,
+    role="user",
+    content="Hello, assistant!",
+    assistant_id=assistant.id
+)
+
+run = client.runs.create_run(
+    assistant_id=assistant.id,
+    thread_id=thread.id
+)
+
+stream = client.inference.stream_inference_response(
+    provider="Hyperbolic",
+    model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    thread_id=thread.id,
+    message_id=message.id,
+    run_id=run.id,
+    assistant_id=assistant.id
+)
+
+for chunk in stream:
+    print(chunk)
+```
+
+---
+
+## 📚 Documentation
+
+| Domain             | Link                                                                 |
+|--------------------|----------------------------------------------------------------------|
+| Assistants         | [assistants.md](/docs/assistants.md)                                 |
+| Threads            | [threads.md](/docs/threads.md)                                       |
+| Messages           | [messages.md](/docs/messages.md)                                     |
+| Runs               | [runs.md](/docs/runs.md)                                             |
+| Inference          | [inference.md](/docs/inference.md)                                   |
+| Streaming          | [streams.md](/docs/streams.md)                                       |
+| Function Calling   | [function_calling.md](/docs/function_calling.md)                     |
+| Code Interpretation| [code_interpretation.md](/docs/code_interpretation.md)               |
+| Files              | [files.md](/docs/files.md)                                           |
+| Vector Store       | [vector_store.md](/docs/vector_store.md)                             |
+
+---
+
+## ✅ Compatibility & Requirements
+
+- Python **3.8+**
+- Compatible with **local** or **cloud** deployments of the Entities API
+
+---
+
+## 🌍 Related Repositories
+
+- 🔌 [Entities API](https://github.com/frankie336/entities_api) — containerized API backend
+- 📚 [entities_common](https://github.com/frankie336/entities_common) — shared validation and schemas
