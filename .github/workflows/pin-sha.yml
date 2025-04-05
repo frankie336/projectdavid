@@ -1,0 +1,68 @@
+name: Pin entities_common SHA
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pin-entities-common:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Pin latest SHA in pyproject.toml and requirements.txt
+        run: |
+          import subprocess
+          from pathlib import Path
+          import re
+
+          REPO = "https://github.com/frankie336/entities_common.git"
+
+          def get_sha():
+              result = subprocess.run(
+                  ["git", "ls-remote", REPO, "HEAD"],
+                  capture_output=True, text=True
+              )
+              result.check_returncode()
+              return result.stdout.strip().split()[0]
+
+          def update_file(path, pattern, replacement):
+              if not path.exists():
+                  return False
+              original = path.read_text()
+              updated = re.sub(pattern, replacement, original)
+              if original != updated:
+                  path.write_text(updated)
+                  return True
+              return False
+
+          sha = get_sha()
+          line = f"entities_common @ git+{REPO}@{sha}"
+          pattern = r'entities_common\s*@\s*git\+https://github.com/frankie336/entities_common\.git(@[^\s"]+)?'
+
+          updated = False
+          updated |= update_file(Path("pyproject.toml"), pattern, line)
+          updated |= update_file(Path("requirements.txt"), pattern, line)
+
+          if not updated:
+              print("No updates made.")
+              exit(0)
+
+          print(f"✅ Updated to SHA: {sha}")
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add pyproject.toml requirements.txt
+          git diff --quiet && echo "No changes to commit." && exit 0
+          git commit -m "CI: Auto-pin latest entities_common SHA"
+          git push origin main

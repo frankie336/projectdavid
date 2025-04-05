@@ -20,7 +20,7 @@ dependencies = [
 
     "ollama >= 0.3.0", # Adjust version constraint as needed
 
-    "entities_common @ git+https://github.com/frankie336/entities_common.git"
+    "entities_common @ git+https://github.com/frankie336/entities_common.git@13e78165902edaf973f2b0aaa6e0f2af41f9af73"
 ]
 
 requires-python = ">=3.9"

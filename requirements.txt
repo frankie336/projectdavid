@@ -7,4 +7,4 @@ sentence-transformers~=4.0.1
 qdrant-client~=1.13.3
 python-dotenv
 pytest>=7.0.0
-git+https://github.com/frankie336/entities_common.git#egg=entities_common
+git+https://github.com/frankie336/entities_common.git@13e78165902edaf973f2b0aaa6e0f2af41f9af73#egg=entities_common

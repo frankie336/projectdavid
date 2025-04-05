@@ -33,7 +33,9 @@ Local inference is fully supported via [Ollama](https://github.com/ollama).
 
 ```bash
 pip install entities
+
 pip install entities_common  # shared model definitions
+
 ```
 
 ---
