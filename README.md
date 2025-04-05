@@ -1,4 +1,4 @@
-# 🧠 Entities SDK
+#  Entities SDK
 
 [![Build](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml)
 [![Test](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml)
@@ -18,14 +18,14 @@ Local inference is fully supported via [Ollama](https://github.com/ollama).
 
 ## 🔌 Supported Inference Providers
 
-| Provider                                         | Type                        |
-|--------------------------------------------------|-----------------------------|
-| [Ollama](https://github.com/ollama)              | 🧠 **Local** (Self-Hosted)  |
-| [DeepSeek](https://platform.deepseek.com/)       | ☁️ **Cloud** (Open-Source)  |
-| [Hyperbolic](https://hyperbolic.xyz/)            | ☁️ **Cloud** (Proprietary)  |
-| [OpenAI](https://platform.openai.com/)           | ☁️ **Cloud** (Proprietary)  |
-| [Together AI](https://www.together.ai/)          | ☁️ **Cloud** (Aggregated)   |
-| [Azure Foundry](https://azure.microsoft.com)     | ☁️ **Cloud** (Enterprise)   |
+| Provider                                         | Type                     |
+|--------------------------------------------------|--------------------------|
+| [Ollama](https://github.com/ollama)              |  **Local** (Self-Hosted) |
+| [DeepSeek](https://platform.deepseek.com/)       | ☁ **Cloud** (Open-Source) |
+| [Hyperbolic](https://hyperbolic.xyz/)            | ☁ **Cloud** (Proprietary) |
+| [OpenAI](https://platform.openai.com/)           | ☁ **Cloud** (Proprietary) |
+| [Together AI](https://www.together.ai/)          | ☁ **Cloud** (Aggregated) |
+| [Azure Foundry](https://azure.microsoft.com)     | ☁ **Cloud** (Enterprise) |
 
 ---
 
@@ -38,7 +38,7 @@ pip install entities_common  # shared model definitions
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ```python
 from entities import Entities
