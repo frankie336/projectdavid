@@ -17,7 +17,10 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv>=1.0",
     "aiofiles>=23.2.1",
-    "entities_common @ git+https://github.com/frankie336/entities_common.git"
+    # Added ollama dependency
+    "ollama >= 0.3.0", # Adjust version constraint as needed
+    # Explicitly added @main - consider using a specific tag or commit hash instead for better stability
+    "entities_common @ git+https://github.com/frankie336/entities_common.git@main"
 ]
 
 requires-python = ">=3.9"
@@ -35,7 +38,7 @@ dev = [
 [project.urls]
 "Homepage" = "https://github.com/frankie336/entitites_sdk"
 "Documentation" = "https://github.com/frankie336/entitites_sdk/tree/master/docs"
-"Changelog" = "https://github.com/your-org/entities-sdk/blob/main/CHANGELOG.md"
+"Changelog" = "https://github.com/your-org/entities-sdk/blob/main/CHANGELOG.md" # Note: Placeholder URL
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -45,11 +48,15 @@ where = ["src"]
 exclude = ["tests", "docs"]
 
 [tool.setuptools.dynamic]
-version = { attr = "_version.__version__" }  # if you're pulling from _version.py
+# Ensure you have a _version.py file at the root for this to work
+# (or remove this section and set version directly under [project])
+version = { attr = "_version.__version__" }
 
 [tool.mypy]
 python_version = "3.9"
 strict = true
+# Consider adding ignores for libraries you don't control if they cause issues
+# ignore_missing_imports = true # Can be useful but use with caution
 
 [tool.black]
 line-length = 100
