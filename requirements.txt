@@ -1,10 +1,17 @@
+# Core dependencies
 pydantic~=2.10.3
 setuptools~=75.8.0
 httpx
-pdfplumber~=0.11.6
-validators~=0.34.0
-sentence-transformers~=4.0.1
-qdrant-client~=1.13.3
 python-dotenv
 pytest>=7.0.0
-git+https://github.com/frankie336/entities_common.git@13e78165902edaf973f2b0aaa6e0f2af41f9af73#egg=entities_common
+
+# Document and file parsing
+pdfplumber~=0.11.6
+validators~=0.34.0
+
+# Embeddings and vector storage
+sentence-transformers~=4.0.1
+qdrant-client~=1.13.3
+
+# Replace Git-based SDK with Test PyPI-published version
+entities_common==0.1.0
