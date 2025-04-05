@@ -10,8 +10,8 @@ from entities_common import UtilsInterface
 from entities_common.utils import IdentifierService
 from entities_common.validation import ValidationInterface
 
-from entities_sdk.clients.file_processor import FileProcessor
-from entities_sdk.clients.vector_store_manager import VectorStoreManager
+from entities.clients.file_processor import FileProcessor
+from entities.clients.vector_store_manager import VectorStoreManager
 
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()

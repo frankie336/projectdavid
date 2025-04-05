@@ -1,5 +1,5 @@
-from entities_sdk.utils.run_monitor import HttpRunMonitor
-from entities_sdk.utils.monitor_launcher import MonitorLauncher
+from entities.utils.run_monitor import HttpRunMonitor
+from entities.utils.monitor_launcher import MonitorLauncher
 
 
 class EventsInterface:

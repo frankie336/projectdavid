@@ -32,7 +32,7 @@ Local inference is fully supported via [Ollama](https://github.com/ollama).
 ## 📦 Installation
 
 ```bash
-pip install entities_sdk
+pip install entities
 pip install entities_common  # shared model definitions
 ```
 
@@ -41,7 +41,7 @@ pip install entities_common  # shared model definitions
 ## 🚀 Quick Start
 
 ```python
-from entities_sdk import Entities
+from entities import Entities
 import os
 from dotenv import load_dotenv
 

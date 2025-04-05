@@ -19,7 +19,7 @@ This provides a robust and efficient user management system that can be used to 
 # Create user
 
 ```python
-from entities_sdk import CommonEntitiesInternalInterface
+from entities import CommonEntitiesInternalInterface
 
 # Initialize the client
 client = CommonEntitiesInternalInterface()
