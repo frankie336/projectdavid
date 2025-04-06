@@ -1,3 +1,10 @@
+## [1.0.12](https://github.com/frankie336/entitites_sdk/compare/v1.0.11...v1.0.12) (2025-04-06)
+
+
+### Bug Fixes
+
+* add validators dependency ([2c52f21](https://github.com/frankie336/entitites_sdk/commit/2c52f212035ed9245540d93df064aedf4a2cb7e0))
+
 ## [1.0.11](https://github.com/frankie336/entitites_sdk/compare/v1.0.10...v1.0.11) (2025-04-06)
 
 
