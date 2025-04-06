@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/frankie336/entitites_sdk/compare/v1.0.7...v1.0.8) (2025-04-06)
+
+
+### Bug Fixes
+
+* test_tag_release.yml ([53bb318](https://github.com/frankie336/entitites_sdk/commit/53bb3186d60dfc38ba76c3180cc064a3f193d42e))
+
 ## [1.0.7](https://github.com/frankie336/entitites_sdk/compare/v1.0.6...v1.0.7) (2025-04-06)
 
 
