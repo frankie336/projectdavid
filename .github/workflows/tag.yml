@@ -1,9 +1,4 @@
-# .github/workflows/tag.yml
-name: Tag and Release
-
-description: >
-  Automatically bumps the version, tags it, and optionally creates a GitHub release
-  based on conventional commit messages (feat/fix/breaking change).
+name: Test, Tag, and Publish
 
 on:
   push:
@@ -13,17 +8,48 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
-  tag:
-    name: Semantic Version Tagging
+  test-and-release:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - name: ✨ Checkout repository
+      - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🚀 Setup Node.js
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 📦 Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: 🧪 Install dependencies and SDK
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --extra-index-url https://test.pypi.org/simple/ -e .
+          if [ -f requirements.txt ]; then
+            pip install --extra-index-url https://test.pypi.org/simple/ -r requirements.txt
+          else
+            echo "requirements.txt not found, skipping."
+          fi
+
+      - name: ✅ Run tests
+        run: pytest tests/
+
+      - name: 🚀 Setup Node.js for semantic-release
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -36,8 +62,22 @@ jobs:
             @semantic-release/github \
             conventional-changelog-conventionalcommits
 
-      - name: 🔢 Run semantic-release
+      - name: 🔢 Run semantic-release (tag, changelog, GitHub release)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx semantic-release
+
+      - name: 🏗️ Build Python package
+        run: |
+          python -m build
+
+      - name: 📦 Publish to Test PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          pip install --upgrade twine
+          twine upload --repository-url https://test.pypi.org/legacy/ \
+            --skip-existing \
+            dist/*
