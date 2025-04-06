@@ -60,22 +60,20 @@ jobs:
             @semantic-release/git \
             @semantic-release/changelog \
             @semantic-release/github \
+            @semantic-release/exec \
             conventional-changelog-conventionalcommits
 
-      - name: 🔢 Run semantic-release (tag, changelog, GitHub release)
+      - name: 🔢 Run semantic-release (tag, changelog, patch pyproject, GitHub release)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx semantic-release
-
 
       - name: 🛠️ Install build module
         run: pip install build
 
       - name: 🏗️ Build Python package
         run: python -m build
-
-
 
       - name: 🛡️ Check build output
         run: |
