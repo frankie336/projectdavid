@@ -19,4 +19,4 @@ qdrant-client~=1.13.3
 
 # Entities SDK and shared models (from Test PyPI)
 entities_common>=0.1.10
-entities==0.3.1
+entities==1.0.5  # ✅ Fixed version
