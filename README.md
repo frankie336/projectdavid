@@ -1,6 +1,6 @@
 #  Entities SDK
 
-[![Build](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml)
+[![Build](https://github.com/frankie336/entitites_sdk/actions/workflows/build.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
 [![Test](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test.yml)
 [![Lint](https://github.com/frankie336/entitites_sdk/actions/workflows/lint.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/lint.yml)
 
@@ -8,7 +8,7 @@ The **Entities SDK** is a composable, Pythonic interface to the [Entities API](h
 
 It unifies:
 
-- Users, threads, assistants, messages, runs
+- Users, threads, assistants, messages, runs, inference
 - **Function calling**, **code interpretation**, and **structured streaming**
 - Vector memory, file uploads, and secure tool orchestration
 
