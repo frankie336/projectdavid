@@ -72,6 +72,16 @@ jobs:
         run: |
           python -m build
 
+      - name: 🛡️ Check build output
+        run: |
+          if [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "❌ Build failed: dist/ is empty."
+            exit 1
+          else
+            echo "✅ Build artifacts found:"
+            ls -l dist
+          fi
+
       - name: 📦 Publish to Test PyPI
         env:
           TWINE_USERNAME: __token__
