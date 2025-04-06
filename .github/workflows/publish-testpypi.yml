@@ -1,11 +1,9 @@
-# .github/workflows/publish-testpypi.yml
-
 name: Publish TestPyPI
 
 on:
   push:
     tags:
-      - 'test-v*'
+      - 'v*'
 
 jobs:
   publish-test:
@@ -26,7 +24,7 @@ jobs:
       - name: Build package
         run: python -m build
 
-      - name: Publish to TestPyPI (dry-run)
+      - name: 🚀 Publish to TestPyPI
         run: |
           twine upload --repository-url https://test.pypi.org/legacy/ \
             --skip-existing \
