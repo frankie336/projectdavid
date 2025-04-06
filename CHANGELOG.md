@@ -1,3 +1,17 @@
+# 1.0.0 (2025-04-06)
+
+
+### Bug Fixes
+
+* Fix auto release ([a9a1b2e](https://github.com/frankie336/entitites_sdk/commit/a9a1b2e0d03a707be0510e171fd57cb0c3c7d5f2))
+* Require latest entities_common in toml ([6ca402b](https://github.com/frankie336/entitites_sdk/commit/6ca402b0532946eef68e93862324d281e181cc39))
+* resolve entities_common version issue ([6b64ef6](https://github.com/frankie336/entitites_sdk/commit/6b64ef6bdde7f21245a728d106d3f95daa1422b9))
+
+
+### Features
+
+* add support for auto version tagging ([5ea9aed](https://github.com/frankie336/entitites_sdk/commit/5ea9aed79fa4f37789c463458409126d60da2388))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
