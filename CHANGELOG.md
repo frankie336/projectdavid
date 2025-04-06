@@ -1,3 +1,10 @@
+## [1.0.13](https://github.com/frankie336/entitites_sdk/compare/v1.0.12...v1.0.13) (2025-04-06)
+
+
+### Bug Fixes
+
+* add sentence-transformers dependency to toml ([0c684b5](https://github.com/frankie336/entitites_sdk/commit/0c684b558c2c8b1b018ddd0a52b2052ee5ae4b99))
+
 ## [1.0.12](https://github.com/frankie336/entitites_sdk/compare/v1.0.11...v1.0.12) (2025-04-06)
 
 
