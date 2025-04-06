@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/frankie336/entitites_sdk/compare/v1.0.5...v1.0.6) (2025-04-06)
+
+
+### Bug Fixes
+
+* align pyproject version to v1.0.5 ([e8d12e0](https://github.com/frankie336/entitites_sdk/commit/e8d12e0e86f46d745a8b8731c7e663180e04c143))
+
 ## [1.0.5](https://github.com/frankie336/entitites_sdk/compare/v1.0.4...v1.0.5) (2025-04-06)
 
 
