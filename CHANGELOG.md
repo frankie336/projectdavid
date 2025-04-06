@@ -1,3 +1,10 @@
+## [1.0.7](https://github.com/frankie336/entitites_sdk/compare/v1.0.6...v1.0.7) (2025-04-06)
+
+
+### Bug Fixes
+
+* update workflow to use new trusted publisher and build flow ([1179def](https://github.com/frankie336/entitites_sdk/commit/1179def6e74ef2cbcb4dc570cd76d239ad84e1b2))
+
 ## [1.0.6](https://github.com/frankie336/entitites_sdk/compare/v1.0.5...v1.0.6) (2025-04-06)
 
 
