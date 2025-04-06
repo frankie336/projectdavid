@@ -37,33 +37,61 @@ class VectorStoreManager(BaseVectorStore):
     def _generate_vector_id(self) -> str:
         return str(uuid.uuid4())
 
-    def create_store(
-        self, store_name: str, collection_name, vector_size: int = 384, distance: str = "COSINE"
-    ) -> dict:
+        # Inside class VectorStoreManager:
 
-        if store_name in self.active_stores:
-            raise StoreExistsError(f"Store {store_name} exists")
+    def create_store(
+        self,
+        collection_name: str,  # <<< Changed first argument to 'collection_name'
+        vector_size: int = 384,
+        distance: str = "COSINE"
+        # Removed the unused 'store_name' parameter from signature
+    ) -> dict:  # Return type still dict for status
+
+        # Check if a collection with this name *already* exists in Qdrant (more robust check)
+        try:
+            # Optional: Check existing collections instead of relying only on internal dict
+            existing_collections = self.client.get_collections().collections
+            if any(c.name == collection_name for c in existing_collections):
+                # Or handle differently, maybe return info? For now, raise.
+                raise StoreExistsError(f"Qdrant collection '{collection_name}' already exists.")
+        except Exception as e:
+            # Handle potential connection errors during check
+            logging_utility.warning(f"Could not check existing collections: {e}")
+            # Decide if you want to proceed cautiously or raise
+
+        # Use the unique collection_name provided by the client for Qdrant interaction
+        logging_utility.info(f"Attempting to create Qdrant collection: {collection_name}")
         try:
             normalized_distance = distance.upper()
             if normalized_distance not in Distance.__members__:
-                raise ValueError(
-                    f"Invalid distance metric '{distance}'. Valid options are: {list(Distance.__members__.keys())}"
-                )
+                raise ValueError(f"Invalid distance metric '{distance}'.")
+
+            # *** Use collection_name parameter here ***
             self.client.recreate_collection(
-                collection_name=store_name,
+                collection_name=collection_name,
                 vectors_config=VectorParams(
                     size=vector_size, distance=Distance[normalized_distance]
                 ),
             )
-            self.active_stores[store_name] = {
+
+            # Keep internal track using the collection_name (unique ID) as the key
+            # If you need to store the user-friendly 'name', the client/API layer handles that.
+            self.active_stores[collection_name] = {  # <<< Use collection_name as key
                 "created_at": int(time.time()),
                 "vector_size": vector_size,
                 "distance": normalized_distance,
             }
-            return {"name": store_name, "status": "created"}
+            logging_utility.info(f"Successfully created Qdrant collection: {collection_name}")
+            # Return info about the collection that was created
+            return {"collection_name": collection_name, "status": "created"}
+
         except Exception as e:
-            logging_utility.error(f"Create store HTTP error: {str(e)}")
-            raise VectorStoreError(f"Store creation failed: {str(e)}")
+            logging_utility.error(
+                f"Create store failed for collection '{collection_name}': {str(e)}")
+            # Raise a specific error type if possible
+            raise VectorStoreError(f"Qdrant collection creation failed: {str(e)}") from e
+
+
 
     def add_to_store(
         self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
