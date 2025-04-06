@@ -1,3 +1,10 @@
+## [1.0.14](https://github.com/frankie336/entitites_sdk/compare/v1.0.13...v1.0.14) (2025-04-06)
+
+
+### Bug Fixes
+
+* Migrate vector store endpoints ([7efbeea](https://github.com/frankie336/entitites_sdk/commit/7efbeeaebf0306f7f6d6d62c47f878e586c161d9))
+
 ## [1.0.13](https://github.com/frankie336/entitites_sdk/compare/v1.0.12...v1.0.13) (2025-04-06)
 
 
