@@ -1,3 +1,10 @@
+## [1.0.11](https://github.com/frankie336/entitites_sdk/compare/v1.0.10...v1.0.11) (2025-04-06)
+
+
+### Bug Fixes
+
+* README.md with correct badge ([a59df73](https://github.com/frankie336/entitites_sdk/commit/a59df73a289e5847d2246686da448ab1d4ad257c))
+
 ## [1.0.10](https://github.com/frankie336/entitites_sdk/compare/v1.0.9...v1.0.10) (2025-04-06)
 
 
