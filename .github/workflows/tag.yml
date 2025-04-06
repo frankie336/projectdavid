@@ -68,9 +68,14 @@ jobs:
         run: |
           npx semantic-release
 
+
+      - name: 🛠️ Install build module
+        run: pip install build
+
       - name: 🏗️ Build Python package
-        run: |
-          python -m build
+        run: python -m build
+
+
 
       - name: 🛡️ Check build output
         run: |
