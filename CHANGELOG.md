@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/frankie336/entitites_sdk/compare/v1.0.0...v1.0.1) (2025-04-06)
+
+
+### Bug Fixes
+
+* entities_common version issue again ([6dc6c45](https://github.com/frankie336/entitites_sdk/commit/6dc6c4500c81e61278bdb0254881cc1dfc537798))
+
 # 1.0.0 (2025-04-06)
 
 
