@@ -1,3 +1,10 @@
+## [1.0.9](https://github.com/frankie336/entitites_sdk/compare/v1.0.8...v1.0.9) (2025-04-06)
+
+
+### Bug Fixes
+
+* _version.py relative import error ([96a5be4](https://github.com/frankie336/entitites_sdk/commit/96a5be4dd5ad85bb158332c7ca86dfe87151af31))
+
 ## [1.0.8](https://github.com/frankie336/entitites_sdk/compare/v1.0.7...v1.0.8) (2025-04-06)
 
 
