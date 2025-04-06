@@ -19,7 +19,7 @@ dependencies = [
     "aiofiles>=23.2.1",
 
     "ollama >= 0.3.0", # Adjust version constraint as needed
-    "entities_common"
+    "entities_common>=0.1.10"
 
 ]
 
