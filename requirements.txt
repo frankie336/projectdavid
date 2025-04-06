@@ -14,4 +14,4 @@ sentence-transformers~=4.0.1
 qdrant-client~=1.13.3
 
 # Replace Git-based SDK with Test PyPI-published version
-entities_common==0.1.0
+entities_common

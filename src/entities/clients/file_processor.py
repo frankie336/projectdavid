@@ -37,7 +37,9 @@ class FileProcessor:
         """Pre-process validation checks"""
         max_size = 100 * 1024 * 1024  # 100MB
         if file_path.stat().st_size > max_size:
-            raise ValueError(f"File {file_path} exceeds size limit of {max_size // (1024 * 1024)}MB")
+            raise ValueError(
+                f"File {file_path} exceeds size limit of {max_size // (1024 * 1024)}MB"
+            )
         if not file_path.exists():
             raise FileNotFoundError(f"File {file_path} not found")
 
@@ -90,11 +92,13 @@ class FileProcessor:
                         if current_chunk:
                             # Save existing chunk
                             all_chunks.append('\n'.join(current_chunk))
-                            chunk_line_data.append({
-                                'page': page_num,
-                                'lines': current_line_nums,
-                                'line_count': len(current_line_nums)
-                            })
+                            chunk_line_data.append(
+                                {
+                                    'page': page_num,
+                                    'lines': current_line_nums,
+                                    'line_count': len(current_line_nums),
+                                }
+                            )
                             current_chunk = []
                             current_line_nums = []
                             current_length = 0
@@ -103,24 +107,23 @@ class FileProcessor:
                         chunks = self._split_oversized_chunk(line)
                         for chunk in chunks:
                             all_chunks.append(chunk)
-                            chunk_line_data.append({
-                                'page': page_num,
-                                'lines': [line_num],
-                                'line_count': 1
-                            })
+                            chunk_line_data.append(
+                                {'page': page_num, 'lines': [line_num], 'line_count': 1}
+                            )
 
                 if current_chunk:
                     all_chunks.append('\n'.join(current_chunk))
-                    chunk_line_data.append({
-                        'page': page_num,
-                        'lines': current_line_nums,
-                        'line_count': len(current_line_nums)
-                    })
+                    chunk_line_data.append(
+                        {
+                            'page': page_num,
+                            'lines': current_line_nums,
+                            'line_count': len(current_line_nums),
+                        }
+                    )
 
-            vectors = await asyncio.gather(*[
-                self._encode_chunk_async(chunk)
-                for chunk in all_chunks
-            ])
+            vectors = await asyncio.gather(
+                *[self._encode_chunk_async(chunk) for chunk in all_chunks]
+            )
 
             return {
                 "content": "\n".join(all_chunks),
@@ -128,11 +131,11 @@ class FileProcessor:
                     **doc_metadata,
                     "source": str(file_path),
                     "chunks": len(all_chunks),
-                    "type": "pdf"
+                    "type": "pdf",
                 },
                 "vectors": [v.tolist() for v in vectors],
                 "chunks": all_chunks,
-                "line_data": chunk_line_data
+                "line_data": chunk_line_data,
             }
 
         except Exception as e:
@@ -145,10 +148,7 @@ class FileProcessor:
             text, extra_meta, _ = await self._extract_text(file_path)
             chunks = self._chunk_text(text)
 
-            vectors = await asyncio.gather(*[
-                self._encode_chunk_async(chunk)
-                for chunk in chunks
-            ])
+            vectors = await asyncio.gather(*[self._encode_chunk_async(chunk) for chunk in chunks])
 
             return {
                 "content": text,
@@ -156,10 +156,10 @@ class FileProcessor:
                     "type": "text",
                     "source": str(file_path),
                     "chunks": len(chunks),
-                    **extra_meta
+                    **extra_meta,
                 },
                 "vectors": [v.tolist() for v in vectors],
-                "chunks": chunks
+                "chunks": chunks,
             }
         except Exception as e:
             logging_utility.error(f"Processing failed: {str(e)}")
@@ -170,37 +170,27 @@ class FileProcessor:
         loop = asyncio.get_event_loop()
 
         if file_path.suffix.lower() == ".pdf":
-            return await loop.run_in_executor(
-                self._executor,
-                self._extract_pdf_text,
-                file_path
-            )
+            return await loop.run_in_executor(self._executor, self._extract_pdf_text, file_path)
         else:
-            text = await loop.run_in_executor(
-                self._executor,
-                self._read_text_file,
-                file_path
-            )
+            text = await loop.run_in_executor(self._executor, self._read_text_file, file_path)
             return text, {}, []
 
     def _extract_pdf_text(
-            self,
-            file_path: Path
-    ) -> tuple[
-        list[list[LiteralString | int | list[Any]]],
-        dict[str, int | str | Any]
-    ]:
+        self, file_path: Path
+    ) -> tuple[list[list[LiteralString | int | list[Any]]], dict[str, int | str | Any]]:
         """PDF extraction with line number tracking"""
         page_chunks = []
         metadata = {}
         with pdfplumber.open(file_path) as pdf:
-            metadata.update({
-                'author': pdf.metadata.get('Author', 'unknown_author'),
-                'title': pdf.metadata.get('Title', Path(file_path).stem),
-                'publication_date': pdf.metadata.get('CreationDate'),
-                'page_count': len(pdf.pages),
-                'type': 'pdf'
-            })
+            metadata.update(
+                {
+                    'author': pdf.metadata.get('Author', 'unknown_author'),
+                    'title': pdf.metadata.get('Title', Path(file_path).stem),
+                    'publication_date': pdf.metadata.get('CreationDate'),
+                    'page_count': len(pdf.pages),
+                    'type': 'pdf',
+                }
+            )
 
             for page_num, page in enumerate(pdf.pages, 1):
                 lines = page.extract_text_lines()
@@ -238,8 +228,8 @@ class FileProcessor:
                 convert_to_numpy=True,
                 truncate='model_max_length',
                 normalize_embeddings=True,
-                show_progress_bar=False
-            )[0]
+                show_progress_bar=False,
+            )[0],
         )
 
     def _chunk_text(self, text: str) -> List[str]:
@@ -285,9 +275,9 @@ class FileProcessor:
 
                 # Handle sentence longer than chunk size
                 while len(sentence) > self.chunk_size:
-                    chunk_part = sentence[:self.chunk_size]
+                    chunk_part = sentence[: self.chunk_size]
                     chunks.append(chunk_part)
-                    sentence = sentence[self.chunk_size:].lstrip()
+                    sentence = sentence[self.chunk_size :].lstrip()
                     current_length = len(sentence)
 
                 if sentence:
@@ -306,13 +296,15 @@ class FileProcessor:
 
         chunks = []
         for i in range(0, len(tokens), self.effective_max_length):
-            chunk_tokens = tokens[i:i + self.effective_max_length]
+            chunk_tokens = tokens[i : i + self.effective_max_length]
             chunk_text = self.embedding_model.tokenizer.convert_tokens_to_string(chunk_tokens)
             chunks.append(chunk_text)
 
         return chunks
 
-    def _generate_chunk_metadata(self, processed_data: dict, chunk_idx: int, doc_metadata: dict) -> dict:
+    def _generate_chunk_metadata(
+        self, processed_data: dict, chunk_idx: int, doc_metadata: dict
+    ) -> dict:
         """Generate metadata with page numbers"""
         chunk_text = processed_data['chunks'][chunk_idx]
         page_number = processed_data['page_numbers'][chunk_idx]
@@ -327,18 +319,15 @@ class FileProcessor:
             "document_type": doc_metadata.get('type', 'pdf'),
             "retrieved_date": datetime.now().isoformat(),
             "page_number": page_number,
-
             # Auto-generated
             "chunk_id": f"{Path(doc_metadata['source']).stem}_chunk{chunk_idx:04d}",
             "token_count": token_count,
-
             # Document metadata
             "author": doc_metadata.get('author', 'unknown_author'),
             "publication_date": doc_metadata.get('publication_date'),
             "title": doc_metadata.get('title', ''),
-
             # Technical info
-            "embedding_model": self.embedding_model_name
+            "embedding_model": self.embedding_model_name,
         }
 
     def _validate_metadata(self, metadata: dict):
@@ -362,7 +351,9 @@ class FileProcessor:
         except Exception:
             return None
 
-    def process_csv_dynamic(self, file_path: Union[str, Path], text_field: str = "description") -> Dict[str, Any]:
+    def process_csv_dynamic(
+        self, file_path: Union[str, Path], text_field: str = "description"
+    ) -> Dict[str, Any]:
         """
         Process a CSV file dynamically and vectorize the text in the specified text_field.
         All other columns in the CSV will be used as metadata without being tailored
@@ -394,10 +385,7 @@ class FileProcessor:
                 # Build metadata dynamically using all columns except the text field.
                 metadata = {k: v.strip() for k, v in row.items() if k != text_field and v}
 
-                documents.append({
-                    "text": text,
-                    "metadata": metadata
-                })
+                documents.append({"text": text, "metadata": metadata})
                 texts.append(text)
 
         if texts:
@@ -406,23 +394,22 @@ class FileProcessor:
                 convert_to_numpy=True,
                 truncate='model_max_length',
                 normalize_embeddings=True,
-                show_progress_bar=True  # Optional: disable in production
+                show_progress_bar=True,  # Optional: disable in production
             )
             vector_list = [v.tolist() for v in vectors]
         else:
             vector_list = []
 
-        return {
-            "documents": documents,
-            "vectors": vector_list
-        }
+        return {"documents": documents, "vectors": vector_list}
 
-    def process_and_store(self,
-                          file_path: Union[str, Path],
-                          destination_store: str,
-                          vector_service,
-                          user_metadata: dict = None,
-                          source_url: str = None) -> dict:
+    def process_and_store(
+        self,
+        file_path: Union[str, Path],
+        destination_store: str,
+        vector_service,
+        user_metadata: dict = None,
+        source_url: str = None,
+    ) -> dict:
         """Process documents with metadata support"""
         file_path = Path(file_path)
 
@@ -433,27 +420,22 @@ class FileProcessor:
         try:
             processed = asyncio.run(
                 self._async_process_and_store(
-                    file_path,
-                    destination_store,
-                    vector_service,
-                    metadata
+                    file_path, destination_store, vector_service, metadata
                 )
             )
             return {
                 "store_name": destination_store,
                 "status": "success",
                 "chunks_processed": processed["chunks_processed"],
-                "metadata_summary": processed["metadata_summary"]
+                "metadata_summary": processed["metadata_summary"],
             }
         except Exception as e:
             logging_utility.error(f"Processing failed: {str(e)}")
             raise
 
-    async def _async_process_and_store(self,
-                                       file_path: Path,
-                                       destination_store: str,
-                                       vector_service,
-                                       doc_metadata: dict):
+    async def _async_process_and_store(
+        self, file_path: Path, destination_store: str, vector_service, doc_metadata: dict
+    ):
         """Process and store with page tracking"""
         processed = await self.process_file(file_path)
         chunk_metadata = [
@@ -465,11 +447,11 @@ class FileProcessor:
             store_name=destination_store,
             texts=processed["chunks"],
             vectors=processed["vectors"],
-            metadata=chunk_metadata
+            metadata=chunk_metadata,
         )
 
         return {
             "store_name": destination_store,
             "chunks_processed": processed["metadata"]["chunks"],
-            "metadata_summary": doc_metadata
+            "metadata_summary": doc_metadata,
         }

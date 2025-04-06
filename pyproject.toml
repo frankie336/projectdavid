@@ -19,8 +19,8 @@ dependencies = [
     "aiofiles>=23.2.1",
 
     "ollama >= 0.3.0", # Adjust version constraint as needed
-    "entities_common==0.1.0"
-   #"entities_common @ git+https://github.com/frankie336/entities_common.git@13e78165902edaf973f2b0aaa6e0f2af41f9af73"
+    "entities_common"
+
 ]
 
 requires-python = ">=3.9"
@@ -48,19 +48,18 @@ where = ["src"]
 exclude = ["tests", "docs"]
 
 [tool.setuptools.dynamic]
-# Ensure you have a _version.py file at the root for this to work
-# (or remove this section and set version directly under [project])
-version = { attr = "_version.__version__" }
+version = { attr = "entities_common.__version__.__version__" }
 
 [tool.mypy]
 python_version = "3.9"
 strict = true
-# Consider adding ignores for libraries you don't control if they cause issues
-# ignore_missing_imports = true # Can be useful but use with caution
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ["py38"]
+skip-string-normalization = true
 
-[tool.isort]
-profile = "black"
+[tool.flake8]
+max-line-length = 200
+extend-ignore = ["E203"]
+exclude = [".venv", ".git", "__pycache__", "build", "dist"]

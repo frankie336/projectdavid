@@ -19,7 +19,9 @@ class UsersClient:
     def __init__(self, base_url=os.getenv("BASE_URL"), api_key=None):
         self.base_url = base_url
         self.api_key = api_key
-        self.client = httpx.Client(base_url=base_url, headers={"Authorization": f"Bearer {api_key}"})
+        self.client = httpx.Client(
+            base_url=base_url, headers={"Authorization": f"Bearer {api_key}"}
+        )
         logging_utility.info("UsersClient initialized with base_url: %s", self.base_url)
 
     def create_user(self, name: str) -> ent_validator.UserRead:
@@ -62,11 +64,17 @@ class UsersClient:
             user_data = current_user.model_dump()
             user_data.update(updates)
 
-            validated_data = ent_validator.UserUpdate(**user_data)  # Validate data using Pydantic model
-            response = self.client.put(f"/v1/users/{user_id}", json=validated_data.model_dump(exclude_unset=True))
+            validated_data = ent_validator.UserUpdate(
+                **user_data
+            )  # Validate data using Pydantic model
+            response = self.client.put(
+                f"/v1/users/{user_id}", json=validated_data.model_dump(exclude_unset=True)
+            )
             response.raise_for_status()
             updated_user = response.json()
-            validated_response = ent_validator.UserRead(**updated_user)  # Validate response using Pydantic model
+            validated_response = ent_validator.UserRead(
+                **updated_user
+            )  # Validate response using Pydantic model
             logging_utility.info("User updated successfully")
             return validated_response
         except ValidationError as e:
@@ -101,7 +109,9 @@ class UsersClient:
             response = self.client.get(f"/v1/users/{user_id}/assistants")
             response.raise_for_status()
             assistants = response.json()
-            validated_assistants = [ent_validator.AssistantRead(**assistant) for assistant in assistants]
+            validated_assistants = [
+                ent_validator.AssistantRead(**assistant) for assistant in assistants
+            ]
             logging_utility.info("Assistants retrieved successfully for user id: %s", user_id)
             return validated_assistants
         except httpx.HTTPStatusError as e:

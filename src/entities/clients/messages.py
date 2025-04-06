@@ -26,13 +26,19 @@ class MessagesClient:
         self.api_key = api_key
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
         )
         self.message_chunks: Dict[str, List[str]] = {}  # Temporary storage for message chunks
         logging_utility.info("MessagesClient initialized with base_url: %s", self.base_url)
 
-    def create_message(self, thread_id: str, content: str, assistant_id: str,
-                       role: str = 'user', meta_data: Optional[Dict[str, Any]] = None) -> ent_validator.MessageRead:
+    def create_message(
+        self,
+        thread_id: str,
+        content: str,
+        assistant_id: str,
+        role: str = 'user',
+        meta_data: Optional[Dict[str, Any]] = None,
+    ) -> ent_validator.MessageRead:
         """
         Create a new message and return it as a MessageRead model.
 
@@ -52,7 +58,7 @@ class MessagesClient:
             "content": content,
             "role": role,
             "assistant_id": assistant_id,
-            "meta_data": meta_data
+            "meta_data": meta_data,
         }
 
         logging_utility.info("Creating message for thread_id: %s, role: %s", thread_id, role)
@@ -63,7 +69,9 @@ class MessagesClient:
             response.raise_for_status()
 
             created_message = response.json()
-            logging_utility.info("Message created successfully with id: %s", created_message.get('id'))
+            logging_utility.info(
+                "Message created successfully with id: %s", created_message.get('id')
+            )
             return ent_validator.MessageRead(**created_message)
 
         except ValidationError as e:
@@ -117,7 +125,9 @@ class MessagesClient:
         logging_utility.info("Updating message with id: %s", message_id)
         try:
             validated_data = ent_validator.MessageUpdate(**updates)
-            response = self.client.put(f"/v1/messages/{message_id}", json=validated_data.dict(exclude_unset=True))
+            response = self.client.put(
+                f"/v1/messages/{message_id}", json=validated_data.dict(exclude_unset=True)
+            )
             response.raise_for_status()
             updated_message = response.json()
             logging_utility.info("Message updated successfully")
@@ -132,7 +142,9 @@ class MessagesClient:
             logging_utility.error("An error occurred while updating message: %s", str(e))
             raise
 
-    def list_messages(self, thread_id: str, limit: int = 20, order: str = "asc") -> List[Dict[str, Any]]:
+    def list_messages(
+        self, thread_id: str, limit: int = 20, order: str = "asc"
+    ) -> List[Dict[str, Any]]:
         """
         List messages for a given thread.
 
@@ -144,7 +156,9 @@ class MessagesClient:
         Returns:
             List[Dict[str, Any]]: A list of messages as dictionaries.
         """
-        logging_utility.info("Listing messages for thread_id: %s, limit: %d, order: %s", thread_id, limit, order)
+        logging_utility.info(
+            "Listing messages for thread_id: %s, limit: %d, order: %s", thread_id, limit, order
+        )
         params = {"limit": limit, "order": order}
         try:
             response = self.client.get(f"/v1/threads/{thread_id}/messages", params=params)
@@ -163,7 +177,9 @@ class MessagesClient:
             logging_utility.error("An error occurred while listing messages: %s", str(e))
             raise
 
-    def get_formatted_messages(self, thread_id: str, system_message: str = "") -> List[Dict[str, Any]]:
+    def get_formatted_messages(
+        self, thread_id: str, system_message: str = ""
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve and format messages for a thread, inserting or replacing the system message.
 
@@ -264,14 +280,14 @@ class MessagesClient:
             raise
 
     def save_assistant_message_chunk(
-            self,
-            thread_id: str,
-            role: str,
-            content: str,
-            assistant_id: str,
-            sender_id: str,
-            is_last_chunk: bool = False,
-            meta_data: Optional[Dict[str, Any]] = None
+        self,
+        thread_id: str,
+        role: str,
+        content: str,
+        assistant_id: str,
+        sender_id: str,
+        is_last_chunk: bool = False,
+        meta_data: Optional[Dict[str, Any]] = None,
     ) -> Optional[ent_validator.MessageRead]:
         """
         Save a message chunk from the assistant, with support for streaming and dynamic roles.
@@ -288,8 +304,12 @@ class MessagesClient:
         Returns:
             Optional[MessageRead]: The final saved message for final chunks, None otherwise.
         """
-        logging_utility.info("Saving assistant message chunk for thread_id: %s, role: %s, is_last_chunk: %s",
-                             thread_id, role, is_last_chunk)
+        logging_utility.info(
+            "Saving assistant message chunk for thread_id: %s, role: %s, is_last_chunk: %s",
+            thread_id,
+            role,
+            is_last_chunk,
+        )
         message_data = {
             "thread_id": thread_id,
             "content": content,
@@ -297,36 +317,43 @@ class MessagesClient:
             "assistant_id": assistant_id,
             "sender_id": sender_id,
             "is_last_chunk": is_last_chunk,
-            "meta_data": meta_data or {}
+            "meta_data": meta_data or {},
         }
         try:
             response = self.client.post("/v1/messages/assistant", json=message_data)
             response.raise_for_status()
             if is_last_chunk:
                 message_read = ent_validator.MessageRead(**response.json())
-                logging_utility.info("Final assistant message chunk saved successfully. Message ID: %s",
-                                     message_read.id)
+                logging_utility.info(
+                    "Final assistant message chunk saved successfully. Message ID: %s",
+                    message_read.id,
+                )
                 return message_read
             else:
                 logging_utility.info("Non-final assistant message chunk saved successfully.")
                 return None
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error while saving assistant message chunk: %s (Status: %d)",
-                                  str(e), e.response.status_code)
+            logging_utility.error(
+                "HTTP error while saving assistant message chunk: %s (Status: %d)",
+                str(e),
+                e.response.status_code,
+            )
             return None
         except Exception as e:
-            logging_utility.error("Unexpected error while saving assistant message chunk: %s", str(e))
+            logging_utility.error(
+                "Unexpected error while saving assistant message chunk: %s", str(e)
+            )
             return None
 
     def submit_tool_output(
-            self,
-            thread_id: str,
-            content: str,
-            assistant_id: str,
-            tool_id: str,
-            role: str = 'tool',
-            sender_id: Optional[str] = None,
-            meta_data: Optional[Dict[str, Any]] = None
+        self,
+        thread_id: str,
+        content: str,
+        assistant_id: str,
+        tool_id: str,
+        role: str = 'tool',
+        sender_id: Optional[str] = None,
+        meta_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Submit tool output as a message.
@@ -350,7 +377,7 @@ class MessagesClient:
             "role": role,
             "assistant_id": assistant_id,
             "tool_id": tool_id,
-            "meta_data": meta_data
+            "meta_data": meta_data,
         }
         if sender_id is not None:
             message_data["sender_id"] = sender_id
@@ -361,7 +388,9 @@ class MessagesClient:
             response = self.client.post("/v1/messages/tools", json=validated_data.dict())
             response.raise_for_status()
             created_message = response.json()
-            logging_utility.info("Tool message created successfully with id: %s", created_message.get('id'))
+            logging_utility.info(
+                "Tool message created successfully with id: %s", created_message.get('id')
+            )
             return created_message
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())

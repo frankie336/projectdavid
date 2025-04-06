@@ -19,7 +19,9 @@ class HttpRunMonitor:
         on_status_change: Callable[[str, str, Optional[str], Optional[Dict[str, Any]]], None],
         on_complete: Callable[[str, str, Optional[Dict[str, Any]]], None],
         on_error: Callable[[str, str], None],
-        on_action_required: Optional[Callable[[str, Dict[str, Any], List[Dict[str, Any]]], None]] = None,
+        on_action_required: Optional[
+            Callable[[str, Dict[str, Any], List[Dict[str, Any]]], None]
+        ] = None,
         check_interval: int = 5,
         initial_delay: int = 1,
     ):
@@ -51,7 +53,11 @@ class HttpRunMonitor:
 
     def is_active(self) -> bool:
         """Return True if the monitor thread is active and running."""
-        return self._monitor_thread is not None and self._monitor_thread.is_alive() and not self._stop_event.is_set()
+        return (
+            self._monitor_thread is not None
+            and self._monitor_thread.is_alive()
+            and not self._stop_event.is_set()
+        )
 
     def _monitor_loop(self):
         time.sleep(self.initial_delay)
@@ -62,7 +68,9 @@ class HttpRunMonitor:
                 current_status = run.status
 
                 if self._last_status != current_status:
-                    self.on_status_change(self.run_id, current_status, self._last_status, run.dict())
+                    self.on_status_change(
+                        self.run_id, current_status, self._last_status, run.dict()
+                    )
                     self._last_status = current_status
 
                 if current_status == ACTION_REQUIRED_STATUS and self.on_action_required:

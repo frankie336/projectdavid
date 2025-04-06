@@ -6,16 +6,19 @@ from qdrant_client import QdrantClient
 
 class VectorStoreError(Exception):
     """Base exception for all vector store operations."""
+
     pass
 
 
 class StoreExistsError(VectorStoreError):
     """Raised when attempting to create a store that already exists."""
+
     pass
 
 
 class StoreNotFoundError(VectorStoreError):
     """Raised when a store is not found."""
+
     pass
 
 
@@ -26,14 +29,20 @@ class BaseVectorStore(ABC):
         pass
 
     @abstractmethod
-    def add_to_store(self, store_name: str, texts: List[str],
-                     vectors: List[List[float]], metadata: List[dict]) -> dict:
+    def add_to_store(
+        self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
+    ) -> dict:
         """Add entries to the vector store."""
         pass
 
     @abstractmethod
-    def query_store(self, store_name: str, query_vector: List[float],
-                    top_k: int = 5, filters: Optional[dict] = None) -> List[dict]:
+    def query_store(
+        self,
+        store_name: str,
+        query_vector: List[float],
+        top_k: int = 5,
+        filters: Optional[dict] = None,
+    ) -> List[dict]:
         """Query the vector store with optional filters."""
         pass
 

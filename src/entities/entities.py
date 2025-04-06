@@ -30,7 +30,6 @@ class Entities:
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
-
     ):
         """
         Initialize the main client with configuration.

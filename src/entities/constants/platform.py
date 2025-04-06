@@ -1,4 +1,3 @@
-
 TERMINAL_STATUSES = {"completed", "failed", "cancelled", "expired"}
 ACTION_REQUIRED_STATUS = "pending_action"
 

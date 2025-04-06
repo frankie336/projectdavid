@@ -34,12 +34,16 @@ class MonitorLauncher:
 
         def default_action_required(run_id, run_data, pending_actions):
             try:
-                logging_utility.info(f"[ACTION_REQUIRED] run {run_id} has {len(pending_actions)} pending action(s)")
+                logging_utility.info(
+                    f"[ACTION_REQUIRED] run {run_id} has {len(pending_actions)} pending action(s)"
+                )
                 for action in pending_actions:
                     action_id = action.get("id")
                     tool_name = action.get("tool_name")
                     args = action.get("function_args", {})
-                    logging_utility.info(f"[ACTION] ID: {action_id}, Tool: {tool_name}, Args: {args}")
+                    logging_utility.info(
+                        f"[ACTION] ID: {action_id}, Tool: {tool_name}, Args: {args}"
+                    )
             except Exception as e:
                 logging_utility.error(f"[MonitorLauncher] Error processing actions: {e}")
 

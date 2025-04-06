@@ -23,12 +23,17 @@ class RunsClient:
         self.api_key = api_key
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
         )
         logging_utility.info("RunsClient initialized with base_url: %s", self.base_url)
 
-    def create_run(self, assistant_id: str, thread_id: str, instructions: Optional[str] = "",
-                   meta_data: Optional[Dict[str, Any]] = {}) -> ent_validator.Run:
+    def create_run(
+        self,
+        assistant_id: str,
+        thread_id: str,
+        instructions: Optional[str] = "",
+        meta_data: Optional[Dict[str, Any]] = {},
+    ) -> ent_validator.Run:
         """
         Create a new run using the provided assistant_id, thread_id, and instructions.
         Returns a Run Pydantic model.
@@ -70,10 +75,12 @@ class RunsClient:
             usage=None,
             temperature=0.7,
             top_p=0.9,
-            tool_resources={}
+            tool_resources={},
         )
 
-        logging_utility.info("Creating run for assistant_id: %s, thread_id: %s", assistant_id, thread_id)
+        logging_utility.info(
+            "Creating run for assistant_id: %s, thread_id: %s", assistant_id, thread_id
+        )
         logging_utility.debug("Run data: %s", run_data.dict())
 
         try:
@@ -213,7 +220,9 @@ class RunsClient:
             logging_utility.error("An error occurred while deleting run: %s", str(e))
             raise
 
-    def generate(self, run_id: str, model: str, prompt: str, stream: bool = False) -> Dict[str, Any]:
+    def generate(
+        self, run_id: str, model: str, prompt: str, stream: bool = False
+    ) -> Dict[str, Any]:
         """
         Generate content for a run based on the provided model and prompt.
 
@@ -237,8 +246,8 @@ class RunsClient:
                     "stream": stream,
                     "context": run.meta_data.get("context", []),
                     "temperature": run.temperature,
-                    "top_p": run.top_p
-                }
+                    "top_p": run.top_p,
+                },
             )
             response.raise_for_status()
             result = response.json()
@@ -251,7 +260,9 @@ class RunsClient:
             logging_utility.error("An error occurred while generating content: %s", str(e))
             raise
 
-    def chat(self, run_id: str, model: str, messages: List[Dict[str, Any]], stream: bool = False) -> Dict[str, Any]:
+    def chat(
+        self, run_id: str, model: str, messages: List[Dict[str, Any]], stream: bool = False
+    ) -> Dict[str, Any]:
         """
         Chat using a run, model, and provided messages.
 
@@ -275,8 +286,8 @@ class RunsClient:
                     "stream": stream,
                     "context": run.meta_data.get("context", []),
                     "temperature": run.temperature,
-                    "top_p": run.top_p
-                }
+                    "top_p": run.top_p,
+                },
             )
             response.raise_for_status()
             result = response.json()

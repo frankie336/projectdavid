@@ -85,18 +85,19 @@ for chunk in stream:
 
 ## 📚 Documentation
 
-| Domain             | Link                                                                 |
-|--------------------|----------------------------------------------------------------------|
-| Assistants         | [assistants.md](/docs/assistants.md)                                 |
-| Threads            | [threads.md](/docs/threads.md)                                       |
-| Messages           | [messages.md](/docs/messages.md)                                     |
-| Runs               | [runs.md](/docs/runs.md)                                             |
-| Inference          | [inference.md](/docs/inference.md)                                   |
-| Streaming          | [streams.md](/docs/streams.md)                                       |
-| Function Calling   | [function_calling.md](/docs/function_calling.md)                     |
-| Code Interpretation| [code_interpretation.md](/docs/code_interpretation.md)               |
-| Files              | [files.md](/docs/files.md)                                           |
-| Vector Store       | [vector_store.md](/docs/vector_store.md)                             |
+| Domain              | Link                                                   |
+|---------------------|--------------------------------------------------------|
+| Assistants          | [assistants.md](/docs/assistants.md)                   |
+| Threads             | [threads.md](/docs/threads.md)                         |
+| Messages            | [messages.md](/docs/messages.md)                       |
+| Runs                | [runs.md](/docs/runs.md)                               |
+| Inference           | [inference.md](/docs/inference.md)                     |
+| Streaming           | [streams.md](/docs/streams.md)                         |
+| Function Calling    | [function_calling.md](/docs/function_calling.md)       |
+| Code Interpretation | [code_interpretation.md](/docs/code_interpretation.md) |
+| Files               | [files.md](/docs/files.md)                             |
+| Vector Store        | [vector_store.md](/docs/vector_store.md)               |
+| Versioning          | [versioning.md](/docs/versioning.md)                   |
 
 ---
 

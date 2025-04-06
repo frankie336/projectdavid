@@ -24,9 +24,12 @@ class SynchronousInferenceStream:
     def stream_chunks(self, provider: str, model: str, timeout_per_chunk: float = 10.0):
         async def _stream_chunks_async():
             async for chunk in self.inference_client.stream_inference_response(
-                provider=provider, model=model,
-                thread_id=self.thread_id, message_id=self.message_id,
-                run_id=self.run_id, assistant_id=self.assistant_id
+                provider=provider,
+                model=model,
+                thread_id=self.thread_id,
+                message_id=self.message_id,
+                run_id=self.run_id,
+                assistant_id=self.assistant_id,
             ):
                 yield chunk
 

@@ -18,6 +18,7 @@ logging_utility = UtilsInterface.LoggingUtility()
 
 class AssistantsClientError(Exception):
     """Custom exception for AssistantsClient errors."""
+
     pass
 
 
@@ -27,7 +28,9 @@ class AssistantsClient:
         self.api_key = api_key or os.getenv("API_KEY")
 
         if not self.base_url:
-            raise AssistantsClientError("BASE_URL must be provided either as an argument or in environment variables.")
+            raise AssistantsClientError(
+                "BASE_URL must be provided either as an argument or in environment variables."
+            )
 
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
@@ -62,17 +65,25 @@ class AssistantsClient:
                 return response
             except httpx.HTTPStatusError:
                 if response.status_code in {500, 503} and attempt < retries - 1:
-                    logging_utility.warning("Retrying request due to server error (attempt %d)", attempt + 1)
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    logging_utility.warning(
+                        "Retrying request due to server error (attempt %d)", attempt + 1
+                    )
+                    time.sleep(2**attempt)  # Exponential backoff
                 else:
                     raise
 
-    def create_assistant(self, model: str = "", name: str = "",
-                         description: str = "", instructions: str = "",
-                         meta_data: Dict[str, Any] = None, top_p: float = 1.0,
-                         temperature: float = 1.0, response_format: str = "auto",
-                         assistant_id: Optional[str] = None) -> ent_validator.AssistantRead:
-
+    def create_assistant(
+        self,
+        model: str = "",
+        name: str = "",
+        description: str = "",
+        instructions: str = "",
+        meta_data: Dict[str, Any] = None,
+        top_p: float = 1.0,
+        temperature: float = 1.0,
+        response_format: str = "auto",
+        assistant_id: Optional[str] = None,
+    ) -> ent_validator.AssistantRead:
         """Creates an assistant.
         :type response_format: object
         """
@@ -85,18 +96,22 @@ class AssistantsClient:
             "meta_data": meta_data,
             "top_p": top_p,
             "temperature": temperature,
-            "response_format": response_format
+            "response_format": response_format,
         }
 
         try:
             validated_data = ent_validator.AssistantCreate(**assistant_data)
             logging_utility.info("Creating assistant with model: %s, name: %s", model, name)
 
-            response = self._request_with_retries("POST", "/v1/assistants", json=validated_data.model_dump())
+            response = self._request_with_retries(
+                "POST", "/v1/assistants", json=validated_data.model_dump()
+            )
             created_assistant = self._parse_response(response)
 
             validated_response = ent_validator.AssistantRead(**created_assistant)
-            logging_utility.info("Assistant created successfully with id: %s", validated_response.id)
+            logging_utility.info(
+                "Assistant created successfully with id: %s", validated_response.id
+            )
             return validated_response
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
@@ -125,8 +140,11 @@ class AssistantsClient:
 
             validated_data = ent_validator.AssistantUpdate(**updates)
 
-            response = self._request_with_retries("PUT", f"/v1/assistants/{assistant_id}",
-                                                  json=validated_data.model_dump(exclude_unset=True))
+            response = self._request_with_retries(
+                "PUT",
+                f"/v1/assistants/{assistant_id}",
+                json=validated_data.model_dump(exclude_unset=True),
+            )
             updated_assistant = self._parse_response(response)
 
             validated_response = ent_validator.AssistantRead(**updated_assistant)
@@ -161,7 +179,9 @@ class AssistantsClient:
             response = self._request_with_retries("GET", f"/v1/users/{user_id}/assistants")
             assistants = self._parse_response(response)
 
-            validated_assistants = [ent_validator.AssistantRead(**assistant) for assistant in assistants]
+            validated_assistants = [
+                ent_validator.AssistantRead(**assistant) for assistant in assistants
+            ]
             logging_utility.info("Assistants retrieved successfully for user id: %s", user_id)
             return validated_assistants
         except ValidationError as e:

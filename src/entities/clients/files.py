@@ -28,12 +28,13 @@ class FileClient:
         self.api_key = api_key
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
         )
         logging_utility.info("FileClient initialized with base_url: %s", self.base_url)
 
-    def upload_file(self, file_path: str, user_id: str, purpose: str,
-                    metadata: Optional[Dict[str, Any]] = None) -> ent_validator.FileResponse:
+    def upload_file(
+        self, file_path: str, user_id: str, purpose: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> ent_validator.FileResponse:
         """
         Upload a file to the server following the OpenAI files endpoint style.
 
@@ -50,7 +51,9 @@ class FileClient:
         mime_type, _ = mimetypes.guess_type(file_path)
         mime_type = mime_type or 'application/octet-stream'
 
-        logging_utility.info("Uploading file: %s with purpose: %s for user: %s", file_path, purpose, user_id)
+        logging_utility.info(
+            "Uploading file: %s with purpose: %s for user: %s", file_path, purpose, user_id
+        )
 
         try:
             with open(file_path, 'rb') as file_object:
@@ -62,7 +65,9 @@ class FileClient:
 
                 file_data = response.json()
                 validated_response = ent_validator.FileResponse.model_validate(file_data)
-                logging_utility.info("File uploaded successfully with ID: %s", validated_response.id)
+                logging_utility.info(
+                    "File uploaded successfully with ID: %s", validated_response.id
+                )
                 return validated_response
 
         except ValidationError as e:
@@ -75,8 +80,14 @@ class FileClient:
             logging_utility.error("An error occurred while uploading file: %s", str(e))
             raise
 
-    def upload_file_object(self, file_object: BinaryIO, file_name: str, user_id: str, purpose: str,
-                           metadata: Optional[Dict[str, Any]] = None) -> ent_validator.FileResponse:
+    def upload_file_object(
+        self,
+        file_object: BinaryIO,
+        file_name: str,
+        user_id: str,
+        purpose: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> ent_validator.FileResponse:
         """
         Upload a file-like object to the server.
 
@@ -93,7 +104,9 @@ class FileClient:
         mime_type, _ = mimetypes.guess_type(file_name)
         mime_type = mime_type or 'application/octet-stream'
 
-        logging_utility.info("Uploading file object: %s with purpose: %s for user: %s", file_name, purpose, user_id)
+        logging_utility.info(
+            "Uploading file object: %s with purpose: %s for user: %s", file_name, purpose, user_id
+        )
 
         try:
             form_data = {"purpose": purpose, "user_id": user_id}

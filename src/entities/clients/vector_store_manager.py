@@ -4,10 +4,22 @@ from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointStruct,
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
 
 from entities_common.utilities.logging_service import LoggingUtility
-from .base_vector_store import BaseVectorStore, StoreExistsError, StoreNotFoundError, VectorStoreError
+from .base_vector_store import (
+    BaseVectorStore,
+    StoreExistsError,
+    StoreNotFoundError,
+    VectorStoreError,
+)
 
 load_dotenv()
 logging_utility = LoggingUtility()
@@ -25,11 +37,9 @@ class VectorStoreManager(BaseVectorStore):
     def _generate_vector_id(self) -> str:
         return str(uuid.uuid4())
 
-    def create_store(self,
-                     store_name: str,
-                     collection_name,
-                     vector_size: int = 384,
-                     distance: str = "COSINE") -> dict:
+    def create_store(
+        self, store_name: str, collection_name, vector_size: int = 384, distance: str = "COSINE"
+    ) -> dict:
 
         if store_name in self.active_stores:
             raise StoreExistsError(f"Store {store_name} exists")
@@ -41,20 +51,23 @@ class VectorStoreManager(BaseVectorStore):
                 )
             self.client.recreate_collection(
                 collection_name=store_name,
-                vectors_config=VectorParams(size=vector_size, distance=Distance[normalized_distance])
+                vectors_config=VectorParams(
+                    size=vector_size, distance=Distance[normalized_distance]
+                ),
             )
             self.active_stores[store_name] = {
                 "created_at": int(time.time()),
                 "vector_size": vector_size,
-                "distance": normalized_distance
+                "distance": normalized_distance,
             }
             return {"name": store_name, "status": "created"}
         except Exception as e:
             logging_utility.error(f"Create store HTTP error: {str(e)}")
             raise VectorStoreError(f"Store creation failed: {str(e)}")
 
-    def add_to_store(self, store_name: str, texts: List[str],
-                     vectors: List[List[float]], metadata: List[dict]):
+    def add_to_store(
+        self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
+    ):
         if not vectors:
             raise ValueError("Empty vectors list")
         expected_size = len(vectors[0])
@@ -65,9 +78,7 @@ class VectorStoreManager(BaseVectorStore):
                 raise TypeError(f"Vector {i} contains non-floats")
         points = [
             PointStruct(
-                id=self._generate_vector_id(),
-                vector=vec,
-                payload={"text": txt, "metadata": meta}
+                id=self._generate_vector_id(), vector=vec, payload={"text": txt, "metadata": meta}
             )
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
@@ -79,17 +90,17 @@ class VectorStoreManager(BaseVectorStore):
             raise VectorStoreError(f"Insertion failed: {str(e)}")
 
     def query_store(
-            self,
-            store_name: str,
-            query_vector: List[float],
-            top_k: int = 5,
-            filters: Optional[dict] = None,
-            score_threshold: float = 0.0,
-            offset: int = 0,
-            limit: Optional[int] = None,
-            score_boosts: Optional[Dict[str, float]] = None,
-            search_type: Optional[str] = None,
-            explain: bool = False
+        self,
+        store_name: str,
+        query_vector: List[float],
+        top_k: int = 5,
+        filters: Optional[dict] = None,
+        score_threshold: float = 0.0,
+        offset: int = 0,
+        limit: Optional[int] = None,
+        score_boosts: Optional[Dict[str, float]] = None,
+        search_type: Optional[str] = None,
+        explain: bool = False,
     ) -> List[dict]:
         # Default limit to top_k if not provided.
         if limit is None:
@@ -97,9 +108,11 @@ class VectorStoreManager(BaseVectorStore):
         try:
             flt = None
             if filters and "key" in filters and "value" in filters:
-                flt = Filter(must=[
-                    FieldCondition(key=filters["key"], match=MatchValue(value=filters["value"]))
-                ])
+                flt = Filter(
+                    must=[
+                        FieldCondition(key=filters["key"], match=MatchValue(value=filters["value"]))
+                    ]
+                )
             # Prepare extra parameters for the search request.
             extra_params = {}
             if score_boosts is not None:
@@ -117,14 +130,17 @@ class VectorStoreManager(BaseVectorStore):
                 with_payload=True,
                 with_vectors=False,
                 query_filter=flt,
-                **extra_params
+                **extra_params,
             )
-            return [{
-                "id": r.id,
-                "score": r.score,
-                "text": r.payload.get("text"),
-                "metadata": r.payload.get("metadata", {})
-            } for r in results]
+            return [
+                {
+                    "id": r.id,
+                    "score": r.score,
+                    "text": r.payload.get("text"),
+                    "metadata": r.payload.get("metadata", {}),
+                }
+                for r in results
+            ]
         except Exception as e:
             logging_utility.error(f"Query failed: {str(e)}")
             raise VectorStoreError(f"Query failed: {str(e)}")
@@ -150,7 +166,7 @@ class VectorStoreManager(BaseVectorStore):
                 "status": "active",
                 "vectors_count": info.points_count,
                 "configuration": info.config.params["default"],
-                "created_at": self.active_stores[store_name]["created_at"]
+                "created_at": self.active_stores[store_name]["created_at"],
             }
         except Exception as e:
             logging_utility.error(f"Store info failed: {str(e)}")
@@ -159,14 +175,7 @@ class VectorStoreManager(BaseVectorStore):
     def delete_file_from_store(self, store_name: str, file_path: str) -> dict:
         try:
             payload = {
-                "filter": {
-                    "must": [
-                        {
-                            "key": "metadata.source",
-                            "match": {"value": file_path}
-                        }
-                    ]
-                }
+                "filter": {"must": [{"key": "metadata.source", "match": {"value": file_path}}]}
             }
             res = self.client.post(f"/collections/{store_name}/points/delete", json=payload)
             res.raise_for_status()
