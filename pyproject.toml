@@ -24,7 +24,8 @@ dependencies = [
     "entities_common>=0.1.10",
     "qdrant-client",
     "pdfplumber",
-    "validators"
+    "validators",
+    "sentence-transformers"
 ]
 
 optional-dependencies.dev = [
