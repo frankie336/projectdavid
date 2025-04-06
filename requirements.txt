@@ -1,3 +1,7 @@
+--index-url https://pypi.org/simple/
+--extra-index-url https://test.pypi.org/simple/
+--prefer-binary
+
 # Core dependencies
 pydantic~=2.10.3
 setuptools~=75.8.0
@@ -13,5 +17,6 @@ validators~=0.34.0
 sentence-transformers~=4.0.1
 qdrant-client~=1.13.3
 
-# Replace Git-based SDK with Test PyPI-published version
-entities_common
+# Entities SDK and shared models (from Test PyPI)
+entities_common>=0.1.10
+entities==0.3.1
