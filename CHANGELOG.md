@@ -1,3 +1,10 @@
+## [1.0.10](https://github.com/frankie336/entitites_sdk/compare/v1.0.9...v1.0.10) (2025-04-06)
+
+
+### Bug Fixes
+
+* Add missing dependencies to toml ([5a78cdc](https://github.com/frankie336/entitites_sdk/commit/5a78cdc170390ffcc95f85aba000e9868a7d33db))
+
 ## [1.0.9](https://github.com/frankie336/entitites_sdk/compare/v1.0.8...v1.0.9) (2025-04-06)
 
 
