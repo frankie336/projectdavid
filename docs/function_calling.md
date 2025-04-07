@@ -8,8 +8,12 @@ Function calling allows your assistant to interact with defined tools, enabling 
 **Define the function**
 
 ```python
-from src.api.entities import CommonEntitiesInternalInterface
-from src.api.entities import ToolFunction  # Import ToolFunction
+
+from entities import Entities
+
+client = Entities()
+
+
 
 # Initialize the client
 client = CommonEntitiesInternalInterface()

@@ -43,7 +43,7 @@ class VectorStoreManager(BaseVectorStore):
         self,
         collection_name: str,  # <<< Changed first argument to 'collection_name'
         vector_size: int = 384,
-        distance: str = "COSINE"
+        distance: str = "COSINE",
         # Removed the unused 'store_name' parameter from signature
     ) -> dict:  # Return type still dict for status
 
@@ -87,11 +87,10 @@ class VectorStoreManager(BaseVectorStore):
 
         except Exception as e:
             logging_utility.error(
-                f"Create store failed for collection '{collection_name}': {str(e)}")
+                f"Create store failed for collection '{collection_name}': {str(e)}"
+            )
             # Raise a specific error type if possible
             raise VectorStoreError(f"Qdrant collection creation failed: {str(e)}") from e
-
-
 
     def add_to_store(
         self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
