@@ -1,3 +1,10 @@
+## [1.0.16](https://github.com/frankie336/entitites_sdk/compare/v1.0.15...v1.0.16) (2025-04-07)
+
+
+### Bug Fixes
+
+* store_name param ([d991581](https://github.com/frankie336/entitites_sdk/commit/d9915812dae6aa00d819b81f62a49a09154ee348))
+
 ## [1.0.15](https://github.com/frankie336/entitites_sdk/compare/v1.0.14...v1.0.15) (2025-04-06)
 
 
