@@ -1,3 +1,10 @@
+## [1.0.18](https://github.com/frankie336/entitites_sdk/compare/v1.0.17...v1.0.18) (2025-04-07)
+
+
+### Bug Fixes
+
+* def _internal_add_file_to_vector_store_async ([60e88b3](https://github.com/frankie336/entitites_sdk/commit/60e88b35cf53aad55c17d4376282c5aa5c689efa))
+
 ## [1.0.17](https://github.com/frankie336/entitites_sdk/compare/v1.0.16...v1.0.17) (2025-04-07)
 
 
