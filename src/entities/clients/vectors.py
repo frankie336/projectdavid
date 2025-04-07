@@ -181,45 +181,60 @@ class VectorStoreClient:
                 logging_utility.error("CRITICAL: Failed to rollback Qdrant collection '%s' after API failure: %s", backend_collection_name, str(rollback_error))
             raise api_error # Re-raise API error
 
+    # Inside entities/clients/vectors.py
+
     async def _internal_add_file_to_vector_store_async(
         self, vector_store_id: str, file_path: Path, user_metadata: Optional[Dict[str, Any]]
-    ) -> ValidationInterface.VectorStoreRead: # API returns updated store state
+    ) -> ValidationInterface.VectorStoreFileRead:  # Update the return type to file read model
         collection_name = vector_store_id
         logging_utility.info("Processing file: %s", file_path)
         try:
             processed_data = await self.file_processor.process_file(file_path)
             texts, vectors = processed_data["chunks"], processed_data["vectors"]
             if not texts or not vectors:
-                raise VectorStoreClientError(f"File '{file_path.name}' resulted in no processable content.")
-            base_metadata = user_metadata or {}; base_metadata.update({"source": str(file_path), "file_name": file_path.name})
+                raise VectorStoreClientError(
+                    f"File '{file_path.name}' resulted in no processable content.")
+            base_metadata = user_metadata or {}
+            base_metadata.update({"source": str(file_path), "file_name": file_path.name})
             chunk_metadata = [{**base_metadata, "chunk_index": i} for i in range(len(texts))]
             logging_utility.info("Processed file '%s' into %d chunks.", file_path.name, len(texts))
         except Exception as e:
             logging_utility.error("Failed to process file %s: %s", file_path, str(e))
             raise VectorStoreClientError(f"File processing failed: {str(e)}") from e
 
-        logging_utility.info("Uploading %d chunks for '%s' to Qdrant collection '%s'", len(texts), file_path.name, collection_name)
+        logging_utility.info("Uploading %d chunks for '%s' to Qdrant collection '%s'", len(texts),
+                             file_path.name, collection_name)
         try:
-            _ = self.vector_manager.add_to_store(store_name=collection_name, texts=texts, vectors=vectors, metadata=chunk_metadata)
+            _ = self.vector_manager.add_to_store(
+                store_name=collection_name, texts=texts, vectors=vectors, metadata=chunk_metadata
+            )
             logging_utility.info("Successfully uploaded chunks to Qdrant for '%s'.", file_path.name)
         except Exception as e:
-            logging_utility.error("Qdrant upload failed for file %s to collection %s: %s", file_path.name, collection_name, str(e))
+            logging_utility.error("Qdrant upload failed for file %s to collection %s: %s",
+                                  file_path.name, collection_name, str(e))
             raise VectorStoreClientError(f"Vector store upload failed: {str(e)}") from e
 
         file_record_id = f"vsf_{uuid.uuid4()}"
-        # Payload matches VectorStoreFileCreate model used in API
         api_payload = {
-            "file_id": file_record_id, "file_name": file_path.name, "file_path": str(file_path),
-            "status": "completed", "meta_data": user_metadata or {},
+            "file_id": file_record_id,
+            "file_name": file_path.name,
+            "file_path": str(file_path),
+            "status": "completed",
+            "meta_data": user_metadata or {},
         }
-        logging_utility.info("Registering file '%s' (Record ID: %s) in vector store '%s' via API", file_path.name, file_record_id, vector_store_id)
+        logging_utility.info("Registering file '%s' (Record ID: %s) in vector store '%s' via API",
+                             file_path.name, file_record_id, vector_store_id)
         try:
-            response_data = await self._internal_request_with_retries("POST", f"/v1/vector-stores/{vector_store_id}/files", json=api_payload)
+            response_data = await self._internal_request_with_retries("POST",
+                                                                      f"/v1/vector-stores/{vector_store_id}/files",
+                                                                      json=api_payload)
             logging_utility.info("Successfully registered file '%s' via API.", file_path.name)
-            # Assuming API returns the updated VectorStore state, not the file record state
-            return ValidationInterface.VectorStoreRead.model_validate(response_data)
+            # Validate against the correct file model
+            return ValidationInterface.VectorStoreFileRead.model_validate(response_data)
         except Exception as api_error:
-            logging_utility.critical("QDRANT UPLOAD SUCCEEDED for file '%s' to store '%s', BUT API registration FAILED. Error: %s", file_path.name, vector_store_id, str(api_error))
+            logging_utility.critical(
+                "QDRANT UPLOAD SUCCEEDED for file '%s' to store '%s', BUT API registration FAILED. Error: %s",
+                file_path.name, vector_store_id, str(api_error))
             raise api_error
 
     async def _internal_search_vector_store_async(
