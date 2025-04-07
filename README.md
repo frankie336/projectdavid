@@ -93,7 +93,7 @@ for chunk in stream:
 | Function Calling    | [function_calling.md](/docs/function_calling.md)       |
 | Code Interpretation | [code_interpretation.md](/docs/code_interpretation.md) |
 | Files               | [files.md](/docs/files.md)                             |
-| Vector Store        | [vector_store.md](/docs/vector_store.md)               |
+| Vector Store(RAG)   | [vector_store.md](/docs/vector_store.md)               |
 | Versioning          | [versioning.md](/docs/versioning.md)                   |
 
 ---
