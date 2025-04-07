@@ -1,10 +1,7 @@
+
 # Vector Store
 
 ## Overview
-
-[![PyPI Version](https://img.shields.io/pypi/v/your-package-name)](https://pypi.org/project/your-package-name/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/your-package-name)](https://pypi.org/project/your-package-name/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A high-performance vector storage and retrieval system designed for AI/ML workflows. This implementation provides:
 
@@ -13,143 +10,135 @@ A high-performance vector storage and retrieval system designed for AI/ML workfl
 📈 **Scalable Embedding Storage**  
 🤖 **ML Framework Integration**
 
-Associated methods can be used to extend the memory and contextual recall of AI assistants beyond the context window, allowing for Retrieval Augmented Generations, (RAG).  
+Associated methods can be used to extend the memory and contextual recall of AI assistants beyond the context window, allowing for Retrieval Augmented Generations (RAG).  
 
-**Create a Vector Store**
-
-```python
-from src.api.entities import CommonEntitiesInternalInterface
-
-# Initialize the client
-client = CommonEntitiesInternalInterface()
-
-# Create user
-user = user_service.create_user(name="test_user")
-
-# Create vector store
-vector_service = client.vector_service
-vector_store = vector_service.create_vector_store(name="pilot_wave",
-                                                  user_id=user.id
-                                                  )
-
-
-```
-
-
-
-**Adding a  single file to the vector store**
+## Basic Vector Store Operations
 
 ```python
+from entities import Entities
 
-file = vector_service.add_files(file_path="Donoghue_Stevenson.pdf", 
-                                destination_store=vector_store.id)
+client = Entities()
 
+# create a user
+test_user = client.users.create_user(name='test_user')
+print(test_user)
+
+# create a vector store
+store = client.vectors.create_vector_store(
+    name='Test Vector Store1',
+    user_id=test_user.id,
+)
+print(store)
 ```
 
-Metadata is automatically generated and attached to  each chunk. 
+Will provide metadata about your new store:
 
-**Example Metadata Output:**
-
-```plaintext
-
-{
-    "chunk_id": "document_chunk0023",
-    "page_number": 5,
-    "start_line": 12,
-    "end_line": 15,
-    "total_lines": 4,
-    "partial_line": false,
-    "token_count": 125,
-    "author": "Jane Smith",
-    "title": "Legal Analysis of Duty of Care"
-}
-
+```bash
+id='vect_WsdjjLHoQqyMLmCdrvShc6' name='Test Vector Store3' user_id='user_gTv1u0Lb97qRpZbbMa4GxF' collection_name='vect_WsdjjLHoQqyMLmCdrvShc6' vector_size=384 distance_metric='COSINE' created_at=1743991638 updated_at=None status=<StatusEnum.active: 'active'> config={} file_count=0
 ```
 
-
-**Adding a  single file with custom metadata**
+You can get the same information with:
 
 ```python
+retrieve_vector_store = client.vectors.retrieve_vector_store(vector_store_id='vect_WsdjjLHoQqyMLmCdrvShc6')
+```
 
-custom_metadata = {
-    "case_year": 1932,
-    "jurisdiction": "UK-Scotland",
-    "legal_topic": "Negligence",
-    "citation": "[1932] UKHL 100",
-    "significance": "Landmark case establishing neighbor principle"
-}
+### Attaching a Store to an Assistant
 
+```python
+from entities import Entities
 
-file = vector_service.add_files(
-    file_path=Path("Donoghue_v_Stevenson.pdf"),
-    destination_store="landmark_cases",
-    user_metadata=custom_metadata,
-    source_url="https://legalarchive.org/cases/UKHL/1932/100"
+client = Entities()
+
+assistant = client.assistants.create_assistant(
+    name='movie_db_drone',
+    instructions='You will defer to a vector store search for contextual information before every response'
 )
 
-
+attach = client.vectors.attach_vector_store_to_assistant(
+    vector_store_id='vect_WsdjjLHoQqyMLmCdrvShc6',
+    assistant_id=assistant.id
+)
 ```
 
+Stores attached to an assistant become available to the assistant 
+to make semantic searches using its latent logic. No further coding needed. 
 
-**Example Metadata Output:**
-
-```plaintext
-
-sample_chunk_metadata = {
-    "chunk_id": "Donoghue_v_Stevenson_chunk0023",
-    "source": "Donoghue_v_Stevenson.pdf",
-    "document_type": "pdf",
-    "page_number": 12,
-    "start_line": 45,
-    "end_line": 52,
-    "total_lines": 8,
-    "token_count": 127,
-    
-    # Custom metadata fields
-    "case_year": 1932,
-    "jurisdiction": "UK-Scotland",
-    "legal_topic": "Negligence",
-    "citation": "[1932] UKHL 100",
-    "significance": "Landmark case establishing neighbor principle",
-    
-    # System-generated fields
-    "retrieved_date": "2025-02-23T14:30:45.123456",
-    "author": "Lord Atkin",
-    "publication_date": "1932-05-26",
-    "title": "Opinion of the Court",
-    "domain": "legalarchive.org",
-    "embedding_model": "paraphrase-MiniLM-L6-v2"
-}
-
-```
-
-
-
-
-**Verify store content**
+### Saving a File to a Store
 
 ```python
+from entities import Entities
 
-store_info = vector_service.vector_manager.get_store_info(vector_store.collection_name)
-print(f"Store info: {store_info}")
+client = Entities()
 
+save_file_to_store = client.vectors.add_file_to_vector_store(
+    vector_store_id='vect_WsdjjLHoQqyMLmCdrvShc6',
+    file_path='test_file.txt'
+)
 ```
 
+At this point, your file has been vectorized to your store.
 
+---
 
+### Making Searches Against Files in a Store
 
-**Attach a Vector Store to an Assistant**
+- The assistant will self-select appropriate vector store 
+searches using its latent logic when responding to a prompt.
+
+![Vector Search](/assets/latent_vector_db.png)
+![Vector Search](/assets/latent_vector_db2.png)
+
+- The assistant can be asked to search a store directly:
+
+![Vector Search](/assets/direct_vector_search2.png)
+
+## ✅ Supported File Formats in Vector Store
+
+| File Type | Extensions             | Processing Method         | Chunking Strategy            | Notes / Limitations                                                 |
+|-----------|------------------------|----------------------------|------------------------------|----------------------------------------------------------------------|
+| PDF       | `.pdf`                 | `_process_pdf()`           | Page-based, line-aware       | Uses `pdfplumber`; includes page + line metadata                    |
+| Text      | `.txt`, `.md`, `.rst`  | `_process_text()`          | Sentence-aware + token limit | Fallback encodings (UTF-8 / Latin-1); semantic + token chunking     |
+| CSV       | `.csv` (special case)  | `process_csv_dynamic()`    | Row-based                    | Uses column `description` by default; all other fields = metadata   |
+
+---
+
+## 📚 Other Public API (Client Methods)
+
+All methods are accessible via `client.vectors`
+
+### Vector Store Lifecycle
 
 ```python
-
-
-vector_service.attach_vector_store_to_assistant(vector_store_id=vector_store.id, assistant_id="asst_Qsnc9bfUhCWft30YsqrBw0")
-
-assistant_service = client.assistant_service
-retrieve_assistant = assistant_service.retrieve_assistant(assistant_id="asst_Qsnc9bfUhCWft30YsqrBw0")
-print(retrieve_assistant.vector_stores)
-
+create_vector_store(name, user_id, vector_size=384, distance_metric='Cosine') → VectorStoreRead
+retrieve_vector_store(vector_store_id) → VectorStoreRead
+retrieve_vector_store_by_collection(collection_name) → VectorStoreRead
+retrieve_vector_store_sync(vector_store_id) → VectorStoreRead
+delete_vector_store(vector_store_id, permanent=False) → dict
 ```
 
+### File Operations
 
+```python
+add_file_to_vector_store(vector_store_id, file_path, user_metadata=None) → VectorStoreRead
+delete_file_from_vector_store(vector_store_id, file_path) → dict
+list_store_files(vector_store_id) → List[VectorStoreFileRead]
+update_vector_store_file_status(vector_store_id, file_id, status, error_message=None) → VectorStoreFileRead
+```
 
+### Search
+
+```python
+search_vector_store(vector_store_id, query_text, top_k=5, filters=None) → List[dict]
+```
+
+### Assistant Integration
+
+```python
+attach_vector_store_to_assistant(vector_store_id, assistant_id) → dict
+detach_vector_store_from_assistant(vector_store_id, assistant_id) → dict
+get_vector_stores_for_assistant(assistant_id) → List[VectorStoreRead]
+get_stores_by_user(user_id) → List[VectorStoreRead]
+```
+
+---

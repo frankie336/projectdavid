@@ -163,7 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Moved `EntitiesEventHandler` logic from Flask backend into internal API and SDK boundary.
-- SDK now defaults to `SDK_VERSION = "0.3.0"`.
+- enties_common package is now an auto installed dependency. No meed to install it directly. 
 
 ---
 
