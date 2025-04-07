@@ -1,3 +1,10 @@
+## [1.0.15](https://github.com/frankie336/entitites_sdk/compare/v1.0.14...v1.0.15) (2025-04-06)
+
+
+### Bug Fixes
+
+* Vector store collection name issue ([eed4db5](https://github.com/frankie336/entitites_sdk/commit/eed4db5c3dcffbdc5a9b11d3495bec3e18706825))
+
 ## [1.0.14](https://github.com/frankie336/entitites_sdk/compare/v1.0.13...v1.0.14) (2025-04-06)
 
 
