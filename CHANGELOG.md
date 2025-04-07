@@ -1,3 +1,10 @@
+## [1.0.19](https://github.com/frankie336/entitites_sdk/compare/v1.0.18...v1.0.19) (2025-04-07)
+
+
+### Bug Fixes
+
+* def _internal_add_file_to_vector_store_async-validation-type ([bd21178](https://github.com/frankie336/entitites_sdk/commit/bd2117874842e52d403aff905cc44944166ac46d))
+
 ## [1.0.18](https://github.com/frankie336/entitites_sdk/compare/v1.0.17...v1.0.18) (2025-04-07)
 
 
