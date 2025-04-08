@@ -134,16 +134,21 @@ sync_stream.setup(
 
 # step 5 - Stream the response
 
-import logging
-import json
+# Stream completions synchronously
 
-logging.basicConfig(level=logging.INFO)
+# The api_key param is optional but needed if you are usign
+# a cloud inference providider 
 
+logging.info("Beginning sync stream...")
 for chunk in sync_stream.stream_chunks(
     provider="Hyperbolic",
     model="hyperbolic/deepseek-ai/DeepSeek-V3",
+    api_key=os.getenv("HYPERBOLIC_API_KEY"),  # Optional
+    timeout_per_chunk=15.0
 ):
     logging.info(json.dumps(chunk, indent=2))
+
+logging.info("Stream finished.")
 
 ```
 

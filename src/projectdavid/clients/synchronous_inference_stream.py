@@ -4,8 +4,6 @@ from typing import Generator, Optional
 
 from projectdavid_common import UtilsInterface
 
-from projectdavid.entity import logging_utility
-
 logging_utility = UtilsInterface.LoggingUtility()
 
 
@@ -20,6 +18,7 @@ class SynchronousInferenceStream:
         self.assistant_id: Optional[str] = None
         self.message_id: Optional[str] = None
         self.run_id: Optional[str] = None
+        self.api_key: Optional[str] = None
 
     def setup(
         self,
@@ -28,19 +27,20 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
+        api_key: str,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
         self.run_id = run_id
+        self.api_key = api_key
 
     def stream_chunks(
         self,
         provider: str,
         model: str,
         *,  # Following parameters are keyword-only.
-        api_key: Optional[str] = None,
         timeout_per_chunk: float = 10.0,
     ) -> Generator[dict, None, None]:
         """
@@ -60,7 +60,7 @@ class SynchronousInferenceStream:
             async for chunk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
-                api_key=api_key,
+                api_key=self.api_key,
                 thread_id=self.thread_id,
                 message_id=self.message_id,
                 run_id=self.run_id,
