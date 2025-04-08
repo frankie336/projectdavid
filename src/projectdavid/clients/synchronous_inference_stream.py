@@ -3,7 +3,6 @@ from contextlib import suppress
 from typing import AsyncGenerator, Optional
 
 from projectdavid_common import UtilsInterface
-from projectdavid.entity import logging_utility
 
 logging_utility = UtilsInterface.LoggingUtility()
 
