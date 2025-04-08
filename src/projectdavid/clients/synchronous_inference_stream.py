@@ -6,6 +6,7 @@ from projectdavid_common import UtilsInterface
 
 logging_utility = UtilsInterface.LoggingUtility()
 
+
 class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
@@ -38,7 +39,7 @@ class SynchronousInferenceStream:
         model: str,
         *,  # The following parameters are keyword-only.
         api_key: Optional[str] = None,
-        timeout_per_chunk: float = 10.0
+        timeout_per_chunk: float = 10.0,
     ) -> AsyncGenerator[dict, None]:
         """
         Streams inference response chunks synchronously by wrapping an async generator.
@@ -52,6 +53,7 @@ class SynchronousInferenceStream:
         Yields:
             dict: A chunk of the inference response.
         """
+
         async def _stream_chunks_async() -> AsyncGenerator[dict, None]:
             async for chunk in self.inference_client.stream_inference_response(
                 provider=provider,
@@ -76,7 +78,9 @@ class SynchronousInferenceStream:
                 logging_utility.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                logging_utility.error("[TimeoutError] Timeout occurred, stopping stream.")
+                logging_utility.error(
+                    "[TimeoutError] Timeout occurred, stopping stream."
+                )
                 break
             except Exception as e:
                 logging_utility.error(f"[Error] Exception during streaming: {e}")
