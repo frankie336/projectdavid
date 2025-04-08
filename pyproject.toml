@@ -10,26 +10,24 @@ readme = "README.md"
 authors = [
     { name = "Francis Neequaye Armah", email = "francis.neequaye@projectdavid.co.uk" }
 ]
-
-
-[project.urls]
-Homepage = "https://github.com/frankie336/projectdavid"
-
-license = { text = "MIT" }
+license = { text = "MIT" }  # <--- CORRECT PLACEMENT
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
+
 dependencies = [
-    "httpx>=0.24.1",
-    "pydantic>=2.0",
-    "python-dotenv>=1.0",
-    "aiofiles>=23.2.1",
-    "ollama>=0.3.0",
-    "projectdavid-common>=0.1.16",
-    "qdrant-client",
-    "pdfplumber",
-    "validators",
-    "sentence-transformers"
+    "httpx>=0.25.2,<0.29",
+    "pydantic>=2.0,<3.0",
+    "python-dotenv>=1.0.1,<2.0",.
+    "aiofiles>=23.2.1,<25.0",
+    "ollama>=0.4.4,<0.5.0",
+    "projectdavid-common>=0.1.16,<0.2.0",
+    "qdrant-client>=1.0.0,<2.0.0",
+    "pdfplumber>=0.11.0,<0.12.0",
+    "validators>=0.29.0,<0.35.0",
+    "sentence-transformers>=3.4.0,<5.0"
 ]
+
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
@@ -39,6 +37,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+
+# URLs should be grouped together
+[project.urls]
+Homepage = "https://github.com/frankie336/projectdavid"
+# Add other URLs like Documentation, Repository if desired
 
 [project.optional-dependencies]
 dev = [
