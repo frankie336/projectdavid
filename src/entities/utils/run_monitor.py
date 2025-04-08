@@ -2,8 +2,7 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
 
-from entities.constants.platform import (ACTION_REQUIRED_STATUS,
-                                         TERMINAL_STATUSES)
+from ..constants.platform import ACTION_REQUIRED_STATUS, TERMINAL_STATUSES
 
 
 class HttpRunMonitor:

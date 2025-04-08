@@ -5,11 +5,21 @@ from typing import Dict, List, Optional
 from dotenv import load_dotenv
 from entities_common.utilities.logging_service import LoggingUtility
 from qdrant_client import QdrantClient
-from qdrant_client.models import (Distance, FieldCondition, Filter, MatchValue,
-                                  PointStruct, VectorParams)
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 
-from .base_vector_store import (BaseVectorStore, StoreExistsError,
-                                StoreNotFoundError, VectorStoreError)
+from .base_vector_store import (
+    BaseVectorStore,
+    StoreExistsError,
+    StoreNotFoundError,
+    VectorStoreError,
+)
 
 load_dotenv()
 logging_utility = LoggingUtility()
