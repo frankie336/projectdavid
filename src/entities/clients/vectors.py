@@ -373,9 +373,7 @@ class VectorStoreClient:
                 str(api_error),
                 exc_info=True  # Include traceback for debugging
             )
-            # CRITICAL: Data is in Qdrant but not tracked in the API DB.
-            # Consider implementing cleanup logic here or marking the Qdrant points somehow.
-            # For now, re-raise the error that occurred (could be HTTP error or Pydantic validation error).
+
             raise api_error
 
     async def _internal_search_vector_store_async(
