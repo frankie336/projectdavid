@@ -1,3 +1,10 @@
+## [1.0.21](https://github.com/frankie336/entitites_sdk/compare/v1.0.20...v1.0.21) (2025-04-08)
+
+
+### Bug Fixes
+
+* workflow ([583145e](https://github.com/frankie336/entitites_sdk/commit/583145ec50ca882332613e802ae0c5f55c9122ce))
+
 ## [1.0.20](https://github.com/frankie336/entitites_sdk/compare/v1.0.19...v1.0.20) (2025-04-08)
 
 
