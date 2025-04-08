@@ -1,3 +1,13 @@
+## [1.0.25](https://github.com/frankie336/entitites_sdk/compare/v1.0.24...v1.0.25) (2025-04-08)
+
+
+### Bug Fixes
+
+* align-with-common ([810aae5](https://github.com/frankie336/entitites_sdk/commit/810aae55869d1f3bf73943f453962b8fa5a813c9))
+* formatting ([31528ba](https://github.com/frankie336/entitites_sdk/commit/31528bac2b7b791113f37f92393fbfb1b589640b))
+* formatting-isort ([d4ed068](https://github.com/frankie336/entitites_sdk/commit/d4ed0687be8544ab81cce302b18c3653e0fc758f))
+* url ([70946f0](https://github.com/frankie336/entitites_sdk/commit/70946f065f3411b7d3b0425cbbb6c1e6e852af0b))
+
 ## [1.0.24](https://github.com/frankie336/entitites_sdk/compare/v1.0.23...v1.0.24) (2025-04-08)
 
 
