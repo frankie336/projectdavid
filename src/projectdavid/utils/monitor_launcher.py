@@ -1,6 +1,6 @@
 import threading
 
-from entities_common import UtilsInterface
+from projectdavid_common import UtilsInterface
 
 logging_utility = UtilsInterface.LoggingUtility()
 

@@ -8,21 +8,19 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from dotenv import load_dotenv
-from entities_common import UtilsInterface
-from entities_common.utils import IdentifierService
-
+from projectdavid_common import UtilsInterface
 # Assume ValidationInterface now contains VectorStoreRead, VectorStoreFileRead, StatusEnum, VectorStoreCreate
-from entities_common.validation import ValidationInterface
+from projectdavid_common import ValidationInterface
 
 # Import necessary Pydantic features if defining models here (though prefer common)
 from pydantic import BaseModel, Field
 
 # Assuming these client classes are compatible with being instantiated here
 # And their methods are either sync or async as called below.
-from entities.clients.file_processor import FileProcessor
+from projectdavid.clients.file_processor import FileProcessor
 
 # Assuming VectorStoreManager has been updated as discussed
-from entities.clients.vector_store_manager import VectorStoreManager
+from projectdavid.clients.vector_store_manager import VectorStoreManager
 
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
@@ -78,7 +76,7 @@ class VectorStoreClient:
         self.vector_manager = VectorStoreManager(
             vector_store_host=self.vector_store_host
         )
-        self.identifier_service = IdentifierService()
+        self.identifier_service = UtilsInterface.IdentifierService()
         self.file_processor = FileProcessor()
 
     # --- Context Managers ---

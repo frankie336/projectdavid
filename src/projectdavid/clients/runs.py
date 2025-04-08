@@ -2,7 +2,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import httpx
-from entities_common import UtilsInterface, ValidationInterface
+from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 ent_validator = ValidationInterface()

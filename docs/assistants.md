@@ -6,13 +6,13 @@ from tkinter.font import names
 
 Create an Assistant by defining its custom instructions and picking a model. If helpful, add files and enable tools like Code Interpreter, File Search, and Function calling.
 
-### Basic Assistant Operations 
+### Basic Assistant Operations
 
 ```python
 
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
+client = Entity()
 
 # Create assistant
 
@@ -34,13 +34,13 @@ print(retrieved_assistant)
 
 client.assistants.update_assistant(
     assistant_id=assistant.id,
-    name = 'Mathy',
+    name='Mathy',
     description='test_update',
     instructions='You are now a world class poker player.'
 )
 
 # Delete an assistant 
 
-client.assistants.delete_assistant(assistant_id=assistant.id)   
+client.assistants.delete_assistant(assistant_id=assistant.id)
 
 ```

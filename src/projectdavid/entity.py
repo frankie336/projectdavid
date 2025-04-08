@@ -2,7 +2,7 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
-from entities_common import UtilsInterface
+from projectdavid_common import UtilsInterface
 
 # Use relative imports for modules within your package.
 from .clients.actions import ActionsClient
@@ -25,7 +25,7 @@ load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class Entities:
+class Entity:
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -40,7 +40,7 @@ class Entities:
         )
         self.api_key = api_key or os.getenv("API_KEY", "your_api_key")
 
-        logging_utility.info("Entities initialized with base_url: %s", self.base_url)
+        logging_utility.info("Entity initialized with base_url: %s", self.base_url)
 
         # Lazy initialization caches for service instances.
         self._users_client: Optional[UsersClient] = None

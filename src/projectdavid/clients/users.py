@@ -3,7 +3,7 @@ from typing import List
 
 import httpx
 from dotenv import load_dotenv
-from entities_common import UtilsInterface, ValidationInterface
+from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 ent_validator = ValidationInterface()

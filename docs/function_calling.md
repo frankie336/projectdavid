@@ -9,34 +9,32 @@ Function calling allows your assistant to interact with defined tools, enabling 
 
 ```python
 
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
-
+client = Entity()
 
 # Define the function definition
 function = {
-   "type": "function",
-   "function": {
-      "name": "get_flight_times",
-      "description": "Get the flight times between two cities.",
-      "parameters": {
-         "type": "object",
-         "properties": {
-            "departure": {
-               "type": "string",
-               "description": "The departure city (airport code)."
+    "type": "function",
+    "function": {
+        "name": "get_flight_times",
+        "description": "Get the flight times between two cities.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "departure": {
+                    "type": "string",
+                    "description": "The departure city (airport code)."
+                },
+                "arrival": {
+                    "type": "string",
+                    "description": "The arrival city (airport code)."
+                }
             },
-            "arrival": {
-               "type": "string",
-               "description": "The arrival city (airport code)."
-            }
-         },
-         "required": ["departure", "arrival"]
-      }
-   }
+            "required": ["departure", "arrival"]
+        }
+    }
 }
-
 
 tool = client.tools.create_tool(tool_data=function)
 
@@ -51,17 +49,16 @@ print(tool.id)
 
 ```python
 
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
-
+client = Entity()
 
 assistant = client.assistants.create_assistant(
     name='movie_db_drone',
     instructions='You are a helpful customer services agent at an airport'
 )
 
-client = Entities()
+client = Entity()
 
 client.tools.associate_tool_with_assistant(tool_id='some_tool_id',
                                            assistant_id=assistant.id)
@@ -76,13 +73,13 @@ Your function call is now attached to the assistant. No more code needed.
 
 ## Function Call handling
 
-
 ```python
 
 import json
-from entities import Entities, EventsInterface
+from projectdavid import Entity, EventsInterface
 
-client = Entities(base_url="http://localhost:9000")
+client = Entity(base_url="http://localhost:9000")
+
 
 def custom_tool_handler(run_id, run_data, pending_actions):
     for action in pending_actions:
@@ -92,17 +89,14 @@ def custom_tool_handler(run_id, run_data, pending_actions):
         # TODO: Add tool logic and optionally submit results:
         # client.runs.submit_tool_outputs(run_id=run_id, outputs=[...])
 
+
 def main():
-    
-    
     thread_id = "your-thread-id"
-    
+
     user = client.users.create_user(name='test_user')
-    
+
     thread = client.threads.create_thread(participant_ids=)
-    
-    
-    
+
     user_id = "your-user-id"
     user_message = "Your message here"
     assistant_id = "default"
@@ -148,6 +142,7 @@ def main():
         print("Inference complete.")
     finally:
         stream.close()
+
 
 if __name__ == '__main__':
     main()

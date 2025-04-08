@@ -5,7 +5,7 @@ import pytest
 def test_always_passes():
     """
     This is a simple dummy test. If pytest runs correctly, this test
-    will always pass. It does not import anything from the entities package.
+    will always pass. It does not import anything from the projectdavid package.
     """
     print("Running test_always_passes...")
     assert True, "This assertion should always succeed."

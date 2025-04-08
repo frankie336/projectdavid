@@ -15,9 +15,9 @@ Associated methods can be used to extend the memory and contextual recall of AI 
 ## Basic Vector Store Operations
 
 ```python
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
+client = Entity()
 
 # create a user
 test_user = client.users.create_user(name='test_user')
@@ -46,9 +46,9 @@ retrieve_vector_store = client.vectors.retrieve_vector_store(vector_store_id='ve
 ### Attaching a Store to an Assistant
 
 ```python
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
+client = Entity()
 
 assistant = client.assistants.create_assistant(
     name='movie_db_drone',
@@ -67,9 +67,9 @@ to make semantic searches using its latent logic. No further coding needed.
 ### Saving a File to a Store
 
 ```python
-from entities import Entities
+from projectdavid import Entity
 
-client = Entities()
+client = Entity()
 
 save_file_to_store = client.vectors.add_file_to_vector_store(
     vector_store_id='vect_WsdjjLHoQqyMLmCdrvShc6',

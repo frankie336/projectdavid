@@ -1,4 +1,5 @@
-# Entity SDK
+# Entity  — by Project David
+
 [![Test, Tag, Publish Status](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
 
 The **Entity SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
@@ -29,7 +30,7 @@ Local inference is fully supported via [Ollama](https://github.com/ollama).
 ## 📦 Installation
 
 ```bash
-pip install entities
+pip install projectdavid
 
 ```
 
@@ -38,15 +39,15 @@ pip install entities
 ##  Quick Start
 
 ```python
-from entities import Entities
+from projectdavid import Entity
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Entities(
-    base_url='http://localhost:9000',
-    api_key=os.getenv("API_KEY")
+client = Entity(
+      base_url='http://localhost:9000',
+      api_key=os.getenv("API_KEY")
 )
 
 user = client.users.create_user(name="demo_user")
@@ -54,28 +55,28 @@ thread = client.threads.create_thread(participant_ids=[user.id])
 assistant = client.assistants.create_assistant(name="Demo Assistant")
 
 message = client.messages.create_message(
-    thread_id=thread.id,
-    role="user",
-    content="Hello, assistant!",
-    assistant_id=assistant.id
+      thread_id=thread.id,
+      role="user",
+      content="Hello, assistant!",
+      assistant_id=assistant.id
 )
 
 run = client.runs.create_run(
-    assistant_id=assistant.id,
-    thread_id=thread.id
+      assistant_id=assistant.id,
+      thread_id=thread.id
 )
 
 stream = client.inference.stream_inference_response(
-    provider="Hyperbolic",
-    model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    thread_id=thread.id,
-    message_id=message.id,
-    run_id=run.id,
-    assistant_id=assistant.id
+      provider="Hyperbolic",
+      model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      thread_id=thread.id,
+      message_id=message.id,
+      run_id=run.id,
+      assistant_id=assistant.id
 )
 
 for chunk in stream:
-    print(chunk)
+      print(chunk)
 ```
 
 ---

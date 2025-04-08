@@ -11,8 +11,9 @@ Threads facilitate ready-to-use conversation context, making it easier to manage
 **Thread operations**
 
 ```python
-from entities import Entities
-client = Entities()
+from projectdavid import Entity
+
+client = Entity()
 
 user = client.users.create_user(name='My test user')
 

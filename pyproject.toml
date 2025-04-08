@@ -19,7 +19,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "aiofiles>=23.2.1",
     "ollama>=0.3.0",
-    "entities_common>=0.1.14",
+    "projectdavid-common>=0.1.16",
     "qdrant-client",
     "pdfplumber",
     "validators",

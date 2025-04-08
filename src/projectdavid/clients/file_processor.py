@@ -14,10 +14,12 @@ except ImportError:
 import numpy as np
 import pdfplumber
 import validators
-from entities_common.utilities.logging_service import LoggingUtility
+
+from projectdavid_common import UtilsInterface
+
 from sentence_transformers import SentenceTransformer
 
-logging_utility = LoggingUtility()
+logging_utility = UtilsInterface.LoggingUtility()
 
 
 class FileProcessor:
