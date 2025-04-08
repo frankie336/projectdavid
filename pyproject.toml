@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "entities"
 version = "1.0.18"
@@ -9,7 +13,6 @@ authors = [
 license = { text = "MIT" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
-
 dependencies = [
     "httpx>=0.24.1",
     "pydantic>=2.0",
@@ -22,18 +25,6 @@ dependencies = [
     "validators",
     "sentence-transformers"
 ]
-
-# ✅ Correct placement
-optional-dependencies.dev = [
-    "black>=23.3",
-    "isort>=5.12",
-    "pytest>=7.2",
-    "mypy>=1.0",
-    "build",
-    "twine"
-]
-
-# ✅ Moved here
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
@@ -43,3 +34,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.3",
+    "isort>=5.12",
+    "pytest>=7.2",
+    "mypy>=1.0",
+    "build",
+    "twine"
+]
+
+[tool.isort]
+profile = "black"
