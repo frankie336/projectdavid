@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import suppress
-from typing import Optional, AsyncGenerator  # Added AsyncGenerator
+from typing import AsyncGenerator, Optional  # Added AsyncGenerator
 
 
 class SynchronousInferenceStream:
