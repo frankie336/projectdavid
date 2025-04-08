@@ -1,11 +1,11 @@
 import io
 import mimetypes
 import os
-from typing import Dict, Any, Optional, BinaryIO
+from typing import Any, BinaryIO, Dict, Optional
 
 import httpx
 from dotenv import load_dotenv
-from entities_common import ValidationInterface, UtilsInterface
+from entities_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 ent_validator = ValidationInterface()

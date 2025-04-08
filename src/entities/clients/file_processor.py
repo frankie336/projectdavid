@@ -1,10 +1,10 @@
-from typing import Union, Dict, Any, Tuple, List
 import asyncio
 import csv
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union
 
 try:
     from typing import LiteralString  # Python 3.11+

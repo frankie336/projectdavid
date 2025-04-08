@@ -1,6 +1,6 @@
+import re
 import subprocess
 from pathlib import Path
-import re
 
 REPO = "https://github.com/frankie336/entities_common.git"
 

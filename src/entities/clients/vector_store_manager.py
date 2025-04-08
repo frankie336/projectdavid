@@ -1,25 +1,15 @@
 import time
 import uuid
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
-from qdrant_client import QdrantClient
-from qdrant_client.models import (
-    Distance,
-    VectorParams,
-    PointStruct,
-    Filter,
-    FieldCondition,
-    MatchValue,
-)
-
 from entities_common.utilities.logging_service import LoggingUtility
-from .base_vector_store import (
-    BaseVectorStore,
-    StoreExistsError,
-    StoreNotFoundError,
-    VectorStoreError,
-)
+from qdrant_client import QdrantClient
+from qdrant_client.models import (Distance, FieldCondition, Filter, MatchValue,
+                                  PointStruct, VectorParams)
+
+from .base_vector_store import (BaseVectorStore, StoreExistsError,
+                                StoreNotFoundError, VectorStoreError)
 
 load_dotenv()
 logging_utility = LoggingUtility()

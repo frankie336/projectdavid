@@ -1,12 +1,11 @@
 #!
 import os
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 import httpx
 from dotenv import load_dotenv
-from entities_common import UtilsInterface
-from entities_common import ValidationInterface
+from entities_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 validation = ValidationInterface()
