@@ -1,7 +1,7 @@
-# Entities SDK
+# Entity SDK
 [![Test, Tag, Publish Status](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
 
-The **Entities SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
+The **Entity SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
 
 It unifies:
 
@@ -100,7 +100,7 @@ for chunk in stream:
 
 ## ✅ Compatibility & Requirements
 
-- Python **3.8+**
+- Python **3.10+**
 - Compatible with **local** or **cloud** deployments of the Entities API
 
 ---
