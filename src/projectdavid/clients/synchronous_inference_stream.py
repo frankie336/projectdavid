@@ -37,7 +37,7 @@ class SynchronousInferenceStream:
                 message_id=self.message_id,
                 run_id=self.run_id,
                 assistant_id=self.assistant_id,
-                api_key=None
+                api_key=None,
             ):
                 yield chunk
 
