@@ -30,7 +30,11 @@ class BaseVectorStore(ABC):
 
     @abstractmethod
     def add_to_store(
-        self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
+        self,
+        store_name: str,
+        texts: List[str],
+        vectors: List[List[float]],
+        metadata: List[dict],
     ) -> dict:
         """Add entries to the vector store."""
         pass

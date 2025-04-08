@@ -14,7 +14,14 @@ class SynchronousInferenceStream:
         self.message_id = None
         self.run_id = None
 
-    def setup(self, user_id: str, thread_id: str, assistant_id: str, message_id: str, run_id: str):
+    def setup(
+        self,
+        user_id: str,
+        thread_id: str,
+        assistant_id: str,
+        message_id: str,
+        run_id: str,
+    ):
         self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id

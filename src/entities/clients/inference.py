@@ -38,7 +38,9 @@ class InferenceClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         self.client = httpx.Client(base_url=self.base_url, headers=headers)
-        logging_utility.info("InferenceClient initialized with base_url: %s", self.base_url)
+        logging_utility.info(
+            "InferenceClient initialized with base_url: %s", self.base_url
+        )
 
     def create_completion_sync(
         self,
@@ -155,7 +157,9 @@ class InferenceClient:
             logging_utility.error("Payload validation error: %s", e.json())
             raise ValueError(f"Payload validation error: {e}")
 
-        logging_utility.info("Sending streaming inference request: %s", validated_payload.dict())
+        logging_utility.info(
+            "Sending streaming inference request: %s", validated_payload.dict()
+        )
 
         async with httpx.AsyncClient(base_url=self.base_url) as async_client:
             if self.api_key:
@@ -179,10 +183,14 @@ class InferenceClient:
                                 )
                                 continue
             except httpx.HTTPStatusError as e:
-                logging_utility.error("HTTP error during streaming completions: %s", str(e))
+                logging_utility.error(
+                    "HTTP error during streaming completions: %s", str(e)
+                )
                 raise
             except Exception as e:
-                logging_utility.error("Unexpected error during streaming completions: %s", str(e))
+                logging_utility.error(
+                    "Unexpected error during streaming completions: %s", str(e)
+                )
                 raise
 
     def close(self):

@@ -28,15 +28,19 @@ class MessagesClient:
             base_url=self.base_url,
             headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
         )
-        self.message_chunks: Dict[str, List[str]] = {}  # Temporary storage for message chunks
-        logging_utility.info("MessagesClient initialized with base_url: %s", self.base_url)
+        self.message_chunks: Dict[str, List[str]] = (
+            {}
+        )  # Temporary storage for message chunks
+        logging_utility.info(
+            "MessagesClient initialized with base_url: %s", self.base_url
+        )
 
     def create_message(
         self,
         thread_id: str,
         content: str,
         assistant_id: str,
-        role: str = 'user',
+        role: str = "user",
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.MessageRead:
         """
@@ -61,7 +65,9 @@ class MessagesClient:
             "meta_data": meta_data,
         }
 
-        logging_utility.info("Creating message for thread_id: %s, role: %s", thread_id, role)
+        logging_utility.info(
+            "Creating message for thread_id: %s, role: %s", thread_id, role
+        )
 
         try:
             validated_data = ent_validator.MessageCreate(**message_data)
@@ -70,7 +76,7 @@ class MessagesClient:
 
             created_message = response.json()
             logging_utility.info(
-                "Message created successfully with id: %s", created_message.get('id')
+                "Message created successfully with id: %s", created_message.get("id")
             )
             return ent_validator.MessageRead(**created_message)
 
@@ -78,10 +84,14 @@ class MessagesClient:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while creating message: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while creating message: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while creating message: %s", str(e))
+            logging_utility.error(
+                "An error occurred while creating message: %s", str(e)
+            )
             raise
 
     def retrieve_message(self, message_id: str) -> ent_validator.MessageRead:
@@ -105,10 +115,14 @@ class MessagesClient:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while retrieving message: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while retrieving message: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while retrieving message: %s", str(e))
+            logging_utility.error(
+                "An error occurred while retrieving message: %s", str(e)
+            )
             raise
 
     def update_message(self, message_id: str, **updates) -> ent_validator.MessageRead:
@@ -126,7 +140,8 @@ class MessagesClient:
         try:
             validated_data = ent_validator.MessageUpdate(**updates)
             response = self.client.put(
-                f"/v1/messages/{message_id}", json=validated_data.dict(exclude_unset=True)
+                f"/v1/messages/{message_id}",
+                json=validated_data.dict(exclude_unset=True),
             )
             response.raise_for_status()
             updated_message = response.json()
@@ -136,10 +151,14 @@ class MessagesClient:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while updating message: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while updating message: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while updating message: %s", str(e))
+            logging_utility.error(
+                "An error occurred while updating message: %s", str(e)
+            )
             raise
 
     def list_messages(
@@ -157,24 +176,35 @@ class MessagesClient:
             List[Dict[str, Any]]: A list of messages as dictionaries.
         """
         logging_utility.info(
-            "Listing messages for thread_id: %s, limit: %d, order: %s", thread_id, limit, order
+            "Listing messages for thread_id: %s, limit: %d, order: %s",
+            thread_id,
+            limit,
+            order,
         )
         params = {"limit": limit, "order": order}
         try:
-            response = self.client.get(f"/v1/threads/{thread_id}/messages", params=params)
+            response = self.client.get(
+                f"/v1/threads/{thread_id}/messages", params=params
+            )
             response.raise_for_status()
             messages = response.json()
-            validated_messages = [ent_validator.MessageRead(**message) for message in messages]
+            validated_messages = [
+                ent_validator.MessageRead(**message) for message in messages
+            ]
             logging_utility.info("Retrieved %d messages", len(validated_messages))
             return [message.dict() for message in validated_messages]
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while listing messages: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while listing messages: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while listing messages: %s", str(e))
+            logging_utility.error(
+                "An error occurred while listing messages: %s", str(e)
+            )
             raise
 
     def get_formatted_messages(
@@ -202,16 +232,26 @@ class MessagesClient:
             for msg in formatted_messages:
                 if msg.get("role") == "tool":
                     if "tool_call_id" not in msg or "content" not in msg:
-                        logging_utility.warning("Malformed tool message detected: %s", msg)
+                        logging_utility.warning(
+                            "Malformed tool message detected: %s", msg
+                        )
                         raise ValueError(f"Malformed tool message: {msg}")
-            if formatted_messages and formatted_messages[0].get('role') == 'system':
-                formatted_messages[0]['content'] = system_message
-                logging_utility.debug("Replaced existing system message with: %s", system_message)
+            if formatted_messages and formatted_messages[0].get("role") == "system":
+                formatted_messages[0]["content"] = system_message
+                logging_utility.debug(
+                    "Replaced existing system message with: %s", system_message
+                )
             else:
-                formatted_messages.insert(0, {"role": "system", "content": system_message})
+                formatted_messages.insert(
+                    0, {"role": "system", "content": system_message}
+                )
                 logging_utility.debug("Inserted new system message: %s", system_message)
-            logging_utility.info("Formatted messages after insertion: %s", formatted_messages)
-            logging_utility.info("Retrieved %d formatted messages", len(formatted_messages))
+            logging_utility.info(
+                "Formatted messages after insertion: %s", formatted_messages
+            )
+            logging_utility.info(
+                "Retrieved %d formatted messages", len(formatted_messages)
+            )
             return formatted_messages
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
@@ -224,7 +264,9 @@ class MessagesClient:
             logging_utility.error("An error occurred: %s", str(e))
             raise RuntimeError(f"An error occurred: {str(e)}")
 
-    def get_messages_without_system_message(self, thread_id: str) -> List[Dict[str, Any]]:
+    def get_messages_without_system_message(
+        self, thread_id: str
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve formatted messages for a thread without modifying the system message.
 
@@ -234,15 +276,21 @@ class MessagesClient:
         Returns:
             List[Dict[str, Any]]: The list of formatted messages.
         """
-        logging_utility.info("Getting messages without system message for thread_id: %s", thread_id)
+        logging_utility.info(
+            "Getting messages without system message for thread_id: %s", thread_id
+        )
         try:
             response = self.client.get(f"/v1/threads/{thread_id}/formatted_messages")
             response.raise_for_status()
             formatted_messages = response.json()
             if not isinstance(formatted_messages, list):
                 raise ValueError("Expected a list of messages")
-            logging_utility.debug("Retrieved formatted messages: %s", formatted_messages)
-            logging_utility.info("Retrieved %d formatted messages", len(formatted_messages))
+            logging_utility.debug(
+                "Retrieved formatted messages: %s", formatted_messages
+            )
+            logging_utility.info(
+                "Retrieved %d formatted messages", len(formatted_messages)
+            )
             return formatted_messages
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
@@ -273,10 +321,14 @@ class MessagesClient:
             logging_utility.info("Message deleted successfully")
             return result
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while deleting message: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while deleting message: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while deleting message: %s", str(e))
+            logging_utility.error(
+                "An error occurred while deleting message: %s", str(e)
+            )
             raise
 
     def save_assistant_message_chunk(
@@ -330,7 +382,9 @@ class MessagesClient:
                 )
                 return message_read
             else:
-                logging_utility.info("Non-final assistant message chunk saved successfully.")
+                logging_utility.info(
+                    "Non-final assistant message chunk saved successfully."
+                )
                 return None
         except httpx.HTTPStatusError as e:
             logging_utility.error(
@@ -351,7 +405,7 @@ class MessagesClient:
         content: str,
         assistant_id: str,
         tool_id: str,
-        role: str = 'tool',
+        role: str = "tool",
         sender_id: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
@@ -382,22 +436,31 @@ class MessagesClient:
         if sender_id is not None:
             message_data["sender_id"] = sender_id
 
-        logging_utility.info("Creating tool message for thread_id: %s, role: %s", thread_id, role)
+        logging_utility.info(
+            "Creating tool message for thread_id: %s, role: %s", thread_id, role
+        )
         try:
             validated_data = ent_validator.MessageCreate(**message_data)
-            response = self.client.post("/v1/messages/tools", json=validated_data.dict())
+            response = self.client.post(
+                "/v1/messages/tools", json=validated_data.dict()
+            )
             response.raise_for_status()
             created_message = response.json()
             logging_utility.info(
-                "Tool message created successfully with id: %s", created_message.get('id')
+                "Tool message created successfully with id: %s",
+                created_message.get("id"),
             )
             return created_message
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while creating tool message: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while creating tool message: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while creating tool message: %s", str(e))
+            logging_utility.error(
+                "An error occurred while creating tool message: %s", str(e)
+            )
             raise

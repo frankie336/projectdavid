@@ -90,7 +90,9 @@ class RunsClient:
 
             # Validate the response using the Run model
             validated_run = ent_validator.Run(**created_run_data)
-            logging_utility.info("Run created successfully with id: %s", validated_run.id)
+            logging_utility.info(
+                "Run created successfully with id: %s", validated_run.id
+            )
             return validated_run
 
         except ValidationError as e:
@@ -119,17 +121,23 @@ class RunsClient:
             response.raise_for_status()
             run_data = response.json()
             validated_run = ent_validator.RunReadDetailed(**run_data)
-            logging_utility.info("Run with id %s retrieved and validated successfully", run_id)
+            logging_utility.info(
+                "Run with id %s retrieved and validated successfully", run_id
+            )
             return validated_run
 
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Data validation failed: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while retrieving run: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while retrieving run: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An unexpected error occurred while retrieving run: %s", str(e))
+            logging_utility.error(
+                "An unexpected error occurred while retrieving run: %s", str(e)
+            )
             raise
 
     def update_run_status(self, run_id: str, new_status: str) -> ent_validator.Run:
@@ -143,12 +151,16 @@ class RunsClient:
         Returns:
             Run: The updated run.
         """
-        logging_utility.info("Updating run status for run_id: %s to %s", run_id, new_status)
+        logging_utility.info(
+            "Updating run status for run_id: %s to %s", run_id, new_status
+        )
         update_data = {"status": new_status}
 
         try:
             validated_data = ent_validator.RunStatusUpdate(**update_data)
-            response = self.client.put(f"/v1/runs/{run_id}/status", json=validated_data.dict())
+            response = self.client.put(
+                f"/v1/runs/{run_id}/status", json=validated_data.dict()
+            )
             response.raise_for_status()
 
             updated_run = response.json()
@@ -160,10 +172,14 @@ class RunsClient:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while updating run status: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while updating run status: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while updating run status: %s", str(e))
+            logging_utility.error(
+                "An error occurred while updating run status: %s", str(e)
+            )
             raise
 
     def list_runs(self, limit: int = 20, order: str = "asc") -> List[ent_validator.Run]:
@@ -235,7 +251,9 @@ class RunsClient:
         Returns:
             Dict[str, Any]: The generated content.
         """
-        logging_utility.info("Generating content for run_id: %s, model: %s", run_id, model)
+        logging_utility.info(
+            "Generating content for run_id: %s, model: %s", run_id, model
+        )
         try:
             run = self.retrieve_run(run_id)
             response = self.client.post(
@@ -254,14 +272,22 @@ class RunsClient:
             logging_utility.info("Content generated successfully")
             return result
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while generating content: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while generating content: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while generating content: %s", str(e))
+            logging_utility.error(
+                "An error occurred while generating content: %s", str(e)
+            )
             raise
 
     def chat(
-        self, run_id: str, model: str, messages: List[Dict[str, Any]], stream: bool = False
+        self,
+        run_id: str,
+        model: str,
+        messages: List[Dict[str, Any]],
+        stream: bool = False,
     ) -> Dict[str, Any]:
         """
         Chat using a run, model, and provided messages.
@@ -318,8 +344,12 @@ class RunsClient:
             logging_utility.info("Run %s cancelled successfully", run_id)
             return result
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while cancelling run %s: %s", run_id, str(e))
+            logging_utility.error(
+                "HTTP error occurred while cancelling run %s: %s", run_id, str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while cancelling run %s: %s", run_id, str(e))
+            logging_utility.error(
+                "An error occurred while cancelling run %s: %s", run_id, str(e)
+            )
             raise

@@ -36,7 +36,9 @@ class AssistantsClient:
 
         self.client = httpx.Client(base_url=self.base_url, headers=headers)
 
-        logging_utility.info("AssistantsClient initialized with base_url: %s", self.base_url)
+        logging_utility.info(
+            "AssistantsClient initialized with base_url: %s", self.base_url
+        )
 
     def close(self):
         """Closes the HTTP client session."""
@@ -101,7 +103,9 @@ class AssistantsClient:
 
         try:
             validated_data = ent_validator.AssistantCreate(**assistant_data)
-            logging_utility.info("Creating assistant with model: %s, name: %s", model, name)
+            logging_utility.info(
+                "Creating assistant with model: %s, name: %s", model, name
+            )
 
             response = self._request_with_retries(
                 "POST", "/v1/assistants", json=validated_data.model_dump()
@@ -121,7 +125,9 @@ class AssistantsClient:
         """Retrieves an assistant by ID."""
         logging_utility.info("Retrieving assistant with id: %s", assistant_id)
         try:
-            response = self._request_with_retries("GET", f"/v1/assistants/{assistant_id}")
+            response = self._request_with_retries(
+                "GET", f"/v1/assistants/{assistant_id}"
+            )
             assistant = self._parse_response(response)
 
             validated_data = ent_validator.AssistantRead(**assistant)
@@ -131,12 +137,14 @@ class AssistantsClient:
             logging_utility.error("Validation error: %s", e.json())
             raise AssistantsClientError(f"Validation error: {e}")
 
-    def update_assistant(self, assistant_id: str, **updates) -> ent_validator.AssistantRead:
+    def update_assistant(
+        self, assistant_id: str, **updates
+    ) -> ent_validator.AssistantRead:
         """Updates an assistant."""
         logging_utility.info("Updating assistant with id: %s", assistant_id)
         try:
-            updates.pop('id', None)
-            updates.pop('assistant_id', None)
+            updates.pop("id", None)
+            updates.pop("assistant_id", None)
 
             validated_data = ent_validator.AssistantUpdate(**updates)
 
@@ -157,32 +165,52 @@ class AssistantsClient:
     def delete_assistant(self, assistant_id: str) -> Dict[str, Any]:
         """Deletes an assistant by ID."""
         logging_utility.info("Deleting assistant with id: %s", assistant_id)
-        response = self._request_with_retries("DELETE", f"/v1/assistants/{assistant_id}")
+        response = self._request_with_retries(
+            "DELETE", f"/v1/assistants/{assistant_id}"
+        )
         return self._parse_response(response)
 
-    def associate_assistant_with_user(self, user_id: str, assistant_id: str) -> Dict[str, Any]:
+    def associate_assistant_with_user(
+        self, user_id: str, assistant_id: str
+    ) -> Dict[str, Any]:
         """Associates an assistant with a user."""
-        logging_utility.info("Associating assistant %s with user %s", assistant_id, user_id)
-        self._request_with_retries("POST", f"/v1/users/{user_id}/assistants/{assistant_id}")
+        logging_utility.info(
+            "Associating assistant %s with user %s", assistant_id, user_id
+        )
+        self._request_with_retries(
+            "POST", f"/v1/users/{user_id}/assistants/{assistant_id}"
+        )
         return {"message": "Assistant associated with user successfully"}
 
-    def disassociate_assistant_from_user(self, user_id: str, assistant_id: str) -> Dict[str, Any]:
+    def disassociate_assistant_from_user(
+        self, user_id: str, assistant_id: str
+    ) -> Dict[str, Any]:
         """Disassociates an assistant from a user."""
-        logging_utility.info("Disassociating assistant %s from user %s", assistant_id, user_id)
-        self._request_with_retries("DELETE", f"/v1/users/{user_id}/assistants/{assistant_id}")
+        logging_utility.info(
+            "Disassociating assistant %s from user %s", assistant_id, user_id
+        )
+        self._request_with_retries(
+            "DELETE", f"/v1/users/{user_id}/assistants/{assistant_id}"
+        )
         return {"message": "Assistant disassociated from user successfully"}
 
-    def list_assistants_by_user(self, user_id: str) -> List[ent_validator.AssistantRead]:
+    def list_assistants_by_user(
+        self, user_id: str
+    ) -> List[ent_validator.AssistantRead]:
         """Lists all assistants associated with a user."""
         logging_utility.info("Retrieving assistants for user id: %s", user_id)
         try:
-            response = self._request_with_retries("GET", f"/v1/users/{user_id}/assistants")
+            response = self._request_with_retries(
+                "GET", f"/v1/users/{user_id}/assistants"
+            )
             assistants = self._parse_response(response)
 
             validated_assistants = [
                 ent_validator.AssistantRead(**assistant) for assistant in assistants
             ]
-            logging_utility.info("Assistants retrieved successfully for user id: %s", user_id)
+            logging_utility.info(
+                "Assistants retrieved successfully for user id: %s", user_id
+            )
             return validated_assistants
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())

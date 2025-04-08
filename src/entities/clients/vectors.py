@@ -39,7 +39,9 @@ class VectorStoreFileUpdateStatusInput(BaseModel):
     status: ValidationInterface.StatusEnum = Field(
         ..., description="The new status for the file record."
     )
-    error_message: Optional[str] = Field(None, description="Error message if status is 'failed'.")
+    error_message: Optional[str] = Field(
+        None, description="Error message if status is 'failed'."
+    )
 
 
 class VectorStoreClient:
@@ -54,7 +56,7 @@ class VectorStoreClient:
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
-        vector_store_host: Optional[str] = 'localhost',
+        vector_store_host: Optional[str] = "localhost",
     ):
         self.base_url = base_url or os.getenv("BASE_URL")
         self.api_key = api_key or os.getenv("API_KEY")
@@ -68,10 +70,14 @@ class VectorStoreClient:
         self._async_api_client = httpx.AsyncClient(
             base_url=self.base_url, headers=headers, timeout=30.0
         )
-        self._sync_api_client = httpx.Client(base_url=self.base_url, headers=headers, timeout=30.0)
+        self._sync_api_client = httpx.Client(
+            base_url=self.base_url, headers=headers, timeout=30.0
+        )
 
         self.vector_store_host = vector_store_host
-        self.vector_manager = VectorStoreManager(vector_store_host=self.vector_store_host)
+        self.vector_manager = VectorStoreManager(
+            vector_store_host=self.vector_store_host
+        )
         self.identifier_service = IdentifierService()
         self.file_processor = FileProcessor()
 
@@ -137,19 +143,30 @@ class VectorStoreClient:
             ) from e
         except Exception as e:
             logging_utility.error("Failed to parse API response: %s", str(e))
-            raise VectorStoreClientError(f"Invalid response from API: {response.text}") from e
+            raise VectorStoreClientError(
+                f"Invalid response from API: {response.text}"
+            ) from e
 
-    async def _internal_request_with_retries(self, method: str, url: str, **kwargs) -> Any:
+    async def _internal_request_with_retries(
+        self, method: str, url: str, **kwargs
+    ) -> Any:
         retries = 3
         last_exception = None
         for attempt in range(retries):
             try:
                 response = await self._async_api_client.request(method, url, **kwargs)
                 return await self._internal_parse_response(response)
-            except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as e:
+            except (
+                httpx.TimeoutException,
+                httpx.NetworkError,
+                httpx.HTTPStatusError,
+            ) as e:
                 last_exception = e
-                should_retry = isinstance(e, (httpx.TimeoutException, httpx.NetworkError)) or (
-                    isinstance(e, httpx.HTTPStatusError) and e.response.status_code >= 500
+                should_retry = isinstance(
+                    e, (httpx.TimeoutException, httpx.NetworkError)
+                ) or (
+                    isinstance(e, httpx.HTTPStatusError)
+                    and e.response.status_code >= 500
                 )
                 if should_retry and attempt < retries - 1:
                     wait_time = 2**attempt
@@ -177,13 +194,22 @@ class VectorStoreClient:
                             f"API Error: {e.response.status_code} - {e.response.text}"
                         ) from e
                     else:
-                        raise VectorStoreClientError(f"API Communication Error: {str(e)}") from e
+                        raise VectorStoreClientError(
+                            f"API Communication Error: {str(e)}"
+                        ) from e
             except Exception as e:
                 logging_utility.error(
-                    "Unexpected error during API request to %s %s: %s", method, url, str(e)
+                    "Unexpected error during API request to %s %s: %s",
+                    method,
+                    url,
+                    str(e),
                 )
-                raise VectorStoreClientError(f"Unexpected API Client Error: {str(e)}") from e
-        raise VectorStoreClientError("Request failed after retries.") from last_exception
+                raise VectorStoreClientError(
+                    f"Unexpected API Client Error: {str(e)}"
+                ) from e
+        raise VectorStoreClientError(
+            "Request failed after retries."
+        ) from last_exception
 
     # --- Internal Async Implementations ---
 
@@ -197,7 +223,9 @@ class VectorStoreClient:
     ) -> ValidationInterface.VectorStoreRead:
         shared_id = self.identifier_service.generate_vector_id()
         backend_collection_name = shared_id
-        logging_utility.info("Attempting to create Qdrant collection '%s'", backend_collection_name)
+        logging_utility.info(
+            "Attempting to create Qdrant collection '%s'", backend_collection_name
+        )
         try:
             # Call assumes manager's create_store expects collection_name
             _ = self.vector_manager.create_store(
@@ -210,11 +238,17 @@ class VectorStoreClient:
             )
         except Exception as e:
             logging_utility.error(
-                "Qdrant collection creation failed for '%s': %s", backend_collection_name, str(e)
+                "Qdrant collection creation failed for '%s': %s",
+                backend_collection_name,
+                str(e),
             )
-            raise VectorStoreClientError(f"Failed to create vector store backend: {str(e)}") from e
+            raise VectorStoreClientError(
+                f"Failed to create vector store backend: {str(e)}"
+            ) from e
 
-        logging_utility.info("Registering vector store '%s' (ID: %s) via API", name, shared_id)
+        logging_utility.info(
+            "Registering vector store '%s' (ID: %s) via API", name, shared_id
+        )
         # Payload matches VectorStoreCreateWithSharedId model used in API
         db_payload = {
             "shared_id": shared_id,
@@ -228,7 +262,9 @@ class VectorStoreClient:
             response_data = await self._internal_request_with_retries(
                 "POST", "/v1/vector-stores", json=db_payload
             )
-            logging_utility.info("Successfully registered vector store '%s' via API", name)
+            logging_utility.info(
+                "Successfully registered vector store '%s' via API", name
+            )
             return ValidationInterface.VectorStoreRead.model_validate(response_data)
         except Exception as api_error:
             logging_utility.error(
@@ -239,7 +275,9 @@ class VectorStoreClient:
             )
             try:
                 self.vector_manager.delete_store(backend_collection_name)
-                logging_utility.info("Rolled back Qdrant collection '%s'", backend_collection_name)
+                logging_utility.info(
+                    "Rolled back Qdrant collection '%s'", backend_collection_name
+                )
             except Exception as rollback_error:
                 logging_utility.error(
                     "CRITICAL: Failed to rollback Qdrant collection '%s' after API failure: %s",
@@ -248,17 +286,23 @@ class VectorStoreClient:
                 )
             raise api_error  # Re-raise API error
 
-
     async def _internal_add_file_to_vector_store_async(
-        self, vector_store_id: str, file_path: Path, user_metadata: Optional[Dict[str, Any]]
+        self,
+        vector_store_id: str,
+        file_path: Path,
+        user_metadata: Optional[Dict[str, Any]],
     ) -> ValidationInterface.VectorStoreFileRead:  # CORRECTED Return Type Hint
         """
         Processes a file, uploads its chunks/vectors to Qdrant, and registers
         the file metadata via the API. Returns the validated file record object.
         """
-        collection_name = vector_store_id  # Assuming vector_store_id is used as collection name
+        collection_name = (
+            vector_store_id  # Assuming vector_store_id is used as collection name
+        )
 
-        logging_utility.info("Processing file: %s for store %s", file_path, vector_store_id)
+        logging_utility.info(
+            "Processing file: %s for store %s", file_path, vector_store_id
+        )
         try:
             # Assuming self.file_processor and its methods exist and work as expected
             processed_data = await self.file_processor.process_file(file_path)
@@ -276,7 +320,9 @@ class VectorStoreClient:
             # Prepare metadata for each chunk
             base_metadata = user_metadata or {}
             # Ensure 'source' and 'file_name' are consistently added for potential filtering/deletion
-            base_metadata.update({"source": str(file_path), "file_name": file_path.name})
+            base_metadata.update(
+                {"source": str(file_path), "file_name": file_path.name}
+            )
             chunk_metadata = [
                 {**base_metadata, "chunk_index": i} for i in range(len(texts))
             ]
@@ -286,10 +332,13 @@ class VectorStoreClient:
             )
 
         except Exception as e:
-            logging_utility.error("Failed to process file %s: %s", file_path, str(e), exc_info=True)
+            logging_utility.error(
+                "Failed to process file %s: %s", file_path, str(e), exc_info=True
+            )
             # You might want to update the file status to 'failed' via API here if possible
             raise VectorStoreClientError(
-                f"File processing failed for '{file_path.name}': {str(e)}") from e
+                f"File processing failed for '{file_path.name}': {str(e)}"
+            ) from e
 
         logging_utility.info(
             "Uploading %d chunks for '%s' to Qdrant collection '%s'",
@@ -307,7 +356,9 @@ class VectorStoreClient:
                 # Consider adding unique IDs for points if needed for deletion later
             )
             logging_utility.info(
-                "Successfully uploaded %d chunks to Qdrant for '%s'.", len(texts), file_path.name
+                "Successfully uploaded %d chunks to Qdrant for '%s'.",
+                len(texts),
+                file_path.name,
             )
         except Exception as e:
             logging_utility.error(
@@ -315,11 +366,12 @@ class VectorStoreClient:
                 file_path.name,
                 collection_name,
                 str(e),
-                exc_info=True
+                exc_info=True,
             )
             # If upload fails, the file shouldn't be registered in the API.
             raise VectorStoreClientError(
-                f"Vector store upload failed for '{file_path.name}': {str(e)}") from e
+                f"Vector store upload failed for '{file_path.name}': {str(e)}"
+            ) from e
 
         # Generate a unique ID for the file record in your database
         file_record_id = f"vsf_{uuid.uuid4()}"
@@ -350,18 +402,24 @@ class VectorStoreClient:
             logging_utility.info(
                 "Successfully registered file '%s' via API. Response keys: %s",
                 file_path.name,
-                list(response_data.keys()) if isinstance(response_data, dict) else type(
-                    response_data)
+                (
+                    list(response_data.keys())
+                    if isinstance(response_data, dict)
+                    else type(response_data)
+                ),
             )
 
             # --- THIS IS THE FIX ---
             # Validate the API response against the VectorStoreFileRead model
-            validated_file_record = ValidationInterface.VectorStoreFileRead.model_validate(
-                response_data)
+            validated_file_record = (
+                ValidationInterface.VectorStoreFileRead.model_validate(response_data)
+            )
             # --- END FIX ---
 
-            logging_utility.debug("Validated API response for file registration: %s",
-                                  validated_file_record)
+            logging_utility.debug(
+                "Validated API response for file registration: %s",
+                validated_file_record,
+            )
             return validated_file_record
 
         except Exception as api_error:
@@ -371,7 +429,7 @@ class VectorStoreClient:
                 file_path.name,
                 vector_store_id,
                 str(api_error),
-                exc_info=True  # Include traceback for debugging
+                exc_info=True,  # Include traceback for debugging
             )
 
             raise api_error
@@ -383,11 +441,15 @@ class VectorStoreClient:
             store_info = self.retrieve_vector_store_sync(vector_store_id)
             collection_name = store_info.collection_name
         except VectorStoreClientError as e:
-            logging_utility.error(f"Vector store {vector_store_id} not found via API: {e}")
+            logging_utility.error(
+                f"Vector store {vector_store_id} not found via API: {e}"
+            )
             raise
 
         try:
-            query_vector = self.file_processor.embedding_model.encode(query_text).tolist()
+            query_vector = self.file_processor.embedding_model.encode(
+                query_text
+            ).tolist()
         except Exception as e:
             logging_utility.error("Failed to embed query text: %s", str(e))
             raise VectorStoreClientError(f"Query embedding failed: {str(e)}") from e
@@ -397,9 +459,14 @@ class VectorStoreClient:
         )
         try:
             search_results = self.vector_manager.query_store(
-                store_name=collection_name, query_vector=query_vector, top_k=top_k, filters=filters
+                store_name=collection_name,
+                query_vector=query_vector,
+                top_k=top_k,
+                filters=filters,
             )
-            logging_utility.info("Qdrant search completed. Found %d results.", len(search_results))
+            logging_utility.info(
+                "Qdrant search completed. Found %d results.", len(search_results)
+            )
             return search_results
         except Exception as e:
             logging_utility.error(
@@ -411,16 +478,22 @@ class VectorStoreClient:
         self, vector_store_id: str, permanent: bool
     ) -> Dict[str, Any]:
         collection_name = vector_store_id
-        logging_utility.info("Attempting to delete Qdrant collection '%s'", collection_name)
+        logging_utility.info(
+            "Attempting to delete Qdrant collection '%s'", collection_name
+        )
         qdrant_result = None
         try:
             qdrant_result = self.vector_manager.delete_store(collection_name)
             logging_utility.info(
-                "Qdrant delete result for collection '%s': %s", collection_name, qdrant_result
+                "Qdrant delete result for collection '%s': %s",
+                collection_name,
+                qdrant_result,
             )
         except Exception as e:
             logging_utility.error(
-                "Qdrant collection deletion failed for '%s': %s.", collection_name, str(e)
+                "Qdrant collection deletion failed for '%s': %s.",
+                collection_name,
+                str(e),
             )
             if permanent:
                 raise VectorStoreClientError(
@@ -434,7 +507,9 @@ class VectorStoreClient:
         )
         try:
             api_response = await self._internal_request_with_retries(
-                "DELETE", f"/v1/vector-stores/{vector_store_id}", params={"permanent": permanent}
+                "DELETE",
+                f"/v1/vector-stores/{vector_store_id}",
+                params={"permanent": permanent},
             )
             logging_utility.info(
                 "API delete call successful for vector store '%s'.", vector_store_id
@@ -466,8 +541,12 @@ class VectorStoreClient:
         )
         qdrant_result = None
         try:
-            qdrant_result = self.vector_manager.delete_file_from_store(collection_name, file_path)
-            logging_utility.info("Qdrant delete result for file '%s': %s", file_path, qdrant_result)
+            qdrant_result = self.vector_manager.delete_file_from_store(
+                collection_name, file_path
+            )
+            logging_utility.info(
+                "Qdrant delete result for file '%s': %s", file_path, qdrant_result
+            )
         except Exception as e:
             logging_utility.error(
                 "Qdrant deletion failed for file '%s' in collection '%s': %s",
@@ -491,7 +570,9 @@ class VectorStoreClient:
                 f"/v1/vector-stores/{vector_store_id}/files",
                 params={"file_path": encoded_file_path},
             )
-            logging_utility.info("API delete call successful for file record '%s'.", file_path)
+            logging_utility.info(
+                "API delete call successful for file record '%s'.", file_path
+            )
             # API returns 204, so api_response will be None. Construct success dict.
             return {
                 "vector_store_id": vector_store_id,
@@ -511,7 +592,9 @@ class VectorStoreClient:
     async def _internal_list_store_files_async(
         self, vector_store_id: str
     ) -> List[ValidationInterface.VectorStoreFileRead]:
-        logging_utility.info("Listing files for vector store '%s' via API", vector_store_id)
+        logging_utility.info(
+            "Listing files for vector store '%s' via API", vector_store_id
+        )
         try:
             response_data = await self._internal_request_with_retries(
                 "GET", f"/v1/vector-stores/{vector_store_id}/files"
@@ -526,7 +609,9 @@ class VectorStoreClient:
             ]
         except Exception as api_error:
             logging_utility.error(
-                "Failed to list files for store '%s' via API: %s", vector_store_id, str(api_error)
+                "Failed to list files for store '%s' via API: %s",
+                vector_store_id,
+                str(api_error),
             )
             raise api_error
 
@@ -534,28 +619,36 @@ class VectorStoreClient:
         self, vector_store_id: str, assistant_id: str
     ) -> Dict[str, Any]:
         logging_utility.info(
-            "Attaching vector store %s to assistant %s via API", vector_store_id, assistant_id
+            "Attaching vector store %s to assistant %s via API",
+            vector_store_id,
+            assistant_id,
         )
         # API returns {"success": True} on success (Status 200)
         return await self._internal_request_with_retries(
-            "POST", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach"
+            "POST",
+            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach",
         )
 
     async def _internal_detach_vs_async(
         self, vector_store_id: str, assistant_id: str
     ) -> Dict[str, Any]:
         logging_utility.info(
-            "Detaching vector store %s from assistant %s via API", vector_store_id, assistant_id
+            "Detaching vector store %s from assistant %s via API",
+            vector_store_id,
+            assistant_id,
         )
         # API returns {"success": True} on success (Status 200)
         return await self._internal_request_with_retries(
-            "DELETE", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/detach"
+            "DELETE",
+            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/detach",
         )
 
     async def _internal_get_assistant_vs_async(
         self, assistant_id: str
     ) -> List[ValidationInterface.VectorStoreRead]:
-        logging_utility.info("Getting vector stores for assistant %s via API", assistant_id)
+        logging_utility.info(
+            "Getting vector stores for assistant %s via API", assistant_id
+        )
         response = await self._internal_request_with_retries(
             "GET", f"/v1/assistants/{assistant_id}/vector-stores"
         )
@@ -563,7 +656,10 @@ class VectorStoreClient:
             raise VectorStoreClientError(
                 f"API returned non-list response for assistant stores: {response}"
             )
-        return [ValidationInterface.VectorStoreRead.model_validate(item) for item in response]
+        return [
+            ValidationInterface.VectorStoreRead.model_validate(item)
+            for item in response
+        ]
 
     async def _internal_get_user_vs_async(
         self, user_id: str
@@ -576,7 +672,10 @@ class VectorStoreClient:
             raise VectorStoreClientError(
                 f"API returned non-list response for user stores: {response}"
             )
-        return [ValidationInterface.VectorStoreRead.model_validate(item) for item in response]
+        return [
+            ValidationInterface.VectorStoreRead.model_validate(item)
+            for item in response
+        ]
 
     async def _internal_retrieve_vs_async(
         self, vector_store_id: str
@@ -594,7 +693,9 @@ class VectorStoreClient:
             "Retrieving vector store by collection name %s via API", collection_name
         )
         response = await self._internal_request_with_retries(
-            "GET", "/v1/vector-stores/lookup/collection", params={"name": collection_name}
+            "GET",
+            "/v1/vector-stores/lookup/collection",
+            params={"name": collection_name},
         )
         return ValidationInterface.VectorStoreRead.model_validate(response)
 
@@ -614,7 +715,9 @@ class VectorStoreClient:
             status=status, error_message=error_message
         ).model_dump(exclude_none=True)
         response_data = await self._internal_request_with_retries(
-            "PATCH", f"/v1/vector-stores/{vector_store_id}/files/{file_id}", json=payload
+            "PATCH",
+            f"/v1/vector-stores/{vector_store_id}/files/{file_id}",
+            json=payload,
         )
         # API returns the updated VectorStoreFileRead model
         return ValidationInterface.VectorStoreFileRead.model_validate(response_data)
@@ -665,7 +768,6 @@ class VectorStoreClient:
             )
         )
 
-
     def search_vector_store(
         self,
         vector_store_id: str,
@@ -675,17 +777,27 @@ class VectorStoreClient:
     ) -> List[Dict[str, Any]]:
         """Synchronously searches a vector store."""
         return self._run_sync(
-            self._internal_search_vector_store_async(vector_store_id, query_text, top_k, filters)
+            self._internal_search_vector_store_async(
+                vector_store_id, query_text, top_k, filters
+            )
         )
 
-    def delete_vector_store(self, vector_store_id: str, permanent: bool = False) -> Dict[str, Any]:
+    def delete_vector_store(
+        self, vector_store_id: str, permanent: bool = False
+    ) -> Dict[str, Any]:
         """Synchronously deletes a vector store."""
-        return self._run_sync(self._internal_delete_vector_store_async(vector_store_id, permanent))
+        return self._run_sync(
+            self._internal_delete_vector_store_async(vector_store_id, permanent)
+        )
 
-    def delete_file_from_vector_store(self, vector_store_id: str, file_path: str) -> Dict[str, Any]:
+    def delete_file_from_vector_store(
+        self, vector_store_id: str, file_path: str
+    ) -> Dict[str, Any]:
         """Synchronously deletes a file's data from a vector store."""
         return self._run_sync(
-            self._internal_delete_file_from_vector_store_async(vector_store_id, file_path)
+            self._internal_delete_file_from_vector_store_async(
+                vector_store_id, file_path
+            )
         )
 
     def list_store_files(
@@ -706,20 +818,26 @@ class VectorStoreClient:
         Synchronously updates the status and optionally the error message for a file record.
         """
         return self._run_sync(
-            self._internal_update_file_status_async(vector_store_id, file_id, status, error_message)
+            self._internal_update_file_status_async(
+                vector_store_id, file_id, status, error_message
+            )
         )
 
     def attach_vector_store_to_assistant(
         self, vector_store_id: str, assistant_id: str
     ) -> Dict[str, Any]:
         """Synchronously attaches a vector store to an assistant via API."""
-        return self._run_sync(self._internal_attach_vs_async(vector_store_id, assistant_id))
+        return self._run_sync(
+            self._internal_attach_vs_async(vector_store_id, assistant_id)
+        )
 
     def detach_vector_store_from_assistant(
         self, vector_store_id: str, assistant_id: str
     ) -> Dict[str, Any]:
         """Synchronously detaches a vector store from an assistant via API."""
-        return self._run_sync(self._internal_detach_vs_async(vector_store_id, assistant_id))
+        return self._run_sync(
+            self._internal_detach_vs_async(vector_store_id, assistant_id)
+        )
 
     def get_vector_stores_for_assistant(
         self, assistant_id: str
@@ -727,11 +845,15 @@ class VectorStoreClient:
         """Synchronously gets vector stores attached to an assistant via API."""
         return self._run_sync(self._internal_get_assistant_vs_async(assistant_id))
 
-    def get_stores_by_user(self, user_id: str) -> List[ValidationInterface.VectorStoreRead]:
+    def get_stores_by_user(
+        self, user_id: str
+    ) -> List[ValidationInterface.VectorStoreRead]:
         """Synchronously gets vector stores owned by a user via API."""
         return self._run_sync(self._internal_get_user_vs_async(user_id))
 
-    def retrieve_vector_store(self, vector_store_id: str) -> ValidationInterface.VectorStoreRead:
+    def retrieve_vector_store(
+        self, vector_store_id: str
+    ) -> ValidationInterface.VectorStoreRead:
         """Synchronously retrieves vector store metadata by its ID via API."""
         return self._run_sync(self._internal_retrieve_vs_async(vector_store_id))
 
@@ -739,14 +861,18 @@ class VectorStoreClient:
         self, collection_name: str
     ) -> ValidationInterface.VectorStoreRead:
         """Synchronously retrieves vector store metadata by its collection name via API."""
-        return self._run_sync(self._internal_retrieve_vs_by_collection_async(collection_name))
+        return self._run_sync(
+            self._internal_retrieve_vs_by_collection_async(collection_name)
+        )
 
     # --- Optional: Keep direct sync method if useful internally or for specific perf needs ---
     def retrieve_vector_store_sync(
         self, vector_store_id: str
     ) -> ValidationInterface.VectorStoreRead:
         """Synchronous retrieval using the sync client directly (less overhead than asyncio.run)."""
-        logging_utility.info("Retrieving vector store %s via sync client", vector_store_id)
+        logging_utility.info(
+            "Retrieving vector store %s via sync client", vector_store_id
+        )
         try:
             response = self._sync_api_client.get(f"/v1/vector-stores/{vector_store_id}")
             response.raise_for_status()

@@ -33,7 +33,11 @@ class FileClient:
         logging_utility.info("FileClient initialized with base_url: %s", self.base_url)
 
     def upload_file(
-        self, file_path: str, user_id: str, purpose: str, metadata: Optional[Dict[str, Any]] = None
+        self,
+        file_path: str,
+        user_id: str,
+        purpose: str,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.FileResponse:
         """
         Upload a file to the server following the OpenAI files endpoint style.
@@ -49,22 +53,27 @@ class FileClient:
         """
         filename = os.path.basename(file_path)
         mime_type, _ = mimetypes.guess_type(file_path)
-        mime_type = mime_type or 'application/octet-stream'
+        mime_type = mime_type or "application/octet-stream"
 
         logging_utility.info(
-            "Uploading file: %s with purpose: %s for user: %s", file_path, purpose, user_id
+            "Uploading file: %s with purpose: %s for user: %s",
+            file_path,
+            purpose,
+            user_id,
         )
 
         try:
-            with open(file_path, 'rb') as file_object:
+            with open(file_path, "rb") as file_object:
                 form_data = {"purpose": purpose, "user_id": user_id}
-                files = {'file': (filename, file_object, mime_type)}
+                files = {"file": (filename, file_object, mime_type)}
 
                 response = self.client.post("/v1/uploads", data=form_data, files=files)
                 response.raise_for_status()
 
                 file_data = response.json()
-                validated_response = ent_validator.FileResponse.model_validate(file_data)
+                validated_response = ent_validator.FileResponse.model_validate(
+                    file_data
+                )
                 logging_utility.info(
                     "File uploaded successfully with ID: %s", validated_response.id
                 )
@@ -74,7 +83,9 @@ class FileClient:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while uploading file: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while uploading file: %s", str(e)
+            )
             raise
         except Exception as e:
             logging_utility.error("An error occurred while uploading file: %s", str(e))
@@ -102,29 +113,36 @@ class FileClient:
             FileResponse: The response from the server with file metadata.
         """
         mime_type, _ = mimetypes.guess_type(file_name)
-        mime_type = mime_type or 'application/octet-stream'
+        mime_type = mime_type or "application/octet-stream"
 
         logging_utility.info(
-            "Uploading file object: %s with purpose: %s for user: %s", file_name, purpose, user_id
+            "Uploading file object: %s with purpose: %s for user: %s",
+            file_name,
+            purpose,
+            user_id,
         )
 
         try:
             form_data = {"purpose": purpose, "user_id": user_id}
-            files = {'file': (file_name, file_object, mime_type)}
+            files = {"file": (file_name, file_object, mime_type)}
 
             response = self.client.post("/v1/uploads", data=form_data, files=files)
             response.raise_for_status()
 
             file_data = response.json()
             validated_response = ent_validator.FileResponse.model_validate(file_data)
-            logging_utility.info("File uploaded successfully with ID: %s", validated_response.id)
+            logging_utility.info(
+                "File uploaded successfully with ID: %s", validated_response.id
+            )
             return validated_response
 
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while uploading file: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while uploading file: %s", str(e)
+            )
             raise
         except Exception as e:
             logging_utility.error("An error occurred while uploading file: %s", str(e))
@@ -147,14 +165,18 @@ class FileClient:
 
             file_data = response.json()
             validated_response = ent_validator.FileResponse.model_validate(file_data)
-            logging_utility.info("File metadata retrieved successfully for ID: %s", file_id)
+            logging_utility.info(
+                "File metadata retrieved successfully for ID: %s", file_id
+            )
             return validated_response
 
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while retrieving file: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while retrieving file: %s", str(e)
+            )
             raise
         except Exception as e:
             logging_utility.error("An error occurred while retrieving file: %s", str(e))
@@ -176,14 +198,20 @@ class FileClient:
             response.raise_for_status()
 
             deletion_result = response.json()
-            logging_utility.info("File deletion result for ID %s: %s", file_id, deletion_result)
+            logging_utility.info(
+                "File deletion result for ID %s: %s", file_id, deletion_result
+            )
             return deletion_result
 
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while deleting the file: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while deleting the file: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while deleting the file: %s", str(e))
+            logging_utility.error(
+                "An error occurred while deleting the file: %s", str(e)
+            )
             raise
 
     def download_file_as_object(self, file_id: str) -> io.BytesIO:
@@ -204,7 +232,9 @@ class FileClient:
             logging_utility.error("HTTP error in download_file_as_object: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error("Unexpected error in download_file_as_object: %s", str(e))
+            logging_utility.error(
+                "Unexpected error in download_file_as_object: %s", str(e)
+            )
             raise
 
     def get_signed_url(self, file_id: str) -> str:

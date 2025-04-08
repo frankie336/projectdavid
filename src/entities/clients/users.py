@@ -32,7 +32,9 @@ class UsersClient:
             response.raise_for_status()
             created_user = response.json()
             validated_user = ent_validator.UserRead(**created_user)
-            logging_utility.info("User created successfully with id: %s", validated_user.id)
+            logging_utility.info(
+                "User created successfully with id: %s", validated_user.id
+            )
             return validated_user
         except httpx.HTTPStatusError as e:
             logging_utility.error("HTTP error occurred while creating user: %s", str(e))
@@ -51,7 +53,9 @@ class UsersClient:
             logging_utility.info("User retrieved successfully")
             return validated_user
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while retrieving user: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while retrieving user: %s", str(e)
+            )
             raise
         except Exception as e:
             logging_utility.error("An error occurred while retrieving user: %s", str(e))
@@ -68,7 +72,8 @@ class UsersClient:
                 **user_data
             )  # Validate data using Pydantic model
             response = self.client.put(
-                f"/v1/users/{user_id}", json=validated_data.model_dump(exclude_unset=True)
+                f"/v1/users/{user_id}",
+                json=validated_data.model_dump(exclude_unset=True),
             )
             response.raise_for_status()
             updated_user = response.json()
@@ -103,7 +108,9 @@ class UsersClient:
             logging_utility.error("An error occurred while deleting user: %s", str(e))
             raise
 
-    def list_assistants_by_user(self, user_id: str) -> List[ent_validator.AssistantRead]:
+    def list_assistants_by_user(
+        self, user_id: str
+    ) -> List[ent_validator.AssistantRead]:
         logging_utility.info("Retrieving assistants for user with id: %s", user_id)
         try:
             response = self.client.get(f"/v1/users/{user_id}/assistants")
@@ -112,11 +119,17 @@ class UsersClient:
             validated_assistants = [
                 ent_validator.AssistantRead(**assistant) for assistant in assistants
             ]
-            logging_utility.info("Assistants retrieved successfully for user id: %s", user_id)
+            logging_utility.info(
+                "Assistants retrieved successfully for user id: %s", user_id
+            )
             return validated_assistants
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while retrieving assistants: %s", str(e))
+            logging_utility.error(
+                "HTTP error occurred while retrieving assistants: %s", str(e)
+            )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while retrieving assistants: %s", str(e))
+            logging_utility.error(
+                "An error occurred while retrieving assistants: %s", str(e)
+            )
             raise

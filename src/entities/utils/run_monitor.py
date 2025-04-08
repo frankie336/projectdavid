@@ -16,7 +16,9 @@ class HttpRunMonitor:
         run_id: str,
         runs_client: Any,
         actions_client: Any,
-        on_status_change: Callable[[str, str, Optional[str], Optional[Dict[str, Any]]], None],
+        on_status_change: Callable[
+            [str, str, Optional[str], Optional[Dict[str, Any]]], None
+        ],
         on_complete: Callable[[str, str, Optional[Dict[str, Any]]], None],
         on_error: Callable[[str, str], None],
         on_action_required: Optional[
@@ -75,10 +77,16 @@ class HttpRunMonitor:
 
                 if current_status == ACTION_REQUIRED_STATUS and self.on_action_required:
                     try:
-                        pending_actions = self.actions_client.get_pending_actions(self.run_id)
-                        self.on_action_required(self.run_id, run.dict(), pending_actions)
+                        pending_actions = self.actions_client.get_pending_actions(
+                            self.run_id
+                        )
+                        self.on_action_required(
+                            self.run_id, run.dict(), pending_actions
+                        )
                     except Exception as action_err:
-                        self.on_error(self.run_id, f"Error fetching actions: {action_err}")
+                        self.on_error(
+                            self.run_id, f"Error fetching actions: {action_err}"
+                        )
 
                 if current_status in TERMINAL_STATUSES:
                     self.on_complete(self.run_id, current_status, run.dict())

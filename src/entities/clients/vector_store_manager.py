@@ -27,12 +27,14 @@ logging_utility = LoggingUtility()
 
 class VectorStoreManager(BaseVectorStore):
 
-    def __init__(self, vector_store_host: str = 'localhost', port: int = 6333):
+    def __init__(self, vector_store_host: str = "localhost", port: int = 6333):
 
         self.vector_store_host = vector_store_host
         self.client = QdrantClient(host=self.vector_store_host, port=port)
         self.active_stores: Dict[str, dict] = {}
-        logging_utility.info(f"Initialized HTTP-based VectorStoreManager. Source: {__file__}")
+        logging_utility.info(
+            f"Initialized HTTP-based VectorStoreManager. Source: {__file__}"
+        )
 
     def _generate_vector_id(self) -> str:
         return str(uuid.uuid4())
@@ -53,14 +55,18 @@ class VectorStoreManager(BaseVectorStore):
             existing_collections = self.client.get_collections().collections
             if any(c.name == collection_name for c in existing_collections):
                 # Or handle differently, maybe return info? For now, raise.
-                raise StoreExistsError(f"Qdrant collection '{collection_name}' already exists.")
+                raise StoreExistsError(
+                    f"Qdrant collection '{collection_name}' already exists."
+                )
         except Exception as e:
             # Handle potential connection errors during check
             logging_utility.warning(f"Could not check existing collections: {e}")
             # Decide if you want to proceed cautiously or raise
 
         # Use the unique collection_name provided by the client for Qdrant interaction
-        logging_utility.info(f"Attempting to create Qdrant collection: {collection_name}")
+        logging_utility.info(
+            f"Attempting to create Qdrant collection: {collection_name}"
+        )
         try:
             normalized_distance = distance.upper()
             if normalized_distance not in Distance.__members__:
@@ -81,7 +87,9 @@ class VectorStoreManager(BaseVectorStore):
                 "vector_size": vector_size,
                 "distance": normalized_distance,
             }
-            logging_utility.info(f"Successfully created Qdrant collection: {collection_name}")
+            logging_utility.info(
+                f"Successfully created Qdrant collection: {collection_name}"
+            )
             # Return info about the collection that was created
             return {"collection_name": collection_name, "status": "created"}
 
@@ -90,10 +98,16 @@ class VectorStoreManager(BaseVectorStore):
                 f"Create store failed for collection '{collection_name}': {str(e)}"
             )
             # Raise a specific error type if possible
-            raise VectorStoreError(f"Qdrant collection creation failed: {str(e)}") from e
+            raise VectorStoreError(
+                f"Qdrant collection creation failed: {str(e)}"
+            ) from e
 
     def add_to_store(
-        self, store_name: str, texts: List[str], vectors: List[List[float]], metadata: List[dict]
+        self,
+        store_name: str,
+        texts: List[str],
+        vectors: List[List[float]],
+        metadata: List[dict],
     ):
         if not vectors:
             raise ValueError("Empty vectors list")
@@ -105,7 +119,9 @@ class VectorStoreManager(BaseVectorStore):
                 raise TypeError(f"Vector {i} contains non-floats")
         points = [
             PointStruct(
-                id=self._generate_vector_id(), vector=vec, payload={"text": txt, "metadata": meta}
+                id=self._generate_vector_id(),
+                vector=vec,
+                payload={"text": txt, "metadata": meta},
             )
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
@@ -137,7 +153,9 @@ class VectorStoreManager(BaseVectorStore):
             if filters and "key" in filters and "value" in filters:
                 flt = Filter(
                     must=[
-                        FieldCondition(key=filters["key"], match=MatchValue(value=filters["value"]))
+                        FieldCondition(
+                            key=filters["key"], match=MatchValue(value=filters["value"])
+                        )
                     ]
                 )
             # Prepare extra parameters for the search request.
@@ -202,11 +220,19 @@ class VectorStoreManager(BaseVectorStore):
     def delete_file_from_store(self, store_name: str, file_path: str) -> dict:
         try:
             payload = {
-                "filter": {"must": [{"key": "metadata.source", "match": {"value": file_path}}]}
+                "filter": {
+                    "must": [{"key": "metadata.source", "match": {"value": file_path}}]
+                }
             }
-            res = self.client.post(f"/collections/{store_name}/points/delete", json=payload)
+            res = self.client.post(
+                f"/collections/{store_name}/points/delete", json=payload
+            )
             res.raise_for_status()
-            return {"deleted_file": file_path, "store_name": store_name, "status": "success"}
+            return {
+                "deleted_file": file_path,
+                "store_name": store_name,
+                "status": "success",
+            }
         except Exception as e:
             logging_utility.error(f"File deletion failed: {str(e)}")
             raise VectorStoreError(f"File deletion failed: {str(e)}")
@@ -232,7 +258,9 @@ class VectorStoreManager(BaseVectorStore):
             # Qdrant returns a dict with a "result" key containing a list of points.
             points = result.get("result", [])
             if not points:
-                raise VectorStoreError(f"Point '{point_id}' not found in store '{store_name}'.")
+                raise VectorStoreError(
+                    f"Point '{point_id}' not found in store '{store_name}'."
+                )
             return points[0]
         except Exception as e:
             logging_utility.error(f"Get point by ID failed: {str(e)}")

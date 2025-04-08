@@ -24,10 +24,14 @@ class MonitorLauncher:
 
         # --- Default handlers ---
         def default_status_change(run_id, new_status, old_status, run_data):
-            logging_utility.info(f"[MONITOR STATUS] {run_id}: {old_status} → {new_status}")
+            logging_utility.info(
+                f"[MONITOR STATUS] {run_id}: {old_status} → {new_status}"
+            )
 
         def default_completion(run_id, final_status, run_data):
-            logging_utility.info(f"[MONITOR COMPLETE] {run_id} ended with status: {final_status}")
+            logging_utility.info(
+                f"[MONITOR COMPLETE] {run_id} ended with status: {final_status}"
+            )
 
         def default_error(run_id, error_msg):
             logging_utility.error(f"[MONITOR ERROR] {run_id}: {error_msg}")
@@ -45,7 +49,9 @@ class MonitorLauncher:
                         f"[ACTION] ID: {action_id}, Tool: {tool_name}, Args: {args}"
                     )
             except Exception as e:
-                logging_utility.error(f"[MonitorLauncher] Error processing actions: {e}")
+                logging_utility.error(
+                    f"[MonitorLauncher] Error processing actions: {e}"
+                )
 
         # --- Use defaults unless overridden ---
         self.monitor = self.events.HttpRunMonitor(
@@ -60,7 +66,9 @@ class MonitorLauncher:
 
     def _monitor_loop(self):
         try:
-            logging_utility.info(f"[MonitorLauncher] Starting monitor for run {self.run_id}")
+            logging_utility.info(
+                f"[MonitorLauncher] Starting monitor for run {self.run_id}"
+            )
             self.monitor.start()
         except Exception as e:
             logging_utility.error(f"[MonitorLauncher] Monitoring thread failed: {e}")

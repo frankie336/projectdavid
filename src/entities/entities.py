@@ -35,8 +35,10 @@ class Entities:
         Initialize the main client with configuration.
         Optionally, a configuration object can be injected to decouple from environment variables.
         """
-        self.base_url = base_url or os.getenv('ASSISTANTS_BASE_URL', 'http://localhost:9000/')
-        self.api_key = api_key or os.getenv('API_KEY', 'your_api_key')
+        self.base_url = base_url or os.getenv(
+            "ASSISTANTS_BASE_URL", "http://localhost:9000/"
+        )
+        self.api_key = api_key or os.getenv("API_KEY", "your_api_key")
 
         logging_utility.info("Entities initialized with base_url: %s", self.base_url)
 
@@ -61,31 +63,41 @@ class Entities:
     @property
     def users(self) -> UsersClient:
         if self._users_client is None:
-            self._users_client = UsersClient(base_url=self.base_url, api_key=self.api_key)
+            self._users_client = UsersClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._users_client
 
     @property
     def assistants(self) -> AssistantsClient:
         if self._assistants_client is None:
-            self._assistants_client = AssistantsClient(base_url=self.base_url, api_key=self.api_key)
+            self._assistants_client = AssistantsClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._assistants_client
 
     @property
     def tools(self) -> ToolsClient:
         if self._tool_service is None:
-            self._tool_service = ToolsClient(base_url=self.base_url, api_key=self.api_key)
+            self._tool_service = ToolsClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._tool_service
 
     @property
     def threads(self) -> ThreadsClient:
         if self._thread_service is None:
-            self._thread_service = ThreadsClient(base_url=self.base_url, api_key=self.api_key)
+            self._thread_service = ThreadsClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._thread_service
 
     @property
     def messages(self) -> MessagesClient:
         if self._messages_client is None:
-            self._messages_client = MessagesClient(base_url=self.base_url, api_key=self.api_key)
+            self._messages_client = MessagesClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._messages_client
 
     def submit_function_call_output(self, thread, assistant_id, tool_id, content):
@@ -101,19 +113,25 @@ class Entities:
     @property
     def actions(self) -> ActionsClient:
         if self._actions_client is None:
-            self._actions_client = ActionsClient(base_url=self.base_url, api_key=self.api_key)
+            self._actions_client = ActionsClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._actions_client
 
     @property
     def inference(self) -> InferenceClient:
         if self._inference_client is None:
-            self._inference_client = InferenceClient(base_url=self.base_url, api_key=self.api_key)
+            self._inference_client = InferenceClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
         return self._inference_client
 
     @property
     def synchronous_inference_stream(self) -> SynchronousInferenceStream:
         if self._synchronous_inference_stream is None:
-            self._synchronous_inference_stream = SynchronousInferenceStream(self.inference)
+            self._synchronous_inference_stream = SynchronousInferenceStream(
+                self.inference
+            )
         return self._synchronous_inference_stream
 
     @property
@@ -125,6 +143,8 @@ class Entities:
     @property
     def vectors(self) -> VectorStoreClient:
         if self._vectors_client is None:
-            self._vectors_client = VectorStoreClient(base_url=self.base_url, api_key=self.api_key)
+            self._vectors_client = VectorStoreClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
 
         return self._vectors_client
