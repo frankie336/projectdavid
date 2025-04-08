@@ -14,28 +14,27 @@ license = { text = "MIT" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
 
-
 dependencies = [
     "httpx>=0.24.1",
     "pydantic>=2.0",
     "python-dotenv>=1.0",
     "aiofiles>=23.2.1",
     "ollama>=0.3.0",
-    "entities_common>=0.1.14",
+    "entities_common>=0.1.14",       # 🧠 Internal, must resolve from Test PyPI
     "qdrant-client",
     "pdfplumber",
     "validators",
     "sentence-transformers"
 ]
 
-optional-dependencies.dev = [
+[project.optional-dependencies]
+dev = [
     "black>=23.3",
     "isort>=5.12",
     "pytest>=7.2",
     "mypy>=1.0",
     "build",
-    "twine",
-
+    "twine"
 ]
 
 classifiers = [
@@ -74,7 +73,6 @@ max-line-length = 200
 extend-ignore = ["E203"]
 exclude = [".venv", ".git", "__pycache__", "build", "dist"]
 
-# Optional: If you ever switch to python-semantic-release
 [tool.semantic_release]
 version_source = "tag"
 upload_to_pypi = false
