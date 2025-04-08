@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/frankie336/projectdavid/compare/v1.1.1...v1.1.2) (2025-04-08)
+
+
+### Bug Fixes
+
+* optional key param ([21e7d9a](https://github.com/frankie336/projectdavid/commit/21e7d9aac7f270625b1ef11522badf2d3ce2efb7))
+
 ## [1.1.1](https://github.com/frankie336/projectdavid/compare/v1.1.0...v1.1.1) (2025-04-08)
 
 
