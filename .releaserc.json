@@ -2,8 +2,7 @@
   "branches": [
     "main",
     "master",
-    { "name": "dev", "prerelease": true },
-    { "name": "feature/**", "prerelease": true }
+    { "name": "dev", "prerelease": true }
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",

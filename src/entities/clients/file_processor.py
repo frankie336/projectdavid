@@ -9,7 +9,7 @@ from pathlib import Path
 try:
     from typing import LiteralString  # Python 3.11+
 except ImportError:
-    from typing_extensions import LiteralString  # For Python 3.10 and below
+    from typing_extensions import LiteralString
 
 import numpy as np
 import pdfplumber
