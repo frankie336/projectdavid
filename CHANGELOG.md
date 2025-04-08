@@ -1,3 +1,10 @@
+## [1.0.24](https://github.com/frankie336/entitites_sdk/compare/v1.0.23...v1.0.24) (2025-04-08)
+
+
+### Bug Fixes
+
+* name change-projectdavid ([0632dc7](https://github.com/frankie336/entitites_sdk/commit/0632dc74fc7b3a500365b95cde21c9dbc6d3e4fc))
+
 ## [1.0.23](https://github.com/frankie336/entitites_sdk/compare/v1.0.22...v1.0.23) (2025-04-08)
 
 
