@@ -1,6 +1,10 @@
-
 {
-  "branches": ["main", "master"],
+  "branches": [
+    "main",
+    "master",
+    { "name": "dev", "prerelease": true },
+    { "name": "feature/**", "prerelease": true }
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -13,7 +17,6 @@
     [
       "@semantic-release/exec",
       {
-
         "prepareCmd": "python scripts/update_pyproject_versions.py ${nextRelease.version} src/api/entities_api/pyproject.toml src/sandbox/pyproject.toml"
       }
     ],
@@ -21,7 +24,6 @@
     [
       "@semantic-release/git",
       {
-
         "assets": [
           "CHANGELOG.md",
           "src/api/entities_api/pyproject.toml",
