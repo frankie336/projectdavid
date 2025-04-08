@@ -1,3 +1,11 @@
+## [1.1.5](https://github.com/frankie336/projectdavid/compare/v1.1.4...v1.1.5) (2025-04-08)
+
+
+### Bug Fixes
+
+* stream timeout issue[#4](https://github.com/frankie336/projectdavid/issues/4) ([c01e345](https://github.com/frankie336/projectdavid/commit/c01e34572e946b20342aa7dac59c14a416c332da))
+* stream timeout issue[#4](https://github.com/frankie336/projectdavid/issues/4) ([1173ded](https://github.com/frankie336/projectdavid/commit/1173ded023218ac1c1aae8936f11a32398f9b6a5))
+
 ## [1.1.4](https://github.com/frankie336/projectdavid/compare/v1.1.3...v1.1.4) (2025-04-08)
 
 
