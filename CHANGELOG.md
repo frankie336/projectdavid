@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/frankie336/projectdavid/compare/v1.0.26...v1.1.0) (2025-04-08)
+
+
+### Features
+
+* add support for passing provider api keys during synchronous streams ([48df025](https://github.com/frankie336/projectdavid/commit/48df025d2da7c229d70ab7a7cb93410dc2624f32))
+* add support for passing provider api keys during synchronous streams ([d0333b1](https://github.com/frankie336/projectdavid/commit/d0333b13e6952c66cf386fa07282a496d4f9a3d5))
+
 ## [1.0.26](https://github.com/frankie336/projectdavid/compare/v1.0.25...v1.0.26) (2025-04-08)
 
 
