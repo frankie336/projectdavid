@@ -54,15 +54,18 @@ class SynchronousInferenceStream:
         """
 
         async def _stream_chunks_async():
-            logging_utility.info("Sending streaming inference request: %s", {
-                "provider": provider,
-                "model": model,
-                "api_key": api_key,
-                "thread_id": self.thread_id,
-                "message_id": self.message_id,
-                "run_id": self.run_id,
-                "assistant_id": self.assistant_id,
-            })
+            logging_utility.info(
+                "Sending streaming inference request: %s",
+                {
+                    "provider": provider,
+                    "model": model,
+                    "api_key": api_key,
+                    "thread_id": self.thread_id,
+                    "message_id": self.message_id,
+                    "run_id": self.run_id,
+                    "assistant_id": self.assistant_id,
+                },
+            )
             async for chunk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
@@ -85,10 +88,14 @@ class SynchronousInferenceStream:
             except StopAsyncIteration:
                 break
             except asyncio.TimeoutError:
-                logging_utility.error("[TimeoutError] Timeout occurred, stopping stream.")
+                logging_utility.error(
+                    "[TimeoutError] Timeout occurred, stopping stream."
+                )
                 break
             except Exception as e:
-                logging_utility.error("Unexpected error during streaming completions: %s", e)
+                logging_utility.error(
+                    "Unexpected error during streaming completions: %s", e
+                )
                 break
 
     @classmethod
