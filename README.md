@@ -38,48 +38,184 @@ pip install projectdavid
 
 ##  Quick Start
 
+**Create a user**
+
 ```python
 from projectdavid import Entity
-import os
 from dotenv import load_dotenv
 
-load_dotenv()
+
+# In dev environments the base url will default 
+# to http://localhost:9000
+# In prod encvironments, you need to set it to your FDQN
 
 client = Entity(
       base_url='http://localhost:9000',
       api_key=os.getenv("API_KEY")
 )
-
-user = client.users.create_user(name="demo_user")
-thread = client.threads.create_thread(participant_ids=[user.id])
-assistant = client.assistants.create_assistant(name="Demo Assistant")
-
-message = client.messages.create_message(
-      thread_id=thread.id,
-      role="user",
-      content="Hello, assistant!",
-      assistant_id=assistant.id
-)
-
-run = client.runs.create_run(
-      assistant_id=assistant.id,
-      thread_id=thread.id
-)
-
-stream = client.inference.stream_inference_response(
-      provider="Hyperbolic",
-      model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      thread_id=thread.id,
-      message_id=message.id,
-      run_id=run.id,
-      assistant_id=assistant.id
-)
-
-for chunk in stream:
-      print(chunk)
+user = client.users.create_user(name='test_user')
 ```
 
+```bash
+print(user.id)
+user_s1xkwzViWkq0dqUBGri9EU
+```
+
+
+
+
+```python
+
+assistant = client.assistants.create_assistant(name='test_assistant',
+                                               instructions='You are a helpful AI assistant',
+
+                                               )
+
+```
+
+```bash
+print(assistant.id)
+asst_3SrhB8vCFTl56M0dtjbqyV
+```
+
+The above steps can be repeated at whatever scale and frequency needed: you can create unlimted users,
+and unlimited asistants
+
 ---
+
+**Setting up a prompt and handling response**
+
+
+- Entities supports synchronous streams
+
+
+
+```python
+
+# step 1 - Create a thread  
+
+thread = client.threads.create_thread(participant_ids=["user_s1xkwzViWkq0dqUBGri9EU"])
+
+
+# step 2 - Create a message 
+
+message = client.messages.create_message(
+      thread_id="thread_kn7vwRPfutWyvwl4um1VCV",
+      role="user",
+      content="Hello, assistant!",
+      assistant_id="asst_3SrhB8vCFTl56M0dtjbqyV"
+)
+
+# step 3 - Create a run 
+
+run = client.runs.create_run(
+      assistant_id="asst_3SrhB8vCFTl56M0dtjbqyV",
+      thread_id="thread_kn7vwRPfutWyvwl4um1VCV"
+)
+
+
+# Instantiate the syncronous streaming helper 
+
+
+
+sync_stream = client.synchronous_inference_stream
+
+
+# step 4 - Set up the stream
+
+sync_stream.setup(
+            user_id="user_s1xkwzViWkq0dqUBGri9EU",
+            thread_id="thread_kn7vwRPfutWyvwl4um1VCV",
+            assistant_id="default",
+            message_id=message.id,
+            run_id=run.id,
+
+        )
+
+# step 5 - Stream the response
+
+import logging
+import json
+
+logging.basicConfig(level=logging.INFO)
+
+for chunk in sync_stream.stream_chunks(
+    provider="Hyperbolic",
+    model="hyperbolic/deepseek-ai/DeepSeek-V3",
+):
+    logging.info(json.dumps(chunk, indent=2))
+
+```
+
+
+A snip  of the stream strcuture:
+
+```bash
+
+INFO:root:{
+  "status": "handshake"
+}
+INFO:root:{
+  "status": "initializing"
+}
+INFO:root:{
+  "status": "processing"
+}
+INFO:root:{
+  "type": "content",
+  "content": "Hello",
+  "first_chunk": true
+}
+INFO:root:{
+  "type": "content",
+  "content": "!"
+}
+INFO:root:{
+  "type": "content",
+  "content": " It"
+}
+INFO:root:{
+  "type": "content",
+  "content": "'s"
+}
+INFO:root:{
+  "type": "content",
+  "content": " great"
+}
+INFO:root:{
+  "type": "content",
+  "content": " to"
+}
+INFO:root:{
+  "type": "content",
+  "content": " hear"
+}
+INFO:root:{
+  "type": "content",
+  "content": " from"
+}
+INFO:root:{
+  "type": "content",
+  "content": " you"
+}
+INFO:root:{
+  "type": "content",
+  "content": "."
+}
+INFO:root:{
+  "type": "content",
+  "content": " How"
+}
+INFO:root:{
+  "type": "content",
+  "content": " can"
+}
+```
+
+
+---
+
+
 
 ## 📚 Documentation
 
