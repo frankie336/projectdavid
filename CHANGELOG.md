@@ -1,3 +1,12 @@
+## [1.0.26](https://github.com/frankie336/projectdavid/compare/v1.0.25...v1.0.26) (2025-04-08)
+
+
+### Bug Fixes
+
+* dependency array ([2e8be32](https://github.com/frankie336/projectdavid/commit/2e8be32d7c03aa413eaffb90e54c4e17619fbc0f))
+* dependency array ([63e7f1a](https://github.com/frankie336/projectdavid/commit/63e7f1a68b34dd082ca553efe8c449f8486b62d5))
+* requirements.txt ([4d24aa4](https://github.com/frankie336/projectdavid/commit/4d24aa412ff43fdc3621c314b5e6fe3eab504cca))
+
 ## [1.0.25](https://github.com/frankie336/entitites_sdk/compare/v1.0.24...v1.0.25) (2025-04-08)
 
 
