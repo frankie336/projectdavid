@@ -1,3 +1,29 @@
+## [1.0.20](https://github.com/frankie336/entitites_sdk/compare/v1.0.19...v1.0.20) (2025-04-08)
+
+
+### Bug Fixes
+
+* black formatting. ([34572e3](https://github.com/frankie336/entitites_sdk/commit/34572e32c5858bda4b19efbc21455609d79a2c84))
+* conditional release in ci. ([22242ee](https://github.com/frankie336/entitites_sdk/commit/22242ee05ea0ca5552b82d56c7ac7fcb2bba0ad7))
+* def _internal_add_file_to_vector_store_async-validation-type ([fa97c40](https://github.com/frankie336/entitites_sdk/commit/fa97c4064ea542601199b117f6c4a1d6a6e69fa6))
+* entities release.json ([884a2b5](https://github.com/frankie336/entitites_sdk/commit/884a2b56aa6d864dab45a718ae135bcef7206895))
+* entities release.json2 ([8c0c8d6](https://github.com/frankie336/entitites_sdk/commit/8c0c8d6c078fa04c4aeb230a1680e430c379c7a4))
+* entities release.json3 ([0c09a5f](https://github.com/frankie336/entitites_sdk/commit/0c09a5ff942cfd02b86906feb8cb8775e02a6a08))
+* entities version in requirements.txt. ([34d7394](https://github.com/frankie336/entitites_sdk/commit/34d7394199b86692ef4ddaa4b5c6cd721afefe81))
+* entities version in requirements.txt2. ([bd47a4c](https://github.com/frankie336/entitites_sdk/commit/bd47a4c8071fedec21c7418c5c7da5c3ee76711b))
+* entities version in requirements.txt3. ([3d49ff9](https://github.com/frankie336/entitites_sdk/commit/3d49ff9d20271c6bb02f01f622e7b8bffdb81d24))
+* entities_common version. ([edd6cd2](https://github.com/frankie336/entitites_sdk/commit/edd6cd24bf5d3fd16c2fa159316e166f347605d6))
+* isort ([072f3c4](https://github.com/frankie336/entitites_sdk/commit/072f3c430903c778d8504524f4b220d99aaaa0a3))
+* isort import order ([6595b0d](https://github.com/frankie336/entitites_sdk/commit/6595b0d7e1ba800d06e85f32d3dfa793541ff9b6))
+* isort imports ([0a16a41](https://github.com/frankie336/entitites_sdk/commit/0a16a41b68160f7afffe1d951879ad01d9f84c55))
+* isort imports3 ([fe515b1](https://github.com/frankie336/entitites_sdk/commit/fe515b14e804b4381eed23e2568a980b051c76ed))
+* publish ([6eee97a](https://github.com/frankie336/entitites_sdk/commit/6eee97ad114cd4f119a9e6610b8981c8739d9eaa))
+* remove non release branch from CI logic ([4e37ece](https://github.com/frankie336/entitites_sdk/commit/4e37ece55899dd64ee666cb6327393d5fc9316f2))
+* remove non release branch from CI logic2 ([db1bb94](https://github.com/frankie336/entitites_sdk/commit/db1bb9422cc70326001f14ee82df4963c6c3a954))
+* run black formatting. ([babcdf1](https://github.com/frankie336/entitites_sdk/commit/babcdf178ee3ce5e159b890dca64a10350f2e70e))
+* scripts/update_pyproject_version.py ([ee62a49](https://github.com/frankie336/entitites_sdk/commit/ee62a49866c1a36058e56ca801556a0c533b95d1))
+* toml file path ([f1ec5b4](https://github.com/frankie336/entitites_sdk/commit/f1ec5b4df7c5ad02cf811f5fb9dcd956045defe6))
+
 ## [1.0.19](https://github.com/frankie336/entitites_sdk/compare/v1.0.18...v1.0.19) (2025-04-07)
 
 
