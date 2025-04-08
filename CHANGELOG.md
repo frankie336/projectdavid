@@ -1,3 +1,10 @@
+## [1.0.22](https://github.com/frankie336/entitites_sdk/compare/v1.0.21...v1.0.22) (2025-04-08)
+
+
+### Bug Fixes
+
+* name change ([654c9e9](https://github.com/frankie336/entitites_sdk/commit/654c9e936bf28d7e0c754c93ca9f5d68b16b4f36))
+
 ## [1.0.21](https://github.com/frankie336/entitites_sdk/compare/v1.0.20...v1.0.21) (2025-04-08)
 
 
