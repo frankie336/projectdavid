@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import suppress
-from typing import Optional, AsyncGenerator # Added Optional, AsyncGenerator
+from typing import AsyncGenerator, Optional  # Added Optional, AsyncGenerator
 
 
 class SynchronousInferenceStream:
@@ -11,11 +11,12 @@ class SynchronousInferenceStream:
     try:
         asyncio.set_event_loop(_GLOBAL_LOOP)
     except RuntimeError as e:
-        print(f"[Warning] Could not set global event loop: {e}. Using existing loop if available.")
-        _GLOBAL_LOOP = asyncio.get_event_loop() # Fallback to existing loop
+        print(
+            f"[Warning] Could not set global event loop: {e}. Using existing loop if available."
+        )
+        _GLOBAL_LOOP = asyncio.get_event_loop()  # Fallback to existing loop
 
-
-    def __init__(self, inference_client): # Renamed parameter for clarity
+    def __init__(self, inference_client):  # Renamed parameter for clarity
         self.inference_client = inference_client
         self.user_id = None
         self.thread_id = None
@@ -56,8 +57,8 @@ class SynchronousInferenceStream:
         """
         # Ensure the loop is available and not closed before starting
         if not self._GLOBAL_LOOP or self._GLOBAL_LOOP.is_closed():
-             print("[Error] Event loop is not available or closed. Cannot stream.")
-             raise RuntimeError("SynchronousInferenceStream event loop is closed.")
+            print("[Error] Event loop is not available or closed. Cannot stream.")
+            raise RuntimeError("SynchronousInferenceStream event loop is closed.")
 
         async def _stream_chunks_async() -> AsyncGenerator[dict, None]:
             # Pass the api_key down to the underlying async method
@@ -88,18 +89,22 @@ class SynchronousInferenceStream:
                 break
             except asyncio.TimeoutError:
                 # Timeout occurred waiting for the next chunk
-                print(f"[TimeoutError] Timeout ({timeout_per_chunk}s) waiting for next chunk, stopping stream.")
+                print(
+                    f"[TimeoutError] Timeout ({timeout_per_chunk}s) waiting for next chunk, stopping stream."
+                )
                 break
             except RuntimeError as e:
-                 # Catch cases like "Event loop is closed" if it happens mid-stream
-                 print(f"[Error] Runtime error during streaming (loop closed?): {e}")
-                 import traceback
-                 traceback.print_exc()
-                 break
+                # Catch cases like "Event loop is closed" if it happens mid-stream
+                print(f"[Error] Runtime error during streaming (loop closed?): {e}")
+                import traceback
+
+                traceback.print_exc()
+                break
             except Exception as e:
                 # Catch any other unexpected errors during streaming
                 print(f"[Error] Exception during streaming: {e}")
                 import traceback
+
                 traceback.print_exc()
                 break
 
@@ -117,19 +122,20 @@ class SynchronousInferenceStream:
             if loop.is_running():
                 loop.stop()
             # Close the loop
-            with suppress(Exception): # Suppress potential errors during close
-                 loop.close()
+            with suppress(Exception):  # Suppress potential errors during close
+                loop.close()
             print("[Info] Synchronous event loop closed.")
             # Optionally clear the class attribute
             # cls._GLOBAL_LOOP = None
-
 
     def close(self):
         """Closes the underlying inference client if possible."""
         print("[Info] Closing SynchronousInferenceStream wrapper.")
         # Attempt to close the inference client if it has a 'close' method
         with suppress(Exception):
-            if hasattr(self.inference_client, 'close') and callable(self.inference_client.close):
+            if hasattr(self.inference_client, "close") and callable(
+                self.inference_client.close
+            ):
                 self.inference_client.close()
         # Note: Instance closing does not shut down the shared _GLOBAL_LOOP.
         # Use the classmethod shutdown_loop() for that when appropriate.
