@@ -4,7 +4,6 @@ from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
-
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,

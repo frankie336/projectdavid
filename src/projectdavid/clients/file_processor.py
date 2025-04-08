@@ -14,9 +14,7 @@ except ImportError:
 import numpy as np
 import pdfplumber
 import validators
-
 from projectdavid_common import UtilsInterface
-
 from sentence_transformers import SentenceTransformer
 
 logging_utility = UtilsInterface.LoggingUtility()
