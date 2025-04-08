@@ -135,11 +135,11 @@ jobs:
           if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
             echo "Publishing to Production PyPI"
             echo "repo=${{ env.PROD_PYPI_URL }}" >> $GITHUB_OUTPUT
-            echo "pypi_token_name=PYPI_API_TOKEN" >> $GITHUB_OUTPUT
+            echo "pypi_token_name=PROD_PYPI_TOKEN" >> $GITHUB_OUTPUT
           elif [[ "$BRANCH" == "dev" ]]; then
             echo "Publishing pre-release to TestPyPI"
             echo "repo=${{ env.TEST_PYPI_URL }}" >> $GITHUB_OUTPUT
-            echo "pypi_token_name=TEST_PYPI_API_TOKEN" >> $GITHUB_OUTPUT
+            echo "pypi_token_name=TEST_PYPI_TOKEN" >> $GITHUB_OUTPUT
           else
             echo "::error::Cannot determine publish target for branch $BRANCH"
             exit 1
