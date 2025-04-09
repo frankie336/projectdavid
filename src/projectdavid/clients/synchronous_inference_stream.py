@@ -18,7 +18,6 @@ class SynchronousInferenceStream:
         self.assistant_id: Optional[str] = None
         self.message_id: Optional[str] = None
         self.run_id: Optional[str] = None
-        self.api_key: Optional[str] = None
 
     def setup(
         self,
@@ -27,39 +26,39 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key: str,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
         self.run_id = run_id
-        self.api_key = api_key
 
     def stream_chunks(
         self,
         provider: str,
         model: str,
-        *,
+        *,  # Following parameters are keyword-only.
+        api_key: Optional[str] = None,
         timeout_per_chunk: float = 10.0,
     ) -> Generator[dict, None, None]:
+        """
+        Streams inference response chunks synchronously by wrapping an async generator.
+
+        Args:
+            provider (str): The provider name.
+            model (str): The model name.
+            api_key (Optional[str]): API key for authentication. Defaults to None.
+            timeout_per_chunk (float): Timeout per chunk in seconds.
+
+        Yields:
+            dict: A chunk of the inference response.
+        """
+
         async def _stream_chunks_async() -> Generator[dict, None, None]:
-            logging_utility.info(
-                "Sending streaming inference request: %s",
-                {
-                    "provider": provider,
-                    "model": model,
-                    "api_key": self.api_key,
-                    "thread_id": self.thread_id,
-                    "message_id": self.message_id,
-                    "run_id": self.run_id,
-                    "assistant_id": self.assistant_id,
-                },
-            )
             async for chunk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
-                api_key=self.api_key,
+                api_key=api_key,
                 thread_id=self.thread_id,
                 message_id=self.message_id,
                 run_id=self.run_id,
