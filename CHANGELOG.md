@@ -1,3 +1,10 @@
+## [1.1.8](https://github.com/frankie336/projectdavid/compare/v1.1.7...v1.1.8) (2025-04-09)
+
+
+### Bug Fixes
+
+* pass key in set-up[#2](https://github.com/frankie336/projectdavid/issues/2) ([d27bbeb](https://github.com/frankie336/projectdavid/commit/d27bbeb1453e0ac5454db87c74f31addc0e50a7b))
+
 ## [1.1.7](https://github.com/frankie336/projectdavid/compare/v1.1.6...v1.1.7) (2025-04-08)
 
 
