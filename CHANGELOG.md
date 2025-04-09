@@ -1,3 +1,10 @@
+## [1.1.11](https://github.com/frankie336/projectdavid/compare/v1.1.10...v1.1.11) (2025-04-09)
+
+
+### Bug Fixes
+
+* event monitor handler and off issue ([24c9dc4](https://github.com/frankie336/projectdavid/commit/24c9dc41f307972ce00f070eb0fe2f2fb714f83d))
+
 ## [1.1.10](https://github.com/frankie336/projectdavid/compare/v1.1.9...v1.1.10) (2025-04-09)
 
 
