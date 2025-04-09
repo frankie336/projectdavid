@@ -18,6 +18,7 @@ class SynchronousInferenceStream:
         self.assistant_id: Optional[str] = None
         self.message_id: Optional[str] = None
         self.run_id: Optional[str] = None
+        self.api_key: Optional[str] = None
 
     def setup(
         self,
@@ -26,12 +27,14 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
+        api_key: str,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
         self.run_id = run_id
+        self.api_key = api_key
 
     def stream_chunks(
         self,
