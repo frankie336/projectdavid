@@ -1,3 +1,11 @@
+## [1.1.9](https://github.com/frankie336/projectdavid/compare/v1.1.8...v1.1.9) (2025-04-09)
+
+
+### Bug Fixes
+
+* pass key in set-up[#3](https://github.com/frankie336/projectdavid/issues/3) ([80e3462](https://github.com/frankie336/projectdavid/commit/80e3462266e64f084539274144ef95e86272150b))
+* restore inference.py ([7619c54](https://github.com/frankie336/projectdavid/commit/7619c546fe30e69ba99799bef44c647c8f4a75c2))
+
 ## [1.1.8](https://github.com/frankie336/projectdavid/compare/v1.1.7...v1.1.8) (2025-04-09)
 
 
