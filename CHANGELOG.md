@@ -1,3 +1,10 @@
+## [1.1.10](https://github.com/frankie336/projectdavid/compare/v1.1.9...v1.1.10) (2025-04-09)
+
+
+### Bug Fixes
+
+* restore inference.py 2 ([434969c](https://github.com/frankie336/projectdavid/commit/434969c95bf1b51e219cdd5d8594962d89bfcb05))
+
 ## [1.1.9](https://github.com/frankie336/projectdavid/compare/v1.1.8...v1.1.9) (2025-04-09)
 
 
