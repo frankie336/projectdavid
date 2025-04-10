@@ -27,7 +27,7 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key: str,
+        api_key: Optional[str] = None,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
@@ -50,18 +50,23 @@ class SynchronousInferenceStream:
         Args:
             provider (str): The provider name.
             model (str): The model name.
-            api_key (Optional[str]): API key for authentication. Defaults to None.
+            api_key (Optional[str]): API key for authentication. Overrides setup() value if provided.
             timeout_per_chunk (float): Timeout per chunk in seconds.
 
         Yields:
             dict: A chunk of the inference response.
         """
 
+        # -------------------------------------------
+        # Internal async generator with key resolution
+        # -------------------------------------------
         async def _stream_chunks_async() -> Generator[dict, None, None]:
+            resolved_api_key = api_key or self.api_key
+
             async for chunk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
-                api_key=api_key,
+                api_key=resolved_api_key,
                 thread_id=self.thread_id,
                 message_id=self.message_id,
                 run_id=self.run_id,
