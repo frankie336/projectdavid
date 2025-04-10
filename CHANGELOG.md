@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/frankie336/projectdavid/compare/v1.2.2...v1.2.3) (2025-04-10)
+
+
+### Bug Fixes
+
+* ✅ api_key passed into stream_chunks(...) overrides ([35438bf](https://github.com/frankie336/projectdavid/commit/35438bfaf949bbb4c91f2ad75e05ce6dec3d9e87))
+
 ## [1.2.2](https://github.com/frankie336/projectdavid/compare/v1.2.1...v1.2.2) (2025-04-10)
 
 
