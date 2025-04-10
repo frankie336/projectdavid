@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/frankie336/projectdavid/compare/v1.1.11...v1.2.0) (2025-04-10)
+
+
+### Features
+
+* Add action required polling helper in runs client. ([2b41aec](https://github.com/frankie336/projectdavid/commit/2b41aec65e6107b61263019e75ccd18f247b9d5e))
+* Add consumer function call execution client ([7cf5f5c](https://github.com/frankie336/projectdavid/commit/7cf5f5c4d289ef99906f7159cbbd04c1909cea39))
+
 ## [1.1.11](https://github.com/frankie336/projectdavid/compare/v1.1.10...v1.1.11) (2025-04-09)
 
 
