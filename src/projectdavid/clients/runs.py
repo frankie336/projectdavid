@@ -366,7 +366,7 @@ class RunsClient:
         actions_client: Any,  # Instance of ActionsClient
         messages_client: Any,  # Instance of MessagesClient
         timeout: float = 60.0,
-        interval: float = 1.0
+        interval: float = 1.0,
     ) -> bool:
         """
         Polls for a required action, executes it using the provided executor,
@@ -397,17 +397,23 @@ class RunsClient:
         start_time = time.time()
         action_handled_successfully = False
         logging_utility.info(
-            f"[SDK Helper] Waiting for action on run {run_id} (timeout: {timeout}s)...")
+            f"[SDK Helper] Waiting for action on run {run_id} (timeout: {timeout}s)..."
+        )
 
         # Define terminal states using the exact string values from your StatusEnum
         terminal_states = {
-            StatusEnum.completed.value, StatusEnum.failed.value,
-            StatusEnum.cancelled.value, StatusEnum.expired.value,
+            StatusEnum.completed.value,
+            StatusEnum.failed.value,
+            StatusEnum.cancelled.value,
+            StatusEnum.expired.value,
         }
         transient_states = {
-            StatusEnum.queued.value, StatusEnum.in_progress.value,
-            StatusEnum.processing.value, StatusEnum.cancelling.value,
-            StatusEnum.pending.value, StatusEnum.retrying.value,
+            StatusEnum.queued.value,
+            StatusEnum.in_progress.value,
+            StatusEnum.processing.value,
+            StatusEnum.cancelling.value,
+            StatusEnum.pending.value,
+            StatusEnum.retrying.value,
         }
         target_state = StatusEnum.pending_action.value
 
@@ -424,92 +430,113 @@ class RunsClient:
                     current_status_str = str(current_run.status)
 
                 logging_utility.debug(
-                    f"[SDK Helper] Polling run {run_id}: Status='{current_status_str}'")
+                    f"[SDK Helper] Polling run {run_id}: Status='{current_status_str}'"
+                )
 
                 if current_status_str == target_state:
                     # Action required, now get action details
                     logging_utility.info(
-                        f"[SDK Helper] Run {run_id} requires action. Fetching details...")
+                        f"[SDK Helper] Run {run_id} requires action. Fetching details..."
+                    )
                     try:
                         # Use the passed-in actions_client
-                        pending_actions = actions_client.get_pending_actions(run_id=run_id)
+                        pending_actions = actions_client.get_pending_actions(
+                            run_id=run_id
+                        )
                         if pending_actions:
                             action_to_handle = pending_actions[0]
                         else:
                             logging_utility.warning(
-                                f"[SDK Helper] Run {run_id} is '{target_state}' but no pending actions found via API.")
+                                f"[SDK Helper] Run {run_id} is '{target_state}' but no pending actions found via API."
+                            )
                             # Maybe the status changed again quickly? Loop will re-check status.
                     except Exception as e:
                         logging_utility.error(
                             f"[SDK Helper] Error fetching pending actions for run {run_id}: {e}",
-                            exc_info=True)
+                            exc_info=True,
+                        )
                         # Consider stopping if we can't get action details
                         return False  # Stop if error getting action details
                 elif current_status_str in terminal_states:
                     logging_utility.info(
-                        f"[SDK Helper] Run {run_id} reached terminal state '{current_status_str}'. Stopping wait.")
+                        f"[SDK Helper] Run {run_id} reached terminal state '{current_status_str}'. Stopping wait."
+                    )
                     return False  # Stop if run finished/failed
                 elif current_status_str not in transient_states:
                     logging_utility.warning(
-                        f"[SDK Helper] Run {run_id} in unexpected state '{current_status_str}'. Stopping wait.")
+                        f"[SDK Helper] Run {run_id} in unexpected state '{current_status_str}'. Stopping wait."
+                    )
                     return False  # Stop on unexpected states
 
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 404: raise  # Re-raise 404 immediately
+                if e.response.status_code == 404:
+                    raise  # Re-raise 404 immediately
                 logging_utility.error(
-                    f"[SDK Helper] HTTP error {e.response.status_code} retrieving run {run_id} status: {e.response.text}. Stopping wait.")
+                    f"[SDK Helper] HTTP error {e.response.status_code} retrieving run {run_id} status: {e.response.text}. Stopping wait."
+                )
                 return False  # Stop on other HTTP errors
             except Exception as e:
-                logging_utility.error(f"[SDK Helper] Error retrieving run {run_id} status: {e}",
-                                      exc_info=True)
+                logging_utility.error(
+                    f"[SDK Helper] Error retrieving run {run_id} status: {e}",
+                    exc_info=True,
+                )
                 return False  # Stop on other errors retrieving status
 
             # --- Process Action if Found ---
             if action_to_handle:
-                action_id = action_to_handle.get('action_id')
-                tool_name = action_to_handle.get('tool_name')
-                arguments = action_to_handle.get('function_arguments')
+                action_id = action_to_handle.get("action_id")
+                tool_name = action_to_handle.get("tool_name")
+                arguments = action_to_handle.get("function_arguments")
 
                 if not action_id or not tool_name:
                     logging_utility.error(
-                        f"[SDK Helper] Invalid action data found for run {run_id}: {action_to_handle}")
+                        f"[SDK Helper] Invalid action data found for run {run_id}: {action_to_handle}"
+                    )
                     # Continue loop to re-fetch status/actions? Or fail? Let's fail for now.
                     return False
 
                 logging_utility.info(
-                    f"[SDK Helper] Processing action {action_id} (Tool: '{tool_name}') for run {run_id}...")
+                    f"[SDK Helper] Processing action {action_id} (Tool: '{tool_name}') for run {run_id}..."
+                )
                 try:
                     # --- Call Consumer's Executor ---
                     logging_utility.debug(
-                        f"[SDK Helper] Calling provided tool_executor for '{tool_name}'...")
+                        f"[SDK Helper] Calling provided tool_executor for '{tool_name}'..."
+                    )
                     tool_result_content = tool_executor(tool_name, arguments)
                     if not isinstance(tool_result_content, str):
                         logging_utility.warning(
-                            f"[SDK Helper] tool_executor for '{tool_name}' did not return a string. Attempting json.dumps.")
+                            f"[SDK Helper] tool_executor for '{tool_name}' did not return a string. Attempting json.dumps."
+                        )
                         try:
                             tool_result_content = json.dumps(tool_result_content)
                         except Exception:
                             logging_utility.error(
-                                f"[SDK Helper] Failed to convert tool_executor result to JSON string.")
+                                f"[SDK Helper] Failed to convert tool_executor result to JSON string."
+                            )
                             raise TypeError(
-                                "Tool executor must return a string or JSON-serializable object.")
+                                "Tool executor must return a string or JSON-serializable object."
+                            )
                     logging_utility.info(
-                        f"[SDK Helper] tool_executor for '{tool_name}' completed.")
+                        f"[SDK Helper] tool_executor for '{tool_name}' completed."
+                    )
                     # --- End Consumer's Executor ---
 
                     # --- Submit Tool Output ---
                     logging_utility.debug(
-                        f"[SDK Helper] Submitting output for action {action_id}...")
+                        f"[SDK Helper] Submitting output for action {action_id}..."
+                    )
                     # Use the passed-in messages_client
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action_id,
                         content=tool_result_content,
                         role="tool",
-                        assistant_id=assistant_id
+                        assistant_id=assistant_id,
                     )
                     logging_utility.info(
-                        f"[SDK Helper] Output submitted successfully for action {action_id}.")
+                        f"[SDK Helper] Output submitted successfully for action {action_id}."
+                    )
                     # --- End Submit ---
 
                     # --- Optional: Update Run Status ---
@@ -527,7 +554,8 @@ class RunsClient:
                 except Exception as e:
                     logging_utility.error(
                         f"[SDK Helper] Error during execution or submission for action {action_id} (Run {run_id}): {e}",
-                        exc_info=True)
+                        exc_info=True,
+                    )
                     # Should we update action/run to failed? Depends on API design.
                     # For now, just break the loop and return False.
                     action_handled_successfully = False
@@ -540,9 +568,11 @@ class RunsClient:
 
         if not action_handled_successfully and (time.time() - start_time) >= timeout:
             logging_utility.warning(
-                f"[SDK Helper] Timeout reached waiting for action on run {run_id}.")
+                f"[SDK Helper] Timeout reached waiting for action on run {run_id}."
+            )
         elif not action_handled_successfully:
             logging_utility.info(
-                f"[SDK Helper] Exited wait loop for run {run_id} without handling action (likely due to error or terminal state reached).")
+                f"[SDK Helper] Exited wait loop for run {run_id} without handling action (likely due to error or terminal state reached)."
+            )
 
         return action_handled_successfully
