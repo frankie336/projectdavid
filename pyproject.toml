@@ -10,20 +10,21 @@ readme = "README.md"
 authors = [
     { name = "Francis Neequaye Armah", email = "francis.neequaye@projectdavid.co.uk" }
 ]
-license = { text = "MIT" }  # Correct placement.
+license = { text = "MIT" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
+
 dependencies = [
-    "httpx>=0.25.2,<0.29",                  # Use patched 0.25.x through 0.28.x releases.
-    "pydantic>=2.0,<3.0",                    # All Pydantic 2.x releases.
-    "python-dotenv>=1.0.1,<2.0",             # Stable 1.x line with post-1.0 fixes.
-    "aiofiles>=23.2.1,<25.0",                # Covers 23.x and 24.x series.
-    "ollama>=0.4.4,<0.5.0",                  # Up to 0.4.x series, starting at 0.4.4 for fixes.
+    "httpx>=0.25.2,<0.29",
+    "pydantic>=2.0,<3.0",
+    "python-dotenv>=1.0.1,<2.0",
+    "aiofiles>=23.2.1,<25.0",
+    "ollama>=0.4.4,<0.5.0",
     "projectdavid_common>=2.0.0,<3.0.0",
-    "qdrant-client>=1.0.0,<2.0.0",           # Stable 1.x release; avoid future 2.x changes.
-    "pdfplumber>=0.11.0,<0.12.0",            # Lock to 0.11.x series for compatibility.
-    "validators>=0.29.0,<0.35.0",            # Use versions from 0.29 up to 0.34.x.
-    "sentence-transformers>=3.4.0,<5.0"      # Allows 3.x and 4.x, capping before 5.x.
+    "qdrant-client>=1.0.0,<2.0.0",
+    "pdfplumber>=0.11.0,<0.12.0",
+    "validators>=0.29.0,<0.35.0",
+    "sentence-transformers>=3.4.0,<5.0"
 ]
 
 classifiers = [
