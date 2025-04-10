@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/frankie336/projectdavid/compare/v1.2.1...v1.2.2) (2025-04-10)
+
+
+### Bug Fixes
+
+* Runs payload.2 ([0dea118](https://github.com/frankie336/projectdavid/commit/0dea118bcc9be39ddd03aa1fffc5c5fffc2aac75))
+
 ## [1.2.1](https://github.com/frankie336/projectdavid/compare/v1.2.0...v1.2.1) (2025-04-10)
 
 
