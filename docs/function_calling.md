@@ -404,3 +404,6 @@ def process_messages():
         return jsonify({"error": "Unexpected error occurred"}), 500
 
 ```
+
+
+![Screen Shot1](/assets/function_call_demo.png)

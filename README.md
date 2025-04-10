@@ -199,26 +199,7 @@ INFO:root:{
   "type": "content",
   "content": " hear"
 }
-INFO:root:{
-  "type": "content",
-  "content": " from"
-}
-INFO:root:{
-  "type": "content",
-  "content": " you"
-}
-INFO:root:{
-  "type": "content",
-  "content": "."
-}
-INFO:root:{
-  "type": "content",
-  "content": " How"
-}
-INFO:root:{
-  "type": "content",
-  "content": " can"
-}
+...
 ```
 
 
