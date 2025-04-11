@@ -9,9 +9,7 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 ent_validator = ValidationInterface()
-
 load_dotenv()
-
 logging_utility = UtilsInterface.LoggingUtility()
 
 
@@ -27,20 +25,25 @@ class InferenceClient:
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         """
         Initialize the InferenceClient with a base URL and an optional API key.
-
-        Args:
-            base_url (str): The base URL for the inference service.
-            api_key (Optional[str]): The API key for authentication.
         """
         self.base_url = base_url
         self.api_key = api_key
+
+        # Set up timeout configuration
+        self.timeout = httpx.Timeout(timeout=60.0, connect=10.0, read=30.0, write=30.0)
+
+        # Prepare headers
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        self.client = httpx.Client(base_url=self.base_url, headers=headers)
-        logging_utility.info(
-            "InferenceClient initialized with base_url: %s", self.base_url
+
+        self.client = httpx.Client(
+            base_url=self.base_url,
+            headers=headers,
+            timeout=self.timeout
         )
+
+        logging_utility.info("InferenceClient initialized with base_url: %s", self.base_url)
 
     def create_completion_sync(
         self,
@@ -161,9 +164,13 @@ class InferenceClient:
             "Sending streaming inference request: %s", validated_payload.dict()
         )
 
-        async with httpx.AsyncClient(base_url=self.base_url) as async_client:
+        async with httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=self.timeout
+        ) as async_client:
             if self.api_key:
                 async_client.headers["Authorization"] = f"Bearer {self.api_key}"
+
             try:
                 async with async_client.stream(
                     "POST", "/v1/completions", json=validated_payload.dict()
@@ -171,7 +178,7 @@ class InferenceClient:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
                         if line.startswith("data:"):
-                            data_str = line[len("data:") :].strip()
+                            data_str = line[len("data:"):].strip()
                             if data_str == "[DONE]":
                                 break
                             try:
