@@ -12,28 +12,16 @@ By leveraging the Messages endpoint, you can manage the flow of conversation and
 **Create a Message**
 
 ```python
+from projectdavid import Entity
 
+client = Entity()
 
-from src.api.entities import CommonEntitiesInternalInterface
-
-# Initialize the client
-client = CommonEntitiesInternalInterface()
-
-# Create user
-user = client.user_service.create_user(name='test_user')
-
-# Create thread
-thread = client.thread_service.create_thread(participant_ids=[user.id])
-
-# Create Message
-message = client.message_service.create_message(
-    thread_id=thread.id,
-    content='Can you help me with a math problem?',
-    role='user',
-    sender_id=user.id
+message = client.messages.create_message(
+    thread_id='some_thread_id',
+    assistant_id='some_assistant_id',
+    content="Tell me about current trends in AI",
+    role='user'
 )
-
-print(f"Message created: ID: {message.id}")  # Optional: To confirm message creation
 
 ```
 
