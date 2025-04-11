@@ -1,3 +1,11 @@
+## [1.3.11](https://github.com/frankie336/projectdavid/compare/v1.3.10...v1.3.11) (2025-04-11)
+
+
+### Bug Fixes
+
+* implement DEFAULT_TIMEOUT ([fe3575a](https://github.com/frankie336/projectdavid/commit/fe3575ad2f8c9a7ee74ee1848ec5fe917c31a4f8))
+* implement DEFAULT_TIMEOUT ([65c72d2](https://github.com/frankie336/projectdavid/commit/65c72d21f3013286e9f29a1bb86288b6e85cc67b))
+
 ## [1.3.10](https://github.com/frankie336/projectdavid/compare/v1.3.9...v1.3.10) (2025-04-11)
 
 
