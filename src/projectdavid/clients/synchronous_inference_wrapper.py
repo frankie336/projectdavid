@@ -42,7 +42,7 @@ class SynchronousInferenceStream:
         model: str,
         *,  # Following parameters are keyword-only.
         api_key: Optional[str] = None,
-        timeout_per_chunk: float = 10.0,
+        timeout_per_chunk: float = 30.0,
     ) -> Generator[dict, None, None]:
         """
         Streams inference response chunks synchronously by wrapping an async generator.
@@ -83,10 +83,14 @@ class SynchronousInferenceStream:
                 logging_utility.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                logging_utility.error("[TimeoutError] Timeout occurred, stopping stream.")
+                logging_utility.error(
+                    "[TimeoutError] Timeout occurred, stopping stream."
+                )
                 break
             except Exception as e:
-                logging_utility.error("Unexpected error during streaming completions: %s", e)
+                logging_utility.error(
+                    "Unexpected error during streaming completions: %s", e
+                )
                 break
 
     @classmethod
