@@ -1,3 +1,10 @@
+## [1.3.14](https://github.com/frankie336/projectdavid/compare/v1.3.13...v1.3.14) (2025-04-11)
+
+
+### Bug Fixes
+
+* constants ([b3c363a](https://github.com/frankie336/projectdavid/commit/b3c363aabb8cd0305d7fd2971dafcca9efc78a62))
+
 ## [1.3.13](https://github.com/frankie336/projectdavid/compare/v1.3.12...v1.3.13) (2025-04-11)
 
 
