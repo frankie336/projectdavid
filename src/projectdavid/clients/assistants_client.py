@@ -5,9 +5,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
+from projectdavid_common.constants.timeouts import DEFAULT_TIMEOUT
 from pydantic import ValidationError
-
-from projectdavid.constants.platform import DEFAULT_TIMEOUT
 
 ent_validator = ValidationInterface()
 
