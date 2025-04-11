@@ -1,3 +1,11 @@
+## [1.3.4](https://github.com/frankie336/projectdavid/compare/v1.3.3...v1.3.4) (2025-04-11)
+
+
+### Bug Fixes
+
+* broken synch wrapper! ([2bc61cb](https://github.com/frankie336/projectdavid/commit/2bc61cbf713184113112d3ee6f1251b2c2c38d27))
+* broken synch wrapper! ([0c28400](https://github.com/frankie336/projectdavid/commit/0c28400cf9b7d2db5a903e788db2a05ab3401b2b))
+
 ## [1.3.3](https://github.com/frankie336/projectdavid/compare/v1.3.2...v1.3.3) (2025-04-11)
 
 
