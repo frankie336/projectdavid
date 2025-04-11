@@ -5,17 +5,17 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
 
 # Use relative imports for modules within your package.
-from .clients.actions import ActionsClient
-from .clients.assistants import AssistantsClient
-from .clients.files import FileClient
-from .clients.inference import InferenceClient
-from .clients.messages import MessagesClient
-from .clients.runs import RunsClient
-from .clients.synchronous_inference_stream import SynchronousInferenceStream
-from .clients.threads import ThreadsClient
-from .clients.tools import ToolsClient
-from .clients.users import UsersClient
-from .clients.vectors import VectorStoreClient
+from .clients.actions_client import ActionsClient
+from .clients.assistants_client import AssistantsClient
+from .clients.files_client import FileClient
+from .clients.inference_client import InferenceClient
+from .clients.messages_client import MessagesClient
+from .clients.runs_client import RunsClient
+from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
+from .clients.threads_client import ThreadsClient
+from .clients.tools_client import ToolsClient
+from .clients.users_client import UsersClient
+from .clients.vectors_client import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
 
 # Load environment variables from .env file.
