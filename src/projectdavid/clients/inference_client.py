@@ -5,7 +5,6 @@ from typing import AsyncGenerator, Optional
 
 import httpx
 from dotenv import load_dotenv
-
 from httpx import Timeout
 from projectdavid_common import UtilsInterface
 from projectdavid_common.schemas.stream import StreamRequest
@@ -164,7 +163,7 @@ class InferenceClient:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
                         if line.startswith("data:"):
-                            data_str = line[len("data:"):].strip()
+                            data_str = line[len("data:") :].strip()
                             if data_str == "[DONE]":
                                 break
                             try:
@@ -182,7 +181,9 @@ class InferenceClient:
                 raise
             except httpx.HTTPStatusError as e:
                 # Log error details with safer response body handling
-                error_summary = f"Status: {e.response.status_code}, URL: {e.response.url}"
+                error_summary = (
+                    f"Status: {e.response.status_code}, URL: {e.response.url}"
+                )
                 logging_utility.error(
                     "HTTP error during streaming completions: %s - %s",
                     str(e),
