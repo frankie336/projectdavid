@@ -34,7 +34,9 @@ class InferenceClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         # Added timeout to client initialization
-        self.client = httpx.Client(base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT)
+        self.client = httpx.Client(
+            base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT
+        )
         logging_utility.info(
             "InferenceClient initialized with base_url: %s", self.base_url
         )
@@ -115,7 +117,9 @@ class InferenceClient:
         logging_utility.info("Sending streaming inference request: %s", request.dict())
 
         # Added timeout to AsyncClient
-        async with httpx.AsyncClient(base_url=self.base_url, timeout=STREAMING_TIMEOUT) as async_client:
+        async with httpx.AsyncClient(
+            base_url=self.base_url, timeout=STREAMING_TIMEOUT
+        ) as async_client:
             if self.api_key:
                 async_client.headers["Authorization"] = f"Bearer {self.api_key}"
 
