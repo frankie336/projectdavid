@@ -5,7 +5,6 @@ from typing import AsyncGenerator, Optional
 
 import httpx
 from dotenv import load_dotenv
-from httpx import Timeout
 from projectdavid_common import UtilsInterface
 from projectdavid_common.schemas.stream import StreamRequest
 from pydantic import ValidationError
@@ -14,10 +13,9 @@ load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
-# Define a default timeout configuration
-DEFAULT_TIMEOUT = Timeout(30.0, read=60.0)
-# Long streaming timeout configuration for cases requiring extended waits
-STREAMING_TIMEOUT = Timeout(10.0, read=300.0)  # 5 minutes read timeout
+# Increased timeout configurations
+DEFAULT_TIMEOUT = httpx.Timeout(60.0, connect=60.0, read=120.0, write=60.0, pool=60.0)
+STREAMING_TIMEOUT = httpx.Timeout(60.0, connect=60.0, read=300.0, write=60.0, pool=60.0)
 
 
 class InferenceClient:
@@ -29,29 +27,16 @@ class InferenceClient:
       - stream_inference_response(...): an async generator for real-time streaming.
     """
 
-    def __init__(
-        self,
-        base_url: str,
-        api_key: Optional[str] = None,
-        timeout: Optional[Timeout] = None,
-    ):
+    def __init__(self, base_url: str, api_key: Optional[str] = None):
         self.base_url = base_url
         self.api_key = api_key
-        self.timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
-
-        # Set up headers once at initialization
-        self.headers = {}
+        headers = {}
         if self.api_key:
-            self.headers["Authorization"] = f"Bearer {self.api_key}"
-
-        # Apply the timeout configuration to the synchronous client
-        self.client = httpx.Client(
-            base_url=self.base_url, headers=self.headers, timeout=self.timeout
-        )
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        # Added timeout to client initialization
+        self.client = httpx.Client(base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT)
         logging_utility.info(
-            "InferenceClient initialized with base_url: %s and timeout: %s",
-            self.base_url,
-            self.timeout,
+            "InferenceClient initialized with base_url: %s", self.base_url
         )
 
     def create_completion_sync(
@@ -68,16 +53,12 @@ class InferenceClient:
         payload = {
             "provider": provider,
             "model": model,
+            "api_key": api_key,
             "thread_id": thread_id,
             "message_id": message_id,
             "run_id": run_id,
             "assistant_id": assistant_id,
         }
-
-        # Apply per-request API key if provided
-        if api_key:
-            payload["api_key"] = api_key
-
         if user_content:
             payload["content"] = user_content
 
@@ -97,17 +78,12 @@ class InferenceClient:
                 final_text += chunk.get("content", "")
             return final_text
 
+        loop = asyncio.new_event_loop()
         try:
-            # Preferred approach: using asyncio.run for clean event loop management
-            final_content = asyncio.run(aggregate())
-        except RuntimeError as e:
-            # Handle cases where this is called from an existing async context
-            logging_utility.warning(
-                "asyncio.run() detected existing loop or context: %s. Using existing loop.",
-                e,
-            )
-            loop = asyncio.get_event_loop()
+            asyncio.set_event_loop(loop)
             final_content = loop.run_until_complete(aggregate())
+        finally:
+            loop.close()
 
         completions_response = {
             "id": f"chatcmpl-{run_id}",
@@ -125,7 +101,6 @@ class InferenceClient:
                 }
             ],
             "usage": {
-                # Placeholder until proper token counting is implemented
                 "prompt_tokens": 0,
                 "completion_tokens": len(final_content.split()),
                 "total_tokens": len(final_content.split()),
@@ -136,29 +111,17 @@ class InferenceClient:
     async def stream_inference_response(
         self,
         request: StreamRequest,
-        streaming_timeout: Optional[Timeout] = None,
     ) -> AsyncGenerator[dict, None]:
         logging_utility.info("Sending streaming inference request: %s", request.dict())
 
-        # Set up headers for this request
-        headers = self.headers.copy()
+        # Added timeout to AsyncClient
+        async with httpx.AsyncClient(base_url=self.base_url, timeout=STREAMING_TIMEOUT) as async_client:
+            if self.api_key:
+                async_client.headers["Authorization"] = f"Bearer {self.api_key}"
 
-        # Override with request's API key if provided
-        if hasattr(request, "api_key") and request.api_key:
-            headers["Authorization"] = f"Bearer {request.api_key}"
-
-        # Use streaming timeout if provided, otherwise use the instance timeout
-        request_timeout = streaming_timeout if streaming_timeout else self.timeout
-
-        async with httpx.AsyncClient(
-            base_url=self.base_url, timeout=request_timeout, headers=headers
-        ) as async_client:
             try:
-                # Make the streaming request
                 async with async_client.stream(
-                    "POST",
-                    "/v1/completions",
-                    json=request.dict(),
+                    "POST", "/v1/completions", json=request.dict()
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
@@ -171,40 +134,19 @@ class InferenceClient:
                                 yield chunk
                             except json.JSONDecodeError as json_exc:
                                 logging_utility.error(
-                                    "Error decoding JSON from stream: %s in line: %s",
-                                    str(json_exc),
-                                    line,
+                                    "Error decoding JSON from stream: %s", str(json_exc)
                                 )
-                                continue  # Skip malformed lines
-            except httpx.TimeoutException as e:
-                logging_utility.error("Request timed out: %s", str(e))
-                raise
+                                continue
             except httpx.HTTPStatusError as e:
-                # Log error details with safer response body handling
-                error_summary = (
-                    f"Status: {e.response.status_code}, URL: {e.response.url}"
-                )
                 logging_utility.error(
-                    "HTTP error during streaming completions: %s - %s",
-                    str(e),
-                    error_summary,
-                )
-                raise
-            except httpx.RequestError as e:
-                logging_utility.error(
-                    "Network or request error during streaming completions: %s", str(e)
+                    "HTTP error during streaming completions: %s", str(e)
                 )
                 raise
             except Exception as e:
                 logging_utility.error(
-                    "Unexpected error during streaming completions: %s",
-                    str(e),
-                    exc_info=True,
+                    "Unexpected error during streaming completions: %s", str(e)
                 )
                 raise
 
     def close(self):
-        """Closes the underlying synchronous HTTPX client."""
-        if self.client and not self.client.is_closed:
-            self.client.close()
-            logging_utility.info("InferenceClient synchronous client closed.")
+        self.client.close()
