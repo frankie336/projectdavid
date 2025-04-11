@@ -14,8 +14,8 @@ from .clients.runs_client import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
 from .clients.tools_client import ToolsClient
-from .clients.users_client import UsersClient
-from .clients.vectors_client import VectorStoreClient
+from .clients.users import UsersClient
+from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
 
 # Load environment variables from .env file.
