@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/frankie336/projectdavid/compare/v1.3.2...v1.3.3) (2025-04-11)
+
+
+### Bug Fixes
+
+* structured file naming convention ([cf0aad9](https://github.com/frankie336/projectdavid/commit/cf0aad9cc2cea4d139bd0e5e065e431101408256))
+
 ## [1.3.2](https://github.com/frankie336/projectdavid/compare/v1.3.1...v1.3.2) (2025-04-11)
 
 
