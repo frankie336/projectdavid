@@ -1,3 +1,13 @@
+## [1.3.6](https://github.com/frankie336/projectdavid/compare/v1.3.5...v1.3.6) (2025-04-11)
+
+
+### Bug Fixes
+
+* restore ([16b0d91](https://github.com/frankie336/projectdavid/commit/16b0d91921f62f8c7cd2261e87350a6da481e5e1))
+* restore ([efbd123](https://github.com/frankie336/projectdavid/commit/efbd1231d0eb2a73b38361844a5dc15a83d74911))
+* restore ([1986706](https://github.com/frankie336/projectdavid/commit/198670663410bce713e1429c7820076ad3c43a10))
+* restore ([70768f4](https://github.com/frankie336/projectdavid/commit/70768f4056e53b80fb532f20566f38855f43f866))
+
 ## [1.3.5](https://github.com/frankie336/projectdavid/compare/v1.3.4...v1.3.5) (2025-04-11)
 
 
