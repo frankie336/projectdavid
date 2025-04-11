@@ -5,17 +5,14 @@ from typing import AsyncGenerator, Optional
 
 import httpx
 from dotenv import load_dotenv
-from projectdavid_common import UtilsInterface
-from projectdavid_common.schemas.stream import StreamRequest
+from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
+
+ent_validator = ValidationInterface()
 
 load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
-
-# Increased timeout configurations
-DEFAULT_TIMEOUT = httpx.Timeout(60.0, connect=60.0, read=120.0, write=60.0, pool=60.0)
-STREAMING_TIMEOUT = httpx.Timeout(60.0, connect=60.0, read=300.0, write=60.0, pool=60.0)
 
 
 class InferenceClient:
@@ -28,15 +25,19 @@ class InferenceClient:
     """
 
     def __init__(self, base_url: str, api_key: Optional[str] = None):
+        """
+        Initialize the InferenceClient with a base URL and an optional API key.
+
+        Args:
+            base_url (str): The base URL for the inference service.
+            api_key (Optional[str]): The API key for authentication.
+        """
         self.base_url = base_url
         self.api_key = api_key
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        # Added timeout to client initialization
-        self.client = httpx.Client(
-            base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT
-        )
+        self.client = httpx.Client(base_url=self.base_url, headers=headers)
         logging_utility.info(
             "InferenceClient initialized with base_url: %s", self.base_url
         )
@@ -52,6 +53,10 @@ class InferenceClient:
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
     ) -> dict:
+        """
+        Synchronously aggregates the streaming completions result and returns the JSON completion.
+        Internally, it uses the asynchronous stream_inference_response method in a background thread.
+        """
         payload = {
             "provider": provider,
             "model": model,
@@ -65,18 +70,27 @@ class InferenceClient:
             payload["content"] = user_content
 
         try:
-            request = StreamRequest(**payload)
+            validated_payload = ent_validator.StreamRequest(**payload)
         except ValidationError as e:
             logging_utility.error("Payload validation error: %s", e.json())
             raise ValueError(f"Payload validation error: {e}")
 
         logging_utility.info(
-            "Sending completions request (sync wrapper): %s", request.dict()
+            "Sending completions request (sync wrapper): %s", validated_payload.dict()
         )
 
         async def aggregate() -> str:
             final_text = ""
-            async for chunk in self.stream_inference_response(request):
+            async for chunk in self.stream_inference_response(
+                provider=provider,
+                model=model,
+                thread_id=thread_id,
+                message_id=message_id,
+                run_id=run_id,
+                assistant_id=assistant_id,
+                user_content=user_content,
+                api_key=api_key,
+            ):
                 final_text += chunk.get("content", "")
             return final_text
 
@@ -91,7 +105,7 @@ class InferenceClient:
             "id": f"chatcmpl-{run_id}",
             "object": "chat.completion",
             "created": int(time.time()),
-            "model": request.mapped_model,
+            "model": model,
             "choices": [
                 {
                     "index": 0,
@@ -112,20 +126,47 @@ class InferenceClient:
 
     async def stream_inference_response(
         self,
-        request: StreamRequest,
+        provider: str,
+        model: str,
+        thread_id: str,
+        message_id: str,
+        run_id: str,
+        assistant_id: str,
+        user_content: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> AsyncGenerator[dict, None]:
-        logging_utility.info("Sending streaming inference request: %s", request.dict())
+        """
+        Initiates an asynchronous streaming request to the completions
+        endpoint and yields each response chunk as a dict.
+        """
+        payload = {
+            "provider": provider,
+            "model": model,
+            "api_key": api_key,
+            "thread_id": thread_id,
+            "message_id": message_id,
+            "run_id": run_id,
+            "assistant_id": assistant_id,
+        }
+        if user_content:
+            payload["content"] = user_content
 
-        # Added timeout to AsyncClient
-        async with httpx.AsyncClient(
-            base_url=self.base_url, timeout=STREAMING_TIMEOUT
-        ) as async_client:
+        try:
+            validated_payload = ent_validator.StreamRequest(**payload)
+        except ValidationError as e:
+            logging_utility.error("Payload validation error: %s", e.json())
+            raise ValueError(f"Payload validation error: {e}")
+
+        logging_utility.info(
+            "Sending streaming inference request: %s", validated_payload.dict()
+        )
+
+        async with httpx.AsyncClient(base_url=self.base_url) as async_client:
             if self.api_key:
                 async_client.headers["Authorization"] = f"Bearer {self.api_key}"
-
             try:
                 async with async_client.stream(
-                    "POST", "/v1/completions", json=request.dict()
+                    "POST", "/v1/completions", json=validated_payload.dict()
                 ) as response:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
@@ -153,4 +194,7 @@ class InferenceClient:
                 raise
 
     def close(self):
+        """
+        Closes the underlying synchronous HTTP client.
+        """
         self.client.close()
