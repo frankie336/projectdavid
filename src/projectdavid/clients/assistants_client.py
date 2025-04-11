@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
+from projectdavid.constants.platform import DEFAULT_TIMEOUT
+
 ent_validator = ValidationInterface()
 
 
@@ -15,7 +17,7 @@ load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
-DEFAULT_TIMEOUT = httpx.Timeout(timeout=60.0, connect=10.0, read=30.0, write=30.0)
+
 
 
 class AssistantsClientError(Exception):
