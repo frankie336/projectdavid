@@ -1,3 +1,11 @@
+## [1.3.10](https://github.com/frankie336/projectdavid/compare/v1.3.9...v1.3.10) (2025-04-11)
+
+
+### Bug Fixes
+
+* restore-params ([dbf61db](https://github.com/frankie336/projectdavid/commit/dbf61db1d7b554bd2f92d910065b9f9b61c92997))
+* restore-params-black ([4bdd63f](https://github.com/frankie336/projectdavid/commit/4bdd63faa37f6c2dd402e871bd40e2adcadf8a99))
+
 ## [1.3.9](https://github.com/frankie336/projectdavid/compare/v1.3.8...v1.3.9) (2025-04-11)
 
 
