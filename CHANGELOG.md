@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/frankie336/projectdavid/compare/v1.3.4...v1.3.5) (2025-04-11)
+
+
+### Bug Fixes
+
+* import name ([4d87f1c](https://github.com/frankie336/projectdavid/commit/4d87f1c4eeeacd13d0ad3fd43c089265abb93572))
+
 ## [1.3.4](https://github.com/frankie336/projectdavid/compare/v1.3.3...v1.3.4) (2025-04-11)
 
 
