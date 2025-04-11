@@ -1,3 +1,11 @@
+## [1.3.12](https://github.com/frankie336/projectdavid/compare/v1.3.11...v1.3.12) (2025-04-11)
+
+
+### Bug Fixes
+
+* hyperbolic/deepseek-ai/DeepSeek-V3-0324 bug ([cd9606f](https://github.com/frankie336/projectdavid/commit/cd9606fe40e04032e47be9691b6bff7298d349ab))
+* hyperbolic/deepseek-ai/DeepSeek-V3-0324 bug ([99b397f](https://github.com/frankie336/projectdavid/commit/99b397fd7655f57bfc51fa4960e3004040931595))
+
 ## [1.3.11](https://github.com/frankie336/projectdavid/compare/v1.3.10...v1.3.11) (2025-04-11)
 
 
