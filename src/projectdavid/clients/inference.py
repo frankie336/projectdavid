@@ -13,6 +13,8 @@ load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
+DEFAULT_TIMEOUT = httpx.Timeout(30.0, connect=10.0, read=30.0, write=10.0, pool=30.0)
+
 
 class InferenceClient:
     """
@@ -23,13 +25,23 @@ class InferenceClient:
       - stream_inference_response(...): an async generator for real-time streaming.
     """
 
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: Optional[str] = None,
+        timeout: Optional[httpx.Timeout] = None,
+    ):
         self.base_url = base_url
         self.api_key = api_key
+        self.timeout = timeout or DEFAULT_TIMEOUT
+
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        self.client = httpx.Client(base_url=self.base_url, headers=headers)
+
+        self.client = httpx.Client(
+            base_url=self.base_url, headers=headers, timeout=self.timeout
+        )
         logging_utility.info(
             "InferenceClient initialized with base_url: %s", self.base_url
         )
@@ -80,7 +92,7 @@ class InferenceClient:
         finally:
             loop.close()
 
-        completions_response = {
+        return {
             "id": f"chatcmpl-{run_id}",
             "object": "chat.completion",
             "created": int(time.time()),
@@ -88,10 +100,7 @@ class InferenceClient:
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": final_content,
-                    },
+                    "message": {"role": "assistant", "content": final_content},
                     "finish_reason": "stop",
                 }
             ],
@@ -101,18 +110,17 @@ class InferenceClient:
                 "total_tokens": len(final_content.split()),
             },
         }
-        return completions_response
 
     async def stream_inference_response(
-        self,
-        request: StreamRequest,
+        self, request: StreamRequest
     ) -> AsyncGenerator[dict, None]:
         logging_utility.info("Sending streaming inference request: %s", request.dict())
 
-        async with httpx.AsyncClient(base_url=self.base_url) as async_client:
-            if self.api_key:
-                async_client.headers["Authorization"] = f"Bearer {self.api_key}"
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
+        async with httpx.AsyncClient(
+            base_url=self.base_url, timeout=self.timeout, headers=headers
+        ) as async_client:
             try:
                 async with async_client.stream(
                     "POST", "/v1/completions", json=request.dict()
@@ -124,13 +132,11 @@ class InferenceClient:
                             if data_str == "[DONE]":
                                 break
                             try:
-                                chunk = json.loads(data_str)
-                                yield chunk
+                                yield json.loads(data_str)
                             except json.JSONDecodeError as json_exc:
                                 logging_utility.error(
                                     "Error decoding JSON from stream: %s", str(json_exc)
                                 )
-                                continue
             except httpx.HTTPStatusError as e:
                 logging_utility.error(
                     "HTTP error during streaming completions: %s", str(e)
