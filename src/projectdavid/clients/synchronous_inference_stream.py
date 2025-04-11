@@ -27,7 +27,7 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key:  Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
@@ -86,10 +86,14 @@ class SynchronousInferenceStream:
                 logging_utility.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                logging_utility.error("[TimeoutError] Timeout occurred, stopping stream.")
+                logging_utility.error(
+                    "[TimeoutError] Timeout occurred, stopping stream."
+                )
                 break
             except Exception as e:
-                logging_utility.error("Unexpected error during streaming completions: %s", e)
+                logging_utility.error(
+                    "Unexpected error during streaming completions: %s", e
+                )
                 break
 
     @classmethod
