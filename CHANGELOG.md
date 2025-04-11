@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/frankie336/projectdavid/compare/v1.3.0...v1.3.1) (2025-04-11)
+
+
+### Bug Fixes
+
+* time out issues. ([9c68435](https://github.com/frankie336/projectdavid/commit/9c68435ef573f25a032bb0a7e1c0b72184293f8c))
+
 # [1.3.0](https://github.com/frankie336/projectdavid/compare/v1.2.3...v1.3.0) (2025-04-10)
 
 
