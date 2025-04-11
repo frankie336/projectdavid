@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/frankie336/projectdavid/compare/v1.3.1...v1.3.2) (2025-04-11)
+
+
+### Bug Fixes
+
+* broken  logic ([077e41f](https://github.com/frankie336/projectdavid/commit/077e41f183470f7f7dda9d8c21ec43d198285a9e))
+
 ## [1.3.1](https://github.com/frankie336/projectdavid/compare/v1.3.0...v1.3.1) (2025-04-11)
 
 
