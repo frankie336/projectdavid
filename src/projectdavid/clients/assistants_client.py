@@ -18,8 +18,6 @@ load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-
-
 class AssistantsClientError(Exception):
     """Custom exception for AssistantsClient errors."""
 
