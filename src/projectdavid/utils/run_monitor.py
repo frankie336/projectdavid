@@ -2,14 +2,21 @@ import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
 
-from ..constants.platform import ACTION_REQUIRED_STATUS, TERMINAL_STATUSES
-
 
 class HttpRunMonitor:
     """
     Monitors the lifecycle of a run using the HTTP-based SDK clients (RunsClient + ActionsClient).
     Triggers callbacks on lifecycle transitions.
     """
+
+    TERMINAL_STATUSES = ({"completed", "failed", "cancelled", "expired"},)
+    ACTION_REQUIRED_STATUS = ("pending_action",)
+    PLATFORM_TOOLS = [
+        "code_interpreter",
+        "web_search",
+        "vector_store_search",
+        "computer",
+    ]
 
     def __init__(
         self,
@@ -27,6 +34,7 @@ class HttpRunMonitor:
         check_interval: int = 5,
         initial_delay: int = 1,
     ):
+
         self.run_id = run_id
         self.runs_client = runs_client
         self.actions_client = actions_client
@@ -75,7 +83,10 @@ class HttpRunMonitor:
                     )
                     self._last_status = current_status
 
-                if current_status == ACTION_REQUIRED_STATUS and self.on_action_required:
+                if (
+                    current_status == self.ACTION_REQUIRED_STATUS
+                    and self.on_action_required
+                ):
                     try:
                         pending_actions = self.actions_client.get_pending_actions(
                             self.run_id
@@ -88,7 +99,7 @@ class HttpRunMonitor:
                             self.run_id, f"Error fetching actions: {action_err}"
                         )
 
-                if current_status in TERMINAL_STATUSES:
+                if current_status in self.TERMINAL_STATUSES:
                     self.on_complete(self.run_id, current_status, run.dict())
                     break
 
