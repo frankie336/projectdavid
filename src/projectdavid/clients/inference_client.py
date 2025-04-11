@@ -38,12 +38,12 @@ class InferenceClient:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-            timeout=self.timeout
+            base_url=self.base_url, headers=headers, timeout=self.timeout
         )
 
-        logging_utility.info("InferenceClient initialized with base_url: %s", self.base_url)
+        logging_utility.info(
+            "InferenceClient initialized with base_url: %s", self.base_url
+        )
 
     def create_completion_sync(
         self,
@@ -165,8 +165,7 @@ class InferenceClient:
         )
 
         async with httpx.AsyncClient(
-            base_url=self.base_url,
-            timeout=self.timeout
+            base_url=self.base_url, timeout=self.timeout
         ) as async_client:
             if self.api_key:
                 async_client.headers["Authorization"] = f"Bearer {self.api_key}"
@@ -178,7 +177,7 @@ class InferenceClient:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
                         if line.startswith("data:"):
-                            data_str = line[len("data:"):].strip()
+                            data_str = line[len("data:") :].strip()
                             if data_str == "[DONE]":
                                 break
                             try:

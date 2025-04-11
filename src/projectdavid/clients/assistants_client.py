@@ -17,6 +17,7 @@ logging_utility = UtilsInterface.LoggingUtility()
 
 DEFAULT_TIMEOUT = httpx.Timeout(timeout=60.0, connect=10.0, read=30.0, write=30.0)
 
+
 class AssistantsClientError(Exception):
     """Custom exception for AssistantsClient errors."""
 
@@ -35,8 +36,9 @@ class AssistantsClient:
 
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
-
-        self.client = httpx.Client(base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT)
+        self.client = httpx.Client(
+            base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT
+        )
 
         logging_utility.info(
             "AssistantsClient initialized with base_url: %s", self.base_url
