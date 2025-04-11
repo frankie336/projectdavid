@@ -1,3 +1,11 @@
+## [1.3.8](https://github.com/frankie336/projectdavid/compare/v1.3.7...v1.3.8) (2025-04-11)
+
+
+### Bug Fixes
+
+* provider param ([93e2bb5](https://github.com/frankie336/projectdavid/commit/93e2bb5a31796998d33b1f60fe859f0996cfaa7f))
+* provider param ([5c5fd48](https://github.com/frankie336/projectdavid/commit/5c5fd48bc7debc844fcfbeb990c27472608861d9))
+
 ## [1.3.7](https://github.com/frankie336/projectdavid/compare/v1.3.6...v1.3.7) (2025-04-11)
 
 
