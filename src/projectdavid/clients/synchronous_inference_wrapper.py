@@ -3,7 +3,6 @@ from contextlib import suppress
 from typing import Generator, Optional
 
 from projectdavid_common import UtilsInterface
-from projectdavid_common.schemas.stream import StreamRequest
 
 logging_utility = UtilsInterface.LoggingUtility()
 
@@ -28,7 +27,7 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key: Optional[str] = None,
+        api_key: str,
     ) -> None:
         self.user_id = user_id
         self.thread_id = thread_id
@@ -39,38 +38,43 @@ class SynchronousInferenceStream:
 
     def stream_chunks(
         self,
-        request: StreamRequest,
-        timeout_per_chunk: float = 30.0,  # Increased from 10.0 to 30.0
+        provider: str,
+        model: str,
+        *,  # Following parameters are keyword-only.
+        api_key: Optional[str] = None,
+        timeout_per_chunk: float = 10.0,
     ) -> Generator[dict, None, None]:
         """
         Streams inference response chunks synchronously by wrapping an async generator.
 
         Args:
-            request (StreamRequest): The validated input request.
+            provider (str): The provider name.
+            model (str): The model name.
+            api_key (Optional[str]): API key for authentication. If not provided, falls back to the value from setup().
             timeout_per_chunk (float): Timeout per chunk in seconds.
 
         Yields:
             dict: A chunk of the inference response.
         """
+        # Prefer direct input over self.api_key
+        resolved_api_key = api_key or self.api_key
 
         async def _stream_chunks_async() -> Generator[dict, None, None]:
-            resolved_api_key = request.api_key or self.api_key
-
             async for chunk in self.inference_client.stream_inference_response(
-                provider=request.provider,
-                model=request.mapped_model,
+                provider=provider,
+                model=model,
                 api_key=resolved_api_key,
-                thread_id=request.thread_id,
-                message_id=request.message_id,
-                run_id=request.run_id,
-                assistant_id=request.assistant_id,
+                thread_id=self.thread_id,
+                message_id=self.message_id,
+                run_id=self.run_id,
+                assistant_id=self.assistant_id,
             ):
                 yield chunk
 
         gen = _stream_chunks_async().__aiter__()
+
         while True:
             try:
-                # Increased timeout value in asyncio.wait_for
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(gen.__anext__(), timeout=timeout_per_chunk)
                 )
@@ -79,14 +83,10 @@ class SynchronousInferenceStream:
                 logging_utility.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                logging_utility.error(
-                    "[TimeoutError] Timeout occurred, stopping stream."
-                )
+                logging_utility.error("[TimeoutError] Timeout occurred, stopping stream.")
                 break
             except Exception as e:
-                logging_utility.error(
-                    "Unexpected error during streaming completions: %s", e
-                )
+                logging_utility.error("Unexpected error during streaming completions: %s", e)
                 break
 
     @classmethod
