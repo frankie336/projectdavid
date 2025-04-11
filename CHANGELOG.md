@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/frankie336/projectdavid/compare/v1.2.3...v1.3.0) (2025-04-10)
+
+
+### Features
+
+* Add support for all google models. ([f5a7c10](https://github.com/frankie336/projectdavid/commit/f5a7c10ccef3d6ddeda0ad96d2359813a26ce61f))
+* Add support for all google models. ([539c51d](https://github.com/frankie336/projectdavid/commit/539c51d53cbc0698691e8231b4626243f18060c9))
+* Add support for all google models. ([82b4181](https://github.com/frankie336/projectdavid/commit/82b41815115f9a1c8f1f5293ce9f21de00dac755))
+
 ## [1.2.3](https://github.com/frankie336/projectdavid/compare/v1.2.2...v1.2.3) (2025-04-10)
 
 
