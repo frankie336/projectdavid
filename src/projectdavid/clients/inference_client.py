@@ -125,7 +125,7 @@ class InferenceClient:
                     response.raise_for_status()
                     async for line in response.aiter_lines():
                         if line.startswith("data:"):
-                            data_str = line[len("data:"):].strip()
+                            data_str = line[len("data:") :].strip()
                             if data_str == "[DONE]":
                                 break
                             try:
