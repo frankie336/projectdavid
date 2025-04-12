@@ -4,7 +4,6 @@ from typing import Optional
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
 
-# Use relative imports for modules within your package.
 from .clients.actions_client import ActionsClient
 from .clients.assistants_client import AssistantsClient
 from .clients.files_client import FileClient

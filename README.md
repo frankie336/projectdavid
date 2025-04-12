@@ -217,7 +217,7 @@ INFO:root:{
 | Runs                | [runs.md](/docs/runs.md)                               |
 | Inference           | [inference.md](/docs/inference.md)                     |
 | Streaming           | [streams.md](/docs/streams.md)                         |
-| Function Calling    | [function_calling.md](/docs/function_calling.md)       |
+| Function Calling    | [function_calling.md](/docs/function_call_definition)       |
 | Code Interpretation | [code_interpretation.md](/docs/code_interpretation.md) |
 | Files               | [files.md](/docs/files.md)                             |
 | Vector Store(RAG)   | [vector_store.md](/docs/vector_store.md)               |
