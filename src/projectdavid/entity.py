@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
 
 from .clients.actions_client import ActionsClient
+from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
@@ -13,7 +14,7 @@ from .clients.runs import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
 from .clients.tools_client import ToolsClient
-from .clients.users import UsersClient
+from .clients.users_client import UsersClient
 from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
 
@@ -53,6 +54,7 @@ class Entity:
         self._inference_client: Optional[InferenceClient] = None
         self._file_client: Optional[FileClient] = None
         self._vectors_client: Optional[VectorStoreClient] = None
+        self._api_key_client: Optional[ApiKeysClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
 
@@ -147,3 +149,12 @@ class Entity:
             )
 
         return self._vectors_client
+
+    @property
+    def keys(self) -> ApiKeysClient:
+        if self._api_key_client is None:
+            self._api_key_client = ApiKeysClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
+
+        return self._api_key_client
