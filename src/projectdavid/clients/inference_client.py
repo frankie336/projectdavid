@@ -1,12 +1,12 @@
 import asyncio
 import json
-import os
 import time
 from typing import AsyncGenerator, Optional
 
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
+from projectdavid_common.schemas.stream import StreamRequest
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
@@ -60,7 +60,7 @@ class InferenceClient(BaseAPIClient):
             payload["content"] = user_content
 
         try:
-            validated_payload = ent_validator.StreamRequest(**payload)
+            validated_payload = StreamRequest(**payload)
         except ValidationError as e:
             logging_utility.error("Payload validation error: %s", e.json())
             raise ValueError(f"Payload validation error: {e}")
@@ -142,7 +142,7 @@ class InferenceClient(BaseAPIClient):
             payload["content"] = user_content
 
         try:
-            validated_payload = ent_validator.StreamRequest(**payload)
+            validated_payload = StreamRequest(**payload)
         except ValidationError as e:
             logging_utility.error("Payload validation error: %s", e.json())
             raise ValueError(f"Payload validation error: {e}")
