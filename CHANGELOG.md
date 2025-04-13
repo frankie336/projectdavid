@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/frankie336/projectdavid/compare/v1.4.2...v1.4.3) (2025-04-13)
+
+
+### Bug Fixes
+
+* X-API-Key alignment. ([e4f8661](https://github.com/frankie336/projectdavid/commit/e4f8661803542312d7893ae31a57d1c0cb90e80a))
+
 ## [1.4.2](https://github.com/frankie336/projectdavid/compare/v1.4.1...v1.4.2) (2025-04-13)
 
 
