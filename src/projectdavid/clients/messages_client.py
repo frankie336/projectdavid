@@ -7,40 +7,24 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
 ent_validator = ValidationInterface()
-
+from projectdavid.clients.base_client import BaseAPIClient
 
 load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class MessagesClient:
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
+class MessagesClient(BaseAPIClient):
+    def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
         """
-        Initialize the MessagesClient with the given base URL and optional API key.
-        Uses X-API-Key authentication for consistency across all internal clients.
+        MessagesClient for interacting with the /v1/messages API.
+
+        Inherits BaseAPIClient for consistent header injection,
+        timeout configuration, and error logging.
         """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-        )
-
+        super().__init__(base_url=base_url, api_key=api_key)
         self.message_chunks: Dict[str, List[str]] = {}
-        logging_utility.info(
-            "MessagesClient initialized with base_url: %s", self.base_url
-        )
+        logging_utility.info("MessagesClient initialized using BaseAPIClient.")
 
     def create_message(
         self,
