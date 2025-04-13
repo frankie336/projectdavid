@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/frankie336/projectdavid/compare/v1.4.4...v1.4.5) (2025-04-13)
+
+
+### Bug Fixes
+
+* assistants_client.py ([4509fcd](https://github.com/frankie336/projectdavid/commit/4509fcd248fa7a82264e41ef6d804213e6677ea2))
+
 ## [1.4.4](https://github.com/frankie336/projectdavid/compare/v1.4.3...v1.4.4) (2025-04-13)
 
 
