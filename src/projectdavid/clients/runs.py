@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -16,17 +17,25 @@ class RunsClient:
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         """
         Initialize the RunsClient with the given base URL and optional API key.
-
-        Args:
-            base_url (str): The base URL for the runs service.
-            api_key (Optional[str]): The API key for authentication.
+        Uses X-API-Key authentication for standardization across all service clients.
         """
-        self.base_url = base_url
-        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key or os.getenv("API_KEY")
+
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning(
+                "No API Key provided. Access to protected endpoints may be denied."
+            )
+
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
+            headers=headers,
         )
+
         logging_utility.info("RunsClient initialized with base_url: %s", self.base_url)
 
     def create_run(

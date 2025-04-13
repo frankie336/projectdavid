@@ -16,18 +16,26 @@ class ToolsClient:
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         """
         Initialize the ToolsClient with the given base URL and optional API key.
-
-        Args:
-            base_url (str): The base URL for the tools service.
-            api_key (Optional[str]): The API key for authentication.
+        Uses X-API-Key authentication for consistency with all other clients.
         """
-        self.base_url = base_url
-        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key or os.getenv("API_KEY")
+
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning(
+                "No API Key provided. Access to protected endpoints may be denied."
+            )
+
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
-            timeout=10.0,  # Timeout set to 10 seconds.
+            headers=headers,
+            timeout=10.0,
         )
+
         logging_utility.info("ToolsClient initialized with base_url: %s", self.base_url)
 
     def __del__(self):

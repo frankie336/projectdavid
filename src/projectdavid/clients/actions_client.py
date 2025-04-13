@@ -24,26 +24,38 @@ class ActionsClient:
         self,
         base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"),
         api_key: Optional[str] = None,
-        # Allow overriding timeouts if needed, but use defined defaults
         default_timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
         connect_timeout: float = DEFAULT_CONNECT_TIMEOUT_SECONDS,
     ):
         """
         Initialize with base URL, API key, and default request timeouts.
+        Uses 'X-API-Key' header for authentication, aligning with UsersClient.
         """
-        self.base_url = base_url
-        self.api_key = api_key or os.getenv("API_KEY", "your_api_key")
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key or os.getenv("API_KEY")
 
-        # --- Configure and Apply Timeout ---
+        if not self.base_url:
+            raise ValueError("Base URL must be specified via param or environment.")
+
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning(
+                "No API Key provided. Access to protected endpoints may be denied."
+            )
+
         timeout_config = httpx.Timeout(default_timeout, connect=connect_timeout)
+
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"} if self.api_key else {},
-            timeout=timeout_config,  # Apply the timeout configuration
+            headers=headers,
+            timeout=timeout_config,
         )
-        # --- Log Initialization with Timeout Info ---
+
         logging_utility.info(
-            "ActionsClient initialized with base_url: %s and default timeout: %s (connect: %s) seconds",
+            "ActionsClient initialized with base_url: %s and default timeout: %s (connect: %s)",
             self.base_url,
             default_timeout,
             connect_timeout,

@@ -43,28 +43,25 @@ class VectorStoreFileUpdateStatusInput(BaseModel):
 
 
 class VectorStoreClient:
-    """
-    Client for interacting with the Vector Store API and backend (e.g., Qdrant).
-
-    Provides synchronous methods for ease of use in standard applications,
-    while utilizing asynchronous operations internally for network I/O.
-    """
-
     def __init__(
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         vector_store_host: Optional[str] = "localhost",
     ):
-        self.base_url = base_url or os.getenv("BASE_URL")
+        self.base_url = (base_url or os.getenv("BASE_URL", "")).rstrip("/")
         self.api_key = api_key or os.getenv("API_KEY")
-        if not self.base_url:
-            raise VectorStoreClientError(
-                "BASE_URL must be provided either as an argument or in environment variables."
-            )
 
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-        # Use underscores to indicate internal clients
+        if not self.base_url:
+            raise VectorStoreClientError("BASE_URL is required.")
+
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning("No API Key provided; requests may fail.")
+
         self._async_api_client = httpx.AsyncClient(
             base_url=self.base_url, headers=headers, timeout=30.0
         )
@@ -73,13 +70,14 @@ class VectorStoreClient:
         )
 
         self.vector_store_host = vector_store_host
-        self.vector_manager = VectorStoreManager(
-            vector_store_host=self.vector_store_host
-        )
+        self.vector_manager = VectorStoreManager(vector_store_host=vector_store_host)
         self.identifier_service = UtilsInterface.IdentifierService()
         self.file_processor = FileProcessor()
 
-    # --- Context Managers ---
+        logging_utility.info(
+            "VectorStoreClient initialized with base_url: %s", self.base_url
+        )
+
     def __enter__(self):
         return self
 
@@ -92,9 +90,7 @@ class VectorStoreClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.aclose()
 
-    # --- Close Methods ---
     async def aclose(self):
-        """Asynchronously closes the underlying HTTP clients."""
         await self._async_api_client.aclose()
         await asyncio.to_thread(self._sync_api_client.close)
 

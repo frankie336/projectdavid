@@ -26,17 +26,30 @@ class AssistantsClientError(Exception):
 class AssistantsClient:
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
         self.base_url = base_url or os.getenv("BASE_URL")
-        self.api_key = api_key or os.getenv("API_KEY")
-
         if not self.base_url:
             raise AssistantsClientError(
-                "BASE_URL must be provided either as an argument or in environment variables."
+                "BASE_URL must be provided either as an argument or via environment variables."
             )
 
-        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        self.base_url = self.base_url.rstrip("/")  # Just like UsersClient
 
+        self.api_key = api_key or os.getenv("API_KEY")
+
+        # Configure headers
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning(
+                "No API Key provided. Access to protected endpoints may be denied."
+            )
+
+        # Initialize the client
         self.client = httpx.Client(
-            base_url=self.base_url, headers=headers, timeout=DEFAULT_TIMEOUT
+            base_url=self.base_url,
+            headers=headers,
+            timeout=DEFAULT_TIMEOUT,
         )
 
         logging_utility.info(

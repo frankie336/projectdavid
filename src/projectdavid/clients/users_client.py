@@ -16,52 +16,38 @@ logging_utility = UtilsInterface.LoggingUtility()
 
 
 class UsersClient:
-    """
-    Client for interacting with the User endpoints of the API.
-
-    Handles API key authentication using the 'X-API-Key' header.
-    Provides methods for creating, retrieving, updating, and deleting users,
-    as well as listing user-associated assistants.
-    """
-
     def __init__(
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
-        timeout: float = 10.0,  # Added default timeout
+        timeout: float = 10.0,
     ):
         """
         Initializes the UsersClient.
-
-        Args:
-            base_url: The base URL of the API (e.g., 'http://localhost:9000').
-                      Defaults to the BASE_URL environment variable.
-            api_key: The API key for authentication. If None, requests might fail
-                     on protected endpoints. Defaults to None.
-            timeout: Default timeout in seconds for HTTP requests.
+        Uses X-API-Key authentication for consistent internal API access.
         """
         resolved_base_url = base_url or os.getenv("BASE_URL")
         if not resolved_base_url:
             raise ValueError(
                 "Base URL must be provided either as an argument or via BASE_URL environment variable."
             )
-        self.base_url = resolved_base_url.rstrip("/")  # Ensure no trailing slash
 
-        self.api_key = api_key
-        headers = {"Content-Type": "application/json"}  # Standard header
+        self.base_url = resolved_base_url.rstrip("/")
+        self.api_key = api_key or os.getenv("API_KEY")
+
+        headers = {"Content-Type": "application/json"}
         if self.api_key:
-            headers["X-API-Key"] = self.api_key  # Use the correct header name
+            headers["X-API-Key"] = self.api_key
             logging_utility.info("API Key provided and added to headers.")
         else:
             logging_utility.warning(
                 "No API Key provided. Access to protected endpoints may be denied."
             )
 
-        # Initialize httpx client with base URL, headers, and timeout
         self.client = httpx.Client(
             base_url=self.base_url,
             headers=headers,
-            timeout=httpx.Timeout(timeout, connect=5.0),  # Set connect timeout too
+            timeout=httpx.Timeout(timeout, connect=5.0),
         )
         logging_utility.info("UsersClient initialized with base_url: %s", self.base_url)
 

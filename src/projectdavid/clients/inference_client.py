@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import time
 from typing import AsyncGenerator, Optional
 
@@ -14,28 +15,24 @@ logging_utility = UtilsInterface.LoggingUtility()
 
 
 class InferenceClient:
-    """
-    Client-side service for interacting with the completions endpoint.
-
-    Exposes:
-      - create_completion_sync(...): a synchronous wrapper that blocks until the response is aggregated.
-      - stream_inference_response(...): an async generator for real-time streaming.
-    """
-
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         """
         Initialize the InferenceClient with a base URL and an optional API key.
+        Uses X-API-Key authentication header, consistent with other clients.
         """
-        self.base_url = base_url
-        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key or os.getenv("API_KEY")
 
-        # Set up timeout configuration
         self.timeout = httpx.Timeout(timeout=60.0, connect=10.0, read=30.0, write=30.0)
 
-        # Prepare headers
-        headers = {}
+        headers = {"Content-Type": "application/json"}
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            headers["X-API-Key"] = self.api_key
+            logging_utility.info("API Key provided and added to headers.")
+        else:
+            logging_utility.warning(
+                "No API Key provided. Access to protected endpoints may be denied."
+            )
 
         self.client = httpx.Client(
             base_url=self.base_url, headers=headers, timeout=self.timeout
