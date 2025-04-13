@@ -1,3 +1,10 @@
+## [1.4.9](https://github.com/frankie336/projectdavid/compare/v1.4.8...v1.4.9) (2025-04-13)
+
+
+### Bug Fixes
+
+* ToolsClient ([1cb2ad9](https://github.com/frankie336/projectdavid/commit/1cb2ad956963c69a08ebada97d77d91694fd74e3))
+
 ## [1.4.8](https://github.com/frankie336/projectdavid/compare/v1.4.7...v1.4.8) (2025-04-13)
 
 
