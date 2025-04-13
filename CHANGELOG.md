@@ -1,3 +1,10 @@
+## [1.4.8](https://github.com/frankie336/projectdavid/compare/v1.4.7...v1.4.8) (2025-04-13)
+
+
+### Bug Fixes
+
+* StreamRequest ([81d7faa](https://github.com/frankie336/projectdavid/commit/81d7faac531cd1546429b2c17c67c43f164049f5))
+
 ## [1.4.7](https://github.com/frankie336/projectdavid/compare/v1.4.6...v1.4.7) (2025-04-13)
 
 
