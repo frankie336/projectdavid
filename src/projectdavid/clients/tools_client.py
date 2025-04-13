@@ -6,14 +6,15 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
-ent_validator = ValidationInterface()
+from projectdavid.clients.base_client import BaseAPIClient
 
+ent_validator = ValidationInterface()
 load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class ToolsClient:
+class ToolsClient(BaseAPIClient):
 
     def __init__(
         self,
