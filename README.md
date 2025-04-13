@@ -38,170 +38,148 @@ pip install projectdavid
 
 ##  Quick Start
 
-**Create a user**
-
 ```python
-from projectdavid import Entity
+import os
+
 from dotenv import load_dotenv
+from projectdavid import Entity
 
+load_dotenv()
 
-# In dev environments the base url will default 
-# to http://localhost:9000
-# In prod encvironments, you need to set it to your FDQN
+# --------------------------------------------------
+# Load the Entities client with your user API key
+# Note: if you define ENTITIES_API_KEY="ea_6zZiZ..."
+# in .env, you do not need to pass in the API key directly.
+# We pass in here directly for clarity
+# ---------------------------------------------------
+client = Entity(base_url="http://localhost:9000", api_key=os.getenv("ENTITIES_API_KEY"))
 
-client = Entity(
-      base_url='http://localhost:9000',
-      api_key=os.getenv("API_KEY")
+user_id = "user_kUKV8octgG2aMc7kxAcD3i"
+
+# -----------------------------
+# create an assistant
+# ------------------------------
+assistant = client.assistants.create_assistant(
+    name="test_assistant",
+    instructions="You are a helpful AI assistant",
 )
-user = client.users.create_user(name='test_user')
-```
+print(f"created assistant with ID: {assistant.id}")
 
-```bash
-print(user.id)
-user_s1xkwzViWkq0dqUBGri9EU
-```
+# -----------------------------------------------
+# Create a thread
+# Note:
+# - Threads are re-usable
+# Reuse threads in the case you want as continued
+# multi turn conversation
+# ------------------------------------------------
+print("Creating thread...")
+thread = client.threads.create_thread(participant_ids=[user_id])
 
-
-
-
-```python
-
-assistant = client.assistants.create_assistant(name='test_assistant',
-                                               instructions='You are a helpful AI assistant',
-
-                                               )
-
-```
-
-```bash
-print(assistant.id)
-asst_3SrhB8vCFTl56M0dtjbqyV
-```
-
-The above steps can be repeated at whatever scale and frequency needed: you can create unlimted users,
-and unlimited asistants
-
----
-
-**Setting up a prompt and handling response**
+print(f"created thread with ID: {thread.id}")
+# Store the dynamically created thread ID
+actual_thread_id = thread.id
 
 
-- Entities supports synchronous streams
-
-
-
-```python
-
-# step 1 - Create a thread  
-
-thread = client.threads.create_thread(participant_ids=["user_s1xkwzViWkq0dqUBGri9EU"])
-
-
-# step 2 - Create a message 
-
+# -----------------------------------------
+#  Create a message using the NEW thread ID
+# --------------------------------------------
+print(f"Creating message in thread {actual_thread_id}...")
 message = client.messages.create_message(
-      thread_id="thread_kn7vwRPfutWyvwl4um1VCV",
-      role="user",
-      content="Hello, assistant!",
-      assistant_id="asst_3SrhB8vCFTl56M0dtjbqyV"
+    thread_id=actual_thread_id,
+    role="user",
+    content="Hello, assistant! Tell me about the latest trends in AI.",
+    assistant_id=assistant.id,
 )
+print(f"Created message with ID: {message.id}")
 
-# step 3 - Create a run 
+# ---------------------------------------------
+# step 3 - Create a run using the NEW thread ID
+# ----------------------------------------------
+print(f"Creating run in thread {actual_thread_id}...")
+run = client.runs.create_run(assistant_id=assistant.id, thread_id=actual_thread_id)
+print(f"Created run with ID: {run.id}")
 
-run = client.runs.create_run(
-      assistant_id="asst_3SrhB8vCFTl56M0dtjbqyV",
-      thread_id="thread_kn7vwRPfutWyvwl4um1VCV"
-)
-
-
-# Instantiate the syncronous streaming helper 
-
+# ------------------------------------------------
+# Instantiate the synchronous streaming helper
+# --------------------------------------------------
 sync_stream = client.synchronous_inference_stream
 
-
-# step 4 - Set up the stream
-
+# ------------------------------------------------------
+# step 4 - Set up the stream using the NEW thread ID
+# --------------------------------------------------------
+print(f"Setting up stream for thread {actual_thread_id}...")
 sync_stream.setup(
-            user_id="user_s1xkwzViWkq0dqUBGri9EU",
-            thread_id="thread_kn7vwRPfutWyvwl4um1VCV",
-            assistant_id="default",
-            message_id=message.id,
-            run_id=run.id,
+    user_id=user_id,
+    thread_id=actual_thread_id,
+    assistant_id=assistant.id,
+    message_id=message.id,
+    run_id=run.id,
+    api_key=os.getenv("HYPERBOLIC_API_KEY"),
+)
+print("Stream setup complete. Starting streaming...")
 
-        )
+# --- Stream initial LLM response ---
+try:
+    for chunk in sync_stream.stream_chunks(
+        provider="Hyperbolic",
+        model="hyperbolic/deepseek-ai/DeepSeek-V3-0324",  # Ensure this model is valid/available
+        timeout_per_chunk=15.0,
+    ):
+        content = chunk.get("content", "")
+        if content:
+            print(content, end="", flush=True)
+    print("\n--- End of Stream ---")  # Add newline after stream
+except Exception as e:
+    print(f"\n--- Stream Error: {e} ---")  # Catch errors during streaming
 
-# step 5 - Stream the response
-
-# Stream completions synchronously
-
-# The api_key param is optional but needed if you are usign
-# a cloud inference providider 
-
-import logging
-import json
-
-logging.basicConfig(level=logging.INFO)
-
-# Stream completions synchronously
-logging.info("Beginning sync stream...")
-for chunk in sync_stream.stream_chunks(
-    provider="Hyperbolic",
-    model="hyperbolic/deepseek-ai/DeepSeek-V3",
-    timeout_per_chunk=15.0,
-    api_key='your-hyperbolic-key-here',
-):
-    logging.info(json.dumps(chunk, indent=2))
-
-logging.info("Stream finished.")
-
+print("Script finished.")
 ```
 
+**The assisants  response**:
 
-A snip  of the stream strcuture:
 
-```bash
+Hello! The field of AI is evolving rapidly, and here are some of the latest trends as of early 2025:
 
-INFO:root:{
-  "status": "handshake"
-}
-INFO:root:{
-  "status": "initializing"
-}
-INFO:root:{
-  "status": "processing"
-}
-INFO:root:{
-  "type": "content",
-  "content": "Hello",
-  "first_chunk": true
-}
-INFO:root:{
-  "type": "content",
-  "content": "!"
-}
-INFO:root:{
-  "type": "content",
-  "content": " It"
-}
-INFO:root:{
-  "type": "content",
-  "content": "'s"
-}
-INFO:root:{
-  "type": "content",
-  "content": " great"
-}
-INFO:root:{
-  "type": "content",
-  "content": " to"
-}
-INFO:root:{
-  "type": "content",
-  "content": " hear"
-}
-...
-```
+### 1. **Multimodal AI Models**  
+   - Models like GPT-4, Gemini, and others now seamlessly process text, images, audio, and video in a unified way, enabling richer interactions (e.g., ChatGPT with vision).  
+   - Applications include real-time translation with context, AI-generated video synthesis, and more immersive virtual assistants.
 
+### 2. **Smaller, More Efficient Models**  
+   - While giant models (e.g., GPT-4, Claude 3) still dominate, there’s a push for smaller, specialized models (e.g., Microsoft’s Phi-3, Mistral 7B) that run locally on devices with near-LLM performance.  
+   - Focus on **energy efficiency** and reduced computational costs.
+
+### 3. **AI Agents & Autonomous Systems**  
+   - AI “agents” (e.g., OpenAI’s “Agentic workflows”) can now perform multi-step tasks autonomously, like coding, research, or booking trips.  
+   - Companies are integrating agentic AI into workflows (e.g., Salesforce, Notion AI).
+
+### 4. **Generative AI Advancements**  
+   - **Video generation**: Tools like OpenAI’s Sora, Runway ML, and Pika Labs produce high-quality, longer AI-generated videos.  
+   - **3D asset creation**: AI can now generate 3D models from text prompts (e.g., Nvidia’s tools).  
+   - **Voice cloning**: Ultra-realistic voice synthesis (e.g., ElevenLabs) is raising ethical debates.
+
+### 5. **Regulation & Ethical AI**  
+   - Governments are catching up with laws like the EU AI Act and U.S. executive orders on AI safety.  
+   - Watermarking AI content (e.g., C2PA standards) is gaining traction to combat deepfakes.
+
+### 6. **AI in Science & Healthcare**  
+   - AlphaFold 3 (DeepMind) predicts protein interactions with unprecedented accuracy.  
+   - AI-driven drug discovery (e.g., Insilico Medicine) is accelerating clinical trials.
+
+### 7. **Open-Source vs. Closed AI**  
+   - Tension between open-source (Mistral, Meta’s Llama 3) and proprietary models (GPT-4, Gemini) continues, with debates over safety and innovation.
+
+### 8. **AI Hardware Innovations**  
+   - New chips (e.g., Nvidia’s Blackwell, Groq’s LPUs) are optimizing speed and cost for AI workloads.  
+   - “AI PCs” with NPUs (neural processing units) are becoming mainstream.
+
+### 9. **Personalized AI**  
+   - Tailored AI assistants learn individual preferences (e.g., Rabbit R1, Humane AI Pin).  
+   - Privacy-focused local AI (e.g., Apple’s on-device AI in iOS 18).
+
+### 10. **Quantum AI (Early Stages)**  
+   - Companies like Google and IBM are exploring quantum machine learning, though practical applications remain limited.
+
+Would you like a deeper dive into any of these trends?
 
 ---
 
