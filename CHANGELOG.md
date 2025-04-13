@@ -1,3 +1,10 @@
+## [1.4.4](https://github.com/frankie336/projectdavid/compare/v1.4.3...v1.4.4) (2025-04-13)
+
+
+### Bug Fixes
+
+* threads_client.py ([8e84c8a](https://github.com/frankie336/projectdavid/commit/8e84c8a35fff8ab63aeaefa4a72d0f09e2f34fef))
+
 ## [1.4.3](https://github.com/frankie336/projectdavid/compare/v1.4.2...v1.4.3) (2025-04-13)
 
 
