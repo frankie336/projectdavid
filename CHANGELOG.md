@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/frankie336/projectdavid/compare/v1.3.14...v1.4.0) (2025-04-12)
+
+
+### Features
+
+* Implement API key protected routes ([f0dae30](https://github.com/frankie336/projectdavid/commit/f0dae30ec80746918d613ec679fa54b690ed5d27))
+
 ## [1.3.14](https://github.com/frankie336/projectdavid/compare/v1.3.13...v1.3.14) (2025-04-11)
 
 
