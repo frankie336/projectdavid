@@ -25,6 +25,7 @@ from projectdavid.clients.base_client import BaseAPIClient
 
 
 class ActionsClient(BaseAPIClient):
+
     def __init__(
         self,
         base_url: Optional[str] = None,

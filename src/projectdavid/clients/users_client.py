@@ -1,53 +1,37 @@
 import os
-from typing import List, Optional  # Added Optional for api_key hint
+from typing import List, Optional
 
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 # Load environment variables if needed (ensure .env file is present or vars are set)
 load_dotenv()
 
-# Assuming ValidationInterface is correctly set up
 ent_validator = ValidationInterface()
-# Assuming UtilsInterface is correctly set up
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class UsersClient:
+class UsersClient(BaseAPIClient):
     def __init__(
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         timeout: float = 10.0,
+        connect_timeout: float = 5.0,
+        read_timeout: float = 10.0,
+        write_timeout: float = 10.0,
     ):
-        """
-        Initializes the UsersClient.
-        Uses X-API-Key authentication for consistent internal API access.
-        """
-        resolved_base_url = base_url or os.getenv("BASE_URL")
-        if not resolved_base_url:
-            raise ValueError(
-                "Base URL must be provided either as an argument or via BASE_URL environment variable."
-            )
-
-        self.base_url = resolved_base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-            timeout=httpx.Timeout(timeout, connect=5.0),
+        super().__init__(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
         )
         logging_utility.info("UsersClient initialized with base_url: %s", self.base_url)
 
@@ -192,10 +176,6 @@ class UsersClient:
 
         # 1. Validate the partial update data using UserUpdate
         try:
-            # Allow extra='ignore' if UserUpdate shouldn't fail on extra fields in **updates
-            # validated_data = ent_validator.UserUpdate.model_validate(updates) # Strict validation
-            # Or filter **updates first to only include known fields in UserUpdate
-            # For simplicity, let's assume UserUpdate defines all allowed update fields:
             validated_update_data = ent_validator.UserUpdate(**updates)
             update_payload = validated_update_data.model_dump(
                 exclude_unset=True

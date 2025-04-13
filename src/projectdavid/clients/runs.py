@@ -9,34 +9,31 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.schemas.enums import StatusEnum
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 ent_validator = ValidationInterface()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class RunsClient:
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
-        """
-        Initialize the RunsClient with the given base URL and optional API key.
-        Uses X-API-Key authentication for standardization across all service clients.
-        """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
+class RunsClient(BaseAPIClient):
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        read_timeout: float = 30.0,
+        write_timeout: float = 30.0,
+    ):
+        super().__init__(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
         )
-
-        logging_utility.info("RunsClient initialized with base_url: %s", self.base_url)
+        logging_utility.info("RunsClient ready at: %s", self.base_url)
 
     def create_run(
         self,

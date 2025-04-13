@@ -1,25 +1,17 @@
-#!/usr/bin/env python
+#!src/projectdavid/clients/vectors.py
 import asyncio
 import os
 import uuid
-import warnings  # Import warnings
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from dotenv import load_dotenv
-
-# Assume ValidationInterface now contains VectorStoreRead, VectorStoreFileRead, StatusEnum, VectorStoreCreate
 from projectdavid_common import UtilsInterface, ValidationInterface
-
-# Import necessary Pydantic features if defining models here (though prefer common)
 from pydantic import BaseModel, Field
 
-# Assuming these client classes are compatible with being instantiated here
-# And their methods are either sync or async as called below.
 from projectdavid.clients.file_processor import FileProcessor
-
-# Assuming VectorStoreManager has been updated as discussed
 from projectdavid.clients.vector_store_manager import VectorStoreManager
 
 load_dotenv()
@@ -32,7 +24,6 @@ class VectorStoreClientError(Exception):
     pass
 
 
-# Define input model for updating file status if not in ValidationInterface
 class VectorStoreFileUpdateStatusInput(BaseModel):
     status: ValidationInterface.StatusEnum = Field(
         ..., description="The new status for the file record."

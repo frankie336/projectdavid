@@ -9,38 +9,28 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 ent_validator = ValidationInterface()
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class InferenceClient:
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
+class InferenceClient(BaseAPIClient):
+    def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
         """
-        Initialize the InferenceClient with a base URL and an optional API key.
-        Uses X-API-Key authentication header, consistent with other clients.
+        InferenceClient for interacting with the completions endpoint.
+        Inherits BaseAPIClient to maintain unified timeout, auth, and base_url configuration.
         """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        self.timeout = httpx.Timeout(timeout=60.0, connect=10.0, read=30.0, write=30.0)
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url, headers=headers, timeout=self.timeout
+        super().__init__(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=60.0,
+            connect_timeout=10.0,
+            read_timeout=30.0,
+            write_timeout=30.0,
         )
-
-        logging_utility.info(
-            "InferenceClient initialized with base_url: %s", self.base_url
-        )
+        logging_utility.info("InferenceClient initialized using BaseAPIClient.")
 
     def create_completion_sync(
         self,

@@ -36,7 +36,7 @@ class Entity:
         Optionally, a configuration object can be injected to decouple from environment variables.
         """
         self.base_url = base_url or os.getenv(
-            "ASSISTANTS_BASE_URL", "http://localhost:9000/"
+            "ENTITIES_BASE_URL", "http://localhost:9000/"
         )
         self.api_key = api_key or os.getenv("API_KEY", "your_api_key")
 
