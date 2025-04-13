@@ -1,3 +1,6 @@
+# projectdavid/clients/threads_client.py
+
+import os
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -5,35 +8,16 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
-validator = ValidationInterface()
+from projectdavid.clients.base_client import BaseAPIClient
 
 load_dotenv()
+validator = ValidationInterface()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class ThreadsClient:
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
-        """
-        Initialize the ThreadsClient with the given base URL and optional API key.
-        Uses X-API-Key authentication for consistency with other internal clients.
-        """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-        )
-
+class ThreadsClient(BaseAPIClient):
+    def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
+        super().__init__(base_url=base_url, api_key=api_key)
         logging_utility.info(
             "ThreadsClient initialized with base_url: %s", self.base_url
         )
@@ -45,11 +29,7 @@ class ThreadsClient:
             response = self.client.post("/v1/users", json=user_data)
             response.raise_for_status()
             created_user = response.json()
-            validated_user = validator.UserRead(**created_user)
-            logging_utility.info(
-                "User created successfully with id: %s", validated_user.id
-            )
-            return validated_user
+            return validator.UserRead(**created_user)
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
@@ -57,7 +37,7 @@ class ThreadsClient:
             logging_utility.error("HTTP error occurred while creating user: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while creating user: %s", str(e))
+            logging_utility.error("Unexpected error creating user: %s", str(e))
             raise
 
     def create_thread(
@@ -74,11 +54,7 @@ class ThreadsClient:
             response = self.client.post("/v1/threads", json=thread_data)
             response.raise_for_status()
             created_thread = response.json()
-            validated_thread = validator.ThreadRead(**created_thread)
-            logging_utility.info(
-                "Thread created successfully with id: %s", validated_thread.id
-            )
-            return validated_thread
+            return validator.ThreadRead(**created_thread)
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
@@ -93,7 +69,7 @@ class ThreadsClient:
             )
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while creating thread: %s", str(e))
+            logging_utility.error("Unexpected error creating thread: %s", str(e))
             raise
 
     def retrieve_thread(self, thread_id: str) -> validator.ThreadRead:
@@ -102,21 +78,15 @@ class ThreadsClient:
             response = self.client.get(f"/v1/threads/{thread_id}")
             response.raise_for_status()
             thread = response.json()
-            validated_thread = validator.ThreadRead(**thread)
-            logging_utility.info("Thread retrieved successfully")
-            return validated_thread
+            return validator.ThreadRead(**thread)
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
         except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while retrieving thread: %s", str(e)
-            )
+            logging_utility.error("HTTP error retrieving thread: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error(
-                "An error occurred while retrieving thread: %s", str(e)
-            )
+            logging_utility.error("Unexpected error retrieving thread: %s", str(e))
             raise
 
     def update_thread(self, thread_id: str, **updates) -> validator.ThreadReadDetailed:
@@ -130,61 +100,33 @@ class ThreadsClient:
             updated_thread = response.json()
             return validator.ThreadReadDetailed(**updated_thread)
         except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while updating thread: %s", str(e)
-            )
-            logging_utility.error("Response content: %s", e.response.content)
+            logging_utility.error("HTTP error updating thread: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while updating thread: %s", str(e))
+            logging_utility.error("Unexpected error updating thread: %s", str(e))
             raise
 
     def update_thread_metadata(
         self, thread_id: str, new_metadata: Dict[str, Any]
     ) -> validator.ThreadRead:
-        logging_utility.info("Updating metadata for thread with id: %s", thread_id)
         try:
             thread = self.retrieve_thread(thread_id)
             current_metadata = thread.meta_data
             current_metadata.update(new_metadata)
             return self.update_thread(thread_id, meta_data=current_metadata)
-        except ValidationError as e:
-            logging_utility.error(
-                "Validation error while updating thread metadata: %s", e.json()
-            )
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while updating thread metadata: %s", str(e)
-            )
-            raise
         except Exception as e:
-            logging_utility.error(
-                "An error occurred while updating thread metadata: %s", str(e)
-            )
+            logging_utility.error("Error updating thread metadata: %s", str(e))
             raise
 
     def list_threads(self, user_id: str) -> List[str]:
-        logging_utility.info("Listing threads for user with id: %s", user_id)
+        logging_utility.info("Listing threads for user: %s", user_id)
         try:
             response = self.client.get(f"/v1/users/{user_id}/threads")
             response.raise_for_status()
             thread_ids = response.json()
-            validated_thread_ids = validator.ThreadIds(**thread_ids)
-            logging_utility.info(
-                "Retrieved %d thread ids", len(validated_thread_ids.thread_ids)
-            )
-            return validated_thread_ids.thread_ids
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while listing threads: %s", str(e)
-            )
-            raise
+            return validator.ThreadIds(**thread_ids).thread_ids
         except Exception as e:
-            logging_utility.error("An error occurred while listing threads: %s", str(e))
+            logging_utility.error("Error listing threads: %s", str(e))
             raise
 
     def delete_thread(self, thread_id: str) -> bool:
@@ -192,12 +134,12 @@ class ThreadsClient:
         try:
             response = self.client.delete(f"/v1/threads/{thread_id}")
             response.raise_for_status()
-            logging_utility.info("Thread deleted successfully")
             return True
         except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while deleting thread: %s", str(e)
-            )
             if e.response.status_code == 404:
                 return False
+            logging_utility.error("HTTP error deleting thread: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("Unexpected error deleting thread: %s", str(e))
             raise
