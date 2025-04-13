@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 ent_validator = ValidationInterface()
 
 load_dotenv()
@@ -15,27 +17,28 @@ load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
-class FileClient:
-    def __init__(self, base_url: str, api_key: Optional[str] = None):
+class FileClient(BaseAPIClient):
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        read_timeout: float = 30.0,
+        write_timeout: float = 30.0,
+    ):
         """
-        Initialize the FileClient with a base URL and an optional API key.
-        Uses X-API-Key for header authentication to align with system standard.
+        FileClient inherits from BaseAPIClient.
+        Handles X-API-Key auth and timeout config via shared client logic.
         """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
+        super().__init__(
+            base_url=base_url
+            or os.getenv("ENTITIES_BASE_URL", "http://localhost:9000"),
+            api_key=api_key or os.getenv("ENTITIES_API_KEY"),
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
         )
         logging_utility.info("FileClient initialized with base_url: %s", self.base_url)
 

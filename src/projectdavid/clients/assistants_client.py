@@ -8,6 +8,8 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.constants.timeouts import DEFAULT_TIMEOUT
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 ent_validator = ValidationInterface()
 
 
@@ -23,38 +25,29 @@ class AssistantsClientError(Exception):
     pass
 
 
-class AssistantsClient:
-    def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
-        self.base_url = base_url or os.getenv("BASE_URL")
-        if not self.base_url:
-            raise AssistantsClientError(
-                "BASE_URL must be provided either as an argument or via environment variables."
-            )
-
-        self.base_url = self.base_url.rstrip("/")  # Just like UsersClient
-
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        # Configure headers
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        # Initialize the client
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-            timeout=DEFAULT_TIMEOUT,
+class AssistantsClient(BaseAPIClient):
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        read_timeout: float = 30.0,
+        write_timeout: float = 30.0,
+    ):
+        """
+        AssistantsClient constructor using BaseAPIClient configuration.
+        Inherits base_url, api_key, timeouts, headers, and client instantiation.
+        """
+        super().__init__(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
         )
-
-        logging_utility.info(
-            "AssistantsClient initialized with base_url: %s", self.base_url
-        )
+        logging_utility.info("AssistantsClient ready at: %s", self.base_url)
 
     def close(self):
         """Closes the HTTP client session."""

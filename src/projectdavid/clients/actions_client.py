@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
+from projectdavid.clients.base_client import BaseAPIClient
+
 # --- Setup ---
 validation = ValidationInterface()
 logging_utility = UtilsInterface.LoggingUtility()
@@ -19,46 +21,34 @@ DEFAULT_HTTP_TIMEOUT_SECONDS = 30.0
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 5.0
 
 
-class ActionsClient:
+from projectdavid.clients.base_client import BaseAPIClient
+
+
+class ActionsClient(BaseAPIClient):
     def __init__(
         self,
-        base_url: str = os.getenv("ASSISTANTS_BASE_URL", "http://localhost:9000/"),
+        base_url: Optional[str] = None,
         api_key: Optional[str] = None,
-        default_timeout: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
-        connect_timeout: float = DEFAULT_CONNECT_TIMEOUT_SECONDS,
+        timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        read_timeout: float = 30.0,
+        write_timeout: float = 30.0,
     ):
         """
-        Initialize with base URL, API key, and default request timeouts.
-        Uses 'X-API-Key' header for authentication, aligning with UsersClient.
+        ActionsClient inherits from BaseAPIClient.
+        Handles API key injection and timeout config using common base.
         """
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.getenv("API_KEY")
-
-        if not self.base_url:
-            raise ValueError("Base URL must be specified via param or environment.")
-
-        headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-            logging_utility.info("API Key provided and added to headers.")
-        else:
-            logging_utility.warning(
-                "No API Key provided. Access to protected endpoints may be denied."
-            )
-
-        timeout_config = httpx.Timeout(default_timeout, connect=connect_timeout)
-
-        self.client = httpx.Client(
-            base_url=self.base_url,
-            headers=headers,
-            timeout=timeout_config,
+        super().__init__(
+            base_url=base_url
+            or os.getenv("ENTITIES_BASE_URL", "http://localhost:9000/"),
+            api_key=api_key or os.getenv("ENTITIES_API_KEY"),
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
         )
-
         logging_utility.info(
-            "ActionsClient initialized with base_url: %s and default timeout: %s (connect: %s)",
-            self.base_url,
-            default_timeout,
-            connect_timeout,
+            "ActionsClient initialized with base_url: %s", self.base_url
         )
 
     def create_action(
@@ -69,7 +59,6 @@ class ActionsClient:
         expires_at: Optional[datetime] = None,
     ) -> validation.ActionRead:
         """Create a new action using the provided tool_name, run_id, and function_args."""
-        # --- NO CHANGES IN THIS METHOD ---
         try:
             action_id = UtilsInterface.IdentifierService.generate_action_id()
             expires_at_iso = expires_at.isoformat() if expires_at else None
