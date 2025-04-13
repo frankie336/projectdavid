@@ -1,3 +1,10 @@
+## [1.4.7](https://github.com/frankie336/projectdavid/compare/v1.4.6...v1.4.7) (2025-04-13)
+
+
+### Bug Fixes
+
+* tools_client.py ([7c8344f](https://github.com/frankie336/projectdavid/commit/7c8344f8051c1e9a6acef03e631c5cfc98d0c233))
+
 ## [1.4.6](https://github.com/frankie336/projectdavid/compare/v1.4.5...v1.4.6) (2025-04-13)
 
 
