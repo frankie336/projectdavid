@@ -1,3 +1,10 @@
+## [1.4.6](https://github.com/frankie336/projectdavid/compare/v1.4.5...v1.4.6) (2025-04-13)
+
+
+### Bug Fixes
+
+* MessagesClient ([78df74f](https://github.com/frankie336/projectdavid/commit/78df74f7560889f4434a886f77571afe664dd840))
+
 ## [1.4.5](https://github.com/frankie336/projectdavid/compare/v1.4.4...v1.4.5) (2025-04-13)
 
 
