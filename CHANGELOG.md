@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/frankie336/projectdavid/compare/v1.4.0...v1.4.1) (2025-04-13)
+
+
+### Bug Fixes
+
+* Align users client ([d7a2cac](https://github.com/frankie336/projectdavid/commit/d7a2cace19cd000f428abc32f61e0fb08139bc3d))
+
 # [1.4.0](https://github.com/frankie336/projectdavid/compare/v1.3.14...v1.4.0) (2025-04-12)
 
 
