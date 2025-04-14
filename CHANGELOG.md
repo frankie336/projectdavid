@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/frankie336/projectdavid/compare/v1.6.0...v1.7.0) (2025-04-14)
+
+
+### Features
+
+* Qwen/QwQ-32B-Preview ([1f3b401](https://github.com/frankie336/projectdavid/commit/1f3b4013e673c3287615b5640cb73cdc6301e71b))
+
 # [1.6.0](https://github.com/frankie336/projectdavid/compare/v1.5.0...v1.6.0) (2025-04-14)
 
 
