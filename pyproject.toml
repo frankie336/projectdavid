@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [
     { name = "Francis Neequaye Armah", email = "francis.neequaye@projectdavid.co.uk" }
 ]
-license = { text = "MIT" }
+license = { text = "PolyForm Noncommercial License 1.0.0" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
 
