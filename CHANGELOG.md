@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/frankie336/projectdavid/compare/v1.4.9...v1.5.0) (2025-04-14)
+
+
+### Features
+
+* PolyForm Noncommercial License 1.0.0 ([5e95d58](https://github.com/frankie336/projectdavid/commit/5e95d58c4d25b62733f4f963dd3b4bc24c1f333a))
+
 ## [1.4.9](https://github.com/frankie336/projectdavid/compare/v1.4.8...v1.4.9) (2025-04-13)
 
 
