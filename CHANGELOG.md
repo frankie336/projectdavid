@@ -1,3 +1,17 @@
+# [1.8.0](https://github.com/frankie336/projectdavid/compare/v1.7.0...v1.8.0) (2025-04-15)
+
+
+### Bug Fixes
+
+* isort ([c12e219](https://github.com/frankie336/projectdavid/commit/c12e219c9111aef80b92fe85ee8db0da4e2d1b23))
+* linting ([bc69c11](https://github.com/frankie336/projectdavid/commit/bc69c114e8278b1cb6edcc33f8e738dbeb7e82c3))
+* linting ([dbeef51](https://github.com/frankie336/projectdavid/commit/dbeef51a4cc92e95e4e557e949793dbc60960a83))
+
+
+### Features
+
+* Qwen/QwQ-32B-Preview ([10e0382](https://github.com/frankie336/projectdavid/commit/10e03826ca3fa6632325953706a24433914421d0))
+
 # [1.7.0](https://github.com/frankie336/projectdavid/compare/v1.6.0...v1.7.0) (2025-04-14)
 
 
