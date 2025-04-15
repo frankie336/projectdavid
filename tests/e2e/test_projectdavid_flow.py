@@ -3,7 +3,9 @@ import os
 import sys
 import time
 from dotenv import load_dotenv
-from projectdavid import Entity # Assuming your library is installable as 'projectdavid'
+from projectdavid import (
+    Entity,
+)  # Assuming your library is installable as 'projectdavid'
 
 # Load .env file if it exists (useful for local testing)
 load_dotenv()
@@ -14,11 +16,14 @@ BASE_URL = os.getenv("PROJECTDAVID_BASE_URL", "http://localhost:9000")
 ENTITIES_API_KEY = os.getenv("ENTITIES_API_KEY")
 HYPERBOLIC_API_KEY = os.getenv("HYPERBOLIC_API_KEY")
 # Use a default or environment variable for user_id
-DEFAULT_USER_ID = "user_kUKV8octgG2aMc7kxAcD3i" # Consider if this should be dynamic or from env
+DEFAULT_USER_ID = (
+    "user_kUKV8octgG2aMc7kxAcD3i"  # Consider if this should be dynamic or from env
+)
 USER_ID = os.getenv("PROJECTDAVID_USER_ID", DEFAULT_USER_ID)
-ASSISTANT_NAME = "ci_test_assistant_" + str(int(time.time())) # Unique name for CI
+ASSISTANT_NAME = "ci_test_assistant_" + str(int(time.time()))  # Unique name for CI
 MODEL_PROVIDER = os.getenv("PROJECTDAVID_MODEL_PROVIDER", "Hyperbolic")
 MODEL_NAME = os.getenv("PROJECTDAVID_MODEL_NAME", "hyperbolic/Qwen/QwQ-32B-Preview")
+
 
 # --- Helper Function for Validation ---
 def check_env_vars():
@@ -26,10 +31,13 @@ def check_env_vars():
     required_vars = ["ENTITIES_API_KEY", "HYPERBOLIC_API_KEY"]
     missing_vars = [var for var in required_vars if not globals().get(var)]
     if missing_vars:
-        print(f"❌ Error: Missing required environment variables: {', '.join(missing_vars)}")
+        print(
+            f"❌ Error: Missing required environment variables: {', '.join(missing_vars)}"
+        )
         print("Please set them in your environment or a .env file.")
-        sys.exit(1) # Exit with error code
+        sys.exit(1)  # Exit with error code
     print("✅ Required environment variables found.")
+
 
 def run_flow_test():
     """Executes the end-to-end test flow."""
@@ -63,11 +71,11 @@ def run_flow_test():
     # -----------------------------------------------
     # Create a thread
     # ------------------------------------------------
-    actual_thread_id = None # Initialize
+    actual_thread_id = None  # Initialize
     try:
         print("Creating thread...")
         thread = client.threads.create_thread(participant_ids=[USER_ID])
-        actual_thread_id = thread.id # Store the dynamically created thread ID
+        actual_thread_id = thread.id  # Store the dynamically created thread ID
         print(f"✅ Created thread with ID: {actual_thread_id}")
     except Exception as e:
         print(f"❌ Error creating thread: {e}")
@@ -78,7 +86,7 @@ def run_flow_test():
     # -----------------------------------------
     # Create a message using the NEW thread ID
     # --------------------------------------------
-    message = None # Initialize
+    message = None  # Initialize
     try:
         print(f"Creating message in thread {actual_thread_id}...")
         message = client.messages.create_message(
@@ -96,10 +104,12 @@ def run_flow_test():
     # ---------------------------------------------
     # Create a run using the NEW thread ID
     # ----------------------------------------------
-    run = None # Initialize
+    run = None  # Initialize
     try:
         print(f"Creating run in thread {actual_thread_id}...")
-        run = client.runs.create_run(assistant_id=assistant.id, thread_id=actual_thread_id)
+        run = client.runs.create_run(
+            assistant_id=assistant.id, thread_id=actual_thread_id
+        )
         print(f"✅ Created run with ID: {run.id}")
     except Exception as e:
         print(f"❌ Error creating run: {e}")
@@ -123,7 +133,7 @@ def run_flow_test():
             assistant_id=assistant.id,
             message_id=message.id,
             run_id=run.id,
-            api_key=HYPERBOLIC_API_KEY, # Pass the specific key here
+            api_key=HYPERBOLIC_API_KEY,  # Pass the specific key here
         )
         print("✅ Stream setup complete. Starting streaming...")
     except Exception as e:
@@ -138,25 +148,25 @@ def run_flow_test():
         for chunk in sync_stream.stream_chunks(
             provider=MODEL_PROVIDER,
             model=MODEL_NAME,
-            timeout_per_chunk=20.0, # Increased timeout slightly
+            timeout_per_chunk=20.0,  # Increased timeout slightly
         ):
             content = chunk.get("content", "")
             if content:
                 print(content, end="", flush=True)
                 output_buffer += content
-                stream_successful = True # Mark as successful if we receive any content
+                stream_successful = True  # Mark as successful if we receive any content
         print("\n--- End of Stream ---")
         if not stream_successful:
-             print("⚠️ Warning: Stream completed but received no content.")
-             # Decide if this is an error condition for your use case
-             # sys.exit(1)
+            print("⚠️ Warning: Stream completed but received no content.")
+            # Decide if this is an error condition for your use case
+            # sys.exit(1)
         else:
             print("✅ Stream completed successfully with content.")
 
     except Exception as e:
         print(f"\n❌ --- Stream Error: {e} ---")
         # Clean up?
-        sys.exit(1) # Exit with error on stream failure
+        sys.exit(1)  # Exit with error on stream failure
 
     # --- Optional Cleanup ---
     # If you want tests to clean up resources (good practice but adds complexity)
@@ -171,8 +181,8 @@ def run_flow_test():
     # except Exception as e:
     #     print(f"⚠️ Warning: Cleanup failed: {e}")
 
-
     print("--- ProjectDavid Flow Test Completed Successfully ---")
+
 
 # --- Main Execution ---
 if __name__ == "__main__":
@@ -180,4 +190,4 @@ if __name__ == "__main__":
     check_env_vars()
     run_flow_test()
     print("Script finished.")
-    sys.exit(0) # Explicitly exit with success code
+    sys.exit(0)  # Explicitly exit with success code
