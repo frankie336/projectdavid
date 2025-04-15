@@ -1,6 +1,7 @@
 # Entity  — by Project David
 
-[![Test, Tag, Publish Status](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
+[![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 
 The **Entity SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
 
