@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/frankie336/projectdavid/compare/v1.11.2...v1.11.3) (2025-04-17)
+
+
+### Bug Fixes
+
+* vectors.py ([db4a8b4](https://github.com/frankie336/projectdavid/commit/db4a8b45a8294af60530ac2cd34e291917645cf1))
+
 ## [1.11.2](https://github.com/frankie336/projectdavid/compare/v1.11.1...v1.11.2) (2025-04-17)
 
 
