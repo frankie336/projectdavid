@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/frankie336/projectdavid/compare/v1.9.0...v1.10.0) (2025-04-17)
+
+
+### Features
+
+* add support for new models ([3d49a22](https://github.com/frankie336/projectdavid/commit/3d49a22663374b978957019e13bd475d6d2394cc))
+
 # [1.9.0](https://github.com/frankie336/projectdavid/compare/v1.8.0...v1.9.0) (2025-04-17)
 
 
