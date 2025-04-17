@@ -349,6 +349,22 @@ class VectorStoreClient:
         )
         return ValidationInterface.VectorStoreRead.model_validate(resp)
 
+    async def _internal_attach_vector_store_to_assistant_async(
+        self, vector_store_id: str, assistant_id: str
+    ) -> bool:
+        await self._internal_request_with_retries(
+            "POST", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}"
+        )
+        return True  # 204 → success
+
+    async def _internal_detach_vector_store_from_assistant_async(
+        self, vector_store_id: str, assistant_id: str
+    ) -> bool:
+        await self._internal_request_with_retries(
+            "DELETE", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}"
+        )
+        return True
+
     # ——— Public sync methods ———
 
     def _run_sync(self, coro):
@@ -452,6 +468,30 @@ class VectorStoreClient:
         self, vector_store_id: str
     ) -> ValidationInterface.VectorStoreRead:
         return self._run_sync(self._internal_retrieve_vs_async(vector_store_id))
+
+    def attach_vector_store_to_assistant(
+        self, vector_store_id: str, assistant_id: str
+    ) -> bool:
+        """
+        Link a vector‑store to an assistant (idempotent, raises on 4xx/5xx).
+        """
+        return self._run_sync(
+            self._internal_attach_vector_store_to_assistant_async(
+                vector_store_id, assistant_id
+            )
+        )
+
+    def detach_vector_store_from_assistant(
+        self, vector_store_id: str, assistant_id: str
+    ) -> bool:
+        """
+        Unlink a vector‑store from an assistant (idempotent).
+        """
+        return self._run_sync(
+            self._internal_detach_vector_store_from_assistant_async(
+                vector_store_id, assistant_id
+            )
+        )
 
     def retrieve_vector_store_sync(
         self, vector_store_id: str
