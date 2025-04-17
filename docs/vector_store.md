@@ -1,6 +1,5 @@
 
 # Vector Store
-
 ## Overview
 
 A high-performance vector storage and retrieval system designed for AI/ML workflows. This implementation provides:
