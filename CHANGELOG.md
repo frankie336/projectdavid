@@ -1,3 +1,10 @@
+## [1.11.10](https://github.com/frankie336/projectdavid/compare/v1.11.9...v1.11.10) (2025-04-18)
+
+
+### Bug Fixes
+
+* improved-csv-support ([9be9313](https://github.com/frankie336/projectdavid/commit/9be93137e8e325e29ef77aac5679f9ff5565601c))
+
 ## [1.11.9](https://github.com/frankie336/projectdavid/compare/v1.11.8...v1.11.9) (2025-04-18)
 
 
