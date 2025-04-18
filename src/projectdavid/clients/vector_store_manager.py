@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant  # unified import
+from qdrant_client.models import FieldCondition, Filter, MatchValue, Range
 
 from .base_vector_store import (
     BaseVectorStore,
@@ -145,14 +146,41 @@ class VectorStoreManager(BaseVectorStore):
     # search / query
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _dict_to_filter(filters: Optional[Dict[str, Any]]) -> Optional[qdrant.Filter]:
-        if filters is None or isinstance(filters, qdrant.Filter):
-            return filters
-        return qdrant.Filter(
-            must=[
-                qdrant.FieldCondition(key=k, match=qdrant.MatchValue(value=v))
-                for k, v in filters.items()
+    def _dict_to_filter(filters: dict) -> Filter:
+        """
+        Converts a nested filter dict into a Qdrant-compatible Filter object.
+
+        Example input:
+        {
+            "must": [
+                {"key": "metadata.file_name", "match": {"value": "doc.txt"}},
+                {"key": "metadata.chunk_index", "range": {"gte": 10, "lte": 50}}
+            ],
+            "must_not": [
+                {"key": "metadata.chunk_index", "range": {"gte": 90}}
+            ],
+            "should": [
+                {"key": "metadata.author", "match": {"value": "Lord Atkin"}}
             ]
+        }
+        """
+
+        def parse_condition(cond: dict) -> FieldCondition:
+            if "key" not in cond:
+                raise ValueError("Each condition must have a 'key'")
+            if "match" in cond:
+                return FieldCondition(
+                    key=cond["key"], match=MatchValue(**cond["match"])
+                )
+            elif "range" in cond:
+                return FieldCondition(key=cond["key"], range=Range(**cond["range"]))
+            else:
+                raise ValueError(f"Unsupported condition format: {cond}")
+
+        return Filter(
+            must=[parse_condition(c) for c in filters.get("must", [])] or None,
+            must_not=[parse_condition(c) for c in filters.get("must_not", [])] or None,
+            should=[parse_condition(c) for c in filters.get("should", [])] or None,
         )
 
     def query_store(
@@ -166,10 +194,10 @@ class VectorStoreManager(BaseVectorStore):
         limit: Optional[int] = None,
     ) -> List[dict]:
         """Run a similarity search that works with any 1.x qdrant‑client."""
-        limit = limit or top_k
-        flt = self._dict_to_filter(filters)
 
-        # Common parameters for both old and new keyword styles
+        limit = limit or top_k
+        flt = self._dict_to_filter(filters) if filters else None
+
         common: Dict[str, Any] = dict(
             collection_name=store_name,
             query_vector=query_vector,
@@ -184,16 +212,15 @@ class VectorStoreManager(BaseVectorStore):
             # Newer clients (≥ 1.6) use `filter=`
             res = self.client.search(**common, filter=flt)  # type: ignore[arg-type]
         except AssertionError as ae:
-            # Fallback for older clients that reject unknown kwargs
             if "Unknown arguments" not in str(ae):
                 raise
+            # Older clients use `query_filter=`
             res = self.client.search(**common, query_filter=flt)  # type: ignore[arg-type]
 
         except Exception as e:
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
 
-        # -------- format response --------
         return [
             {
                 "id": p.id,
