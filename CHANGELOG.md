@@ -1,3 +1,87 @@
+## [1.11.9](https://github.com/frankie336/projectdavid/compare/v1.11.8...v1.11.9) (2025-04-18)
+
+
+### Bug Fixes
+
+* query_store ([84df1cf](https://github.com/frankie336/projectdavid/commit/84df1cf60ccf234e559a183082842b0b1c4a9fa9))
+
+## [1.11.8](https://github.com/frankie336/projectdavid/compare/v1.11.7...v1.11.8) (2025-04-18)
+
+
+### Bug Fixes
+
+* query_store ([45d8d6e](https://github.com/frankie336/projectdavid/commit/45d8d6e11568cd881badea4212d45d9cfe2d5955))
+
+## [1.11.7](https://github.com/frankie336/projectdavid/compare/v1.11.6...v1.11.7) (2025-04-18)
+
+
+### Bug Fixes
+
+* projectdavid.clients.vector_store_manager ([770eece](https://github.com/frankie336/projectdavid/commit/770eece5f0079fff56da232707137b1e80918e39))
+
+## [1.11.6](https://github.com/frankie336/projectdavid/compare/v1.11.5...v1.11.6) (2025-04-18)
+
+
+### Bug Fixes
+
+* attach_vector_store_to_assistant ([7e60556](https://github.com/frankie336/projectdavid/commit/7e605568ed68462733166d4b440f957bc5b3ca61))
+
+## [1.11.5](https://github.com/frankie336/projectdavid/compare/v1.11.4...v1.11.5) (2025-04-17)
+
+
+### Bug Fixes
+
+* attach_vector_store_to_assistant2 ([592211a](https://github.com/frankie336/projectdavid/commit/592211ad5dcf7a03d7af0c0cca12728fc8cc32ec))
+
+## [1.11.4](https://github.com/frankie336/projectdavid/compare/v1.11.3...v1.11.4) (2025-04-17)
+
+
+### Bug Fixes
+
+* attach_vector_store_to_assistant ([3cf0096](https://github.com/frankie336/projectdavid/commit/3cf0096d66e73bce70dc2c2c33c4c2f88b6caee2))
+
+## [1.11.3](https://github.com/frankie336/projectdavid/compare/v1.11.2...v1.11.3) (2025-04-17)
+
+
+### Bug Fixes
+
+* vectors.py ([db4a8b4](https://github.com/frankie336/projectdavid/commit/db4a8b45a8294af60530ac2cd34e291917645cf1))
+
+## [1.11.2](https://github.com/frankie336/projectdavid/compare/v1.11.1...v1.11.2) (2025-04-17)
+
+
+### Bug Fixes
+
+* projectdavid_common>=0.6 ([d64d055](https://github.com/frankie336/projectdavid/commit/d64d05557f42ac76d2f2338571a8a3ffd28a508a))
+
+## [1.11.1](https://github.com/frankie336/projectdavid/compare/v1.11.0...v1.11.1) (2025-04-17)
+
+
+### Bug Fixes
+
+* projectdavid_common>=0.5.0,<0.12.0 ([4a7dd78](https://github.com/frankie336/projectdavid/commit/4a7dd78b05bd00ec617b5c0be2955aa30189b12e))
+
+# [1.11.0](https://github.com/frankie336/projectdavid/compare/v1.10.0...v1.11.0) (2025-04-17)
+
+
+### Features
+
+* add support for new models1 ([48ae477](https://github.com/frankie336/projectdavid/commit/48ae477c2d14d4d8f9315009841f64e794c8a691))
+
+# [1.10.0](https://github.com/frankie336/projectdavid/compare/v1.9.0...v1.10.0) (2025-04-17)
+
+
+### Features
+
+* add support for new models ([3d49a22](https://github.com/frankie336/projectdavid/commit/3d49a22663374b978957019e13bd475d6d2394cc))
+
+# [1.9.0](https://github.com/frankie336/projectdavid/compare/v1.8.0...v1.9.0) (2025-04-17)
+
+
+### Features
+
+* add new model support ([447e633](https://github.com/frankie336/projectdavid/commit/447e6336854ca5c5eead627373b6237b041dbab7))
+
 # [1.8.0](https://github.com/frankie336/projectdavid/compare/v1.7.0...v1.8.0) (2025-04-15)
 
 
