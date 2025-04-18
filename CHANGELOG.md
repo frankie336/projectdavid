@@ -1,3 +1,10 @@
+## [1.11.7](https://github.com/frankie336/projectdavid/compare/v1.11.6...v1.11.7) (2025-04-18)
+
+
+### Bug Fixes
+
+* projectdavid.clients.vector_store_manager ([770eece](https://github.com/frankie336/projectdavid/commit/770eece5f0079fff56da232707137b1e80918e39))
+
 ## [1.11.6](https://github.com/frankie336/projectdavid/compare/v1.11.5...v1.11.6) (2025-04-18)
 
 
