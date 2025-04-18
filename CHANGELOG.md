@@ -1,3 +1,10 @@
+## [1.11.9](https://github.com/frankie336/projectdavid/compare/v1.11.8...v1.11.9) (2025-04-18)
+
+
+### Bug Fixes
+
+* query_store ([84df1cf](https://github.com/frankie336/projectdavid/commit/84df1cf60ccf234e559a183082842b0b1c4a9fa9))
+
 ## [1.11.8](https://github.com/frankie336/projectdavid/compare/v1.11.7...v1.11.8) (2025-04-18)
 
 
