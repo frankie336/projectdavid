@@ -1,3 +1,10 @@
+## [1.11.11](https://github.com/frankie336/projectdavid/compare/v1.11.10...v1.11.11) (2025-04-18)
+
+
+### Bug Fixes
+
+* def _extract_pdf_text ([7d5dc95](https://github.com/frankie336/projectdavid/commit/7d5dc95cd503b99c416160012a7552eff63c1e01))
+
 ## [1.11.10](https://github.com/frankie336/projectdavid/compare/v1.11.9...v1.11.10) (2025-04-18)
 
 
