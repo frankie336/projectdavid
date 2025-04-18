@@ -146,7 +146,6 @@ class VectorStoreManager(BaseVectorStore):
     # ------------------------------------------------------------------ #
     @staticmethod
     def _dict_to_filter(filters: Optional[Dict[str, Any]]) -> Optional[qdrant.Filter]:
-        """Convert a `{field: value}` mapping into a Qdrant `Filter`."""
         if filters is None or isinstance(filters, qdrant.Filter):
             return filters
         return qdrant.Filter(
@@ -166,30 +165,44 @@ class VectorStoreManager(BaseVectorStore):
         offset: int = 0,
         limit: Optional[int] = None,
     ) -> List[dict]:
+        """Run a similarity search that works with any 1.x qdrant‑client."""
         limit = limit or top_k
+        flt = self._dict_to_filter(filters)
+
+        # Common parameters for both old and new keyword styles
+        common: Dict[str, Any] = dict(
+            collection_name=store_name,
+            query_vector=query_vector,
+            limit=limit,
+            offset=offset,
+            score_threshold=score_threshold,
+            with_payload=True,
+            with_vectors=False,
+        )
+
         try:
-            res = self.client.search(
-                collection_name=store_name,
-                query_vector=query_vector,
-                limit=limit,
-                offset=offset,
-                score_threshold=score_threshold,
-                with_payload=True,
-                with_vectors=False,
-                filter=self._dict_to_filter(filters),
-            )
-            return [
-                {
-                    "id": p.id,
-                    "score": p.score,
-                    "text": p.payload.get("text"),
-                    "metadata": {k: v for k, v in p.payload.items() if k != "text"},
-                }
-                for p in res
-            ]
+            # Newer clients (≥ 1.6) use `filter=`
+            res = self.client.search(**common, filter=flt)  # type: ignore[arg-type]
+        except AssertionError as ae:
+            # Fallback for older clients that reject unknown kwargs
+            if "Unknown arguments" not in str(ae):
+                raise
+            res = self.client.search(**common, query_filter=flt)  # type: ignore[arg-type]
+
         except Exception as e:
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
+
+        # -------- format response --------
+        return [
+            {
+                "id": p.id,
+                "score": p.score,
+                "text": p.payload.get("text"),
+                "metadata": {k: v for k, v in p.payload.items() if k != "text"},
+            }
+            for p in res
+        ]
 
     # ------------------------------------------------------------------ #
     # point / file deletion helpers
