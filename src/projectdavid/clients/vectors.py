@@ -353,15 +353,17 @@ class VectorStoreClient:
         self, vector_store_id: str, assistant_id: str
     ) -> bool:
         await self._internal_request_with_retries(
-            "POST", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}"
+            "POST",
+            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach",
         )
-        return True  # 204 → success
+        return True  # 200 with {"success": true}
 
     async def _internal_detach_vector_store_from_assistant_async(
         self, vector_store_id: str, assistant_id: str
     ) -> bool:
         await self._internal_request_with_retries(
-            "DELETE", f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}"
+            "DELETE",
+            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/detach",
         )
         return True
 
