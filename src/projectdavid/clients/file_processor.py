@@ -204,11 +204,14 @@ class FileProcessor:
             for i, page in enumerate(pdf.pages, start=1):
                 lines = page.extract_text_lines()
                 txts, nums = [], []
-                for L in sorted(lines, key=lambda x: x["top"]):
-                    t = L["text"].strip()
+                # sort by vertical position
+                sorted_lines = sorted(lines, key=lambda x: x["top"])
+                # enumerate to get a reliable line number
+                for ln_idx, L in enumerate(sorted_lines, start=1):
+                    t = L.get("text", "").strip()
                     if t:
                         txts.append(t)
-                        nums.append(L["line_number"])
+                        nums.append(ln_idx)
                 if txts:
                     page_chunks.append(("\n".join(txts), i, nums))
         return page_chunks, meta
