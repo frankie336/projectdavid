@@ -584,3 +584,48 @@ class RunsClient(BaseAPIClient):
             )
 
         return action_handled_successfully
+
+    def watch_run_events(
+        self,
+        run_id: str,
+        tool_executor: Callable[[str, dict], str],
+        actions_client: Any,
+        messages_client: Any,
+        assistant_id: str,
+        thread_id: str,
+    ) -> None:
+        """
+        Opens an SSE connection to /runs/{run_id}/events, waits for
+        'action_required', runs the executor, and submits the result.
+        Blocks until the action is handled.
+        """
+
+        url = f"{self.base_url}/runs/{run_id}/events"
+        headers = self._base_headers
+
+        def _listen_and_handle():
+            for event in SSEClient(url, headers=headers):
+                if event.event == "action_required":
+                    action = json.loads(event.data)
+                    tool_name = action["tool_name"]
+                    args = action.get("function_arguments", {})
+
+                    # execute
+                    result = tool_executor(tool_name, args)
+                    if not isinstance(result, str):
+                        result = json.dumps(result)
+
+                    # submit
+                    messages_client.submit_tool_output(
+                        thread_id=thread_id,
+                        tool_id=action["action_id"],
+                        content=result,
+                        role="tool",
+                        assistant_id=assistant_id,
+                    )
+                    break  # done—exit the loop
+
+        # Run the listener in a short‑lived thread so it can block safely
+        t = threading.Thread(target=_listen_and_handle, daemon=True)
+        t.start()
+        t.join()
