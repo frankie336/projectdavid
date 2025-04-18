@@ -1,3 +1,10 @@
+## [1.11.5](https://github.com/frankie336/projectdavid/compare/v1.11.4...v1.11.5) (2025-04-17)
+
+
+### Bug Fixes
+
+* attach_vector_store_to_assistant2 ([592211a](https://github.com/frankie336/projectdavid/commit/592211ad5dcf7a03d7af0c0cca12728fc8cc32ec))
+
 ## [1.11.4](https://github.com/frankie336/projectdavid/compare/v1.11.3...v1.11.4) (2025-04-17)
 
 
