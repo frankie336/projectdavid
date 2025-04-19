@@ -1,3 +1,10 @@
+## [1.12.4](https://github.com/frankie336/projectdavid/compare/v1.12.3...v1.12.4) (2025-04-19)
+
+
+### Bug Fixes
+
+* watch_run_events4 ([567f767](https://github.com/frankie336/projectdavid/commit/567f76789d83e6a9333fc1cac7dd53934817180f))
+
 ## [1.12.3](https://github.com/frankie336/projectdavid/compare/v1.12.2...v1.12.3) (2025-04-19)
 
 
