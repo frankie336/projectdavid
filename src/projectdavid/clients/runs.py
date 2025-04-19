@@ -598,35 +598,36 @@ class RunsClient(BaseAPIClient):
         thread_id: str,
     ) -> None:
         """
-        Opens an SSE connection to /runs/{run_id}/events, waits for
+        Opens an SSE connection to /v1/runs/{run_id}/events, waits for
         'action_required', runs the executor, and submits the result.
         Blocks until the action is handled.
 
         Requires the 'sseclient' package: pip install sseclient-py
         """
 
-        url = f"{self.base_url}/runs/{run_id}/events"
-        headers = self.client.headers  # include auth headers
+        # ← include the `/v1` prefix so you hit the right route
+        url = f"{self.base_url}/v1/runs/{run_id}/events"
+        headers = self.client.headers  # reuse your BaseAPIClient headers
 
         def _listen_and_handle():
-            # Use requests to get a streaming response
+            # stream the SSE
             response = requests.get(url, headers=headers, stream=True)
             response.raise_for_status()
 
-            # Wrap the response iterator with SSEClient
-            client: SSEClient = SSEClient(response.iter_lines())
+            # feed the line‑iterator into SSEClient
+            client = SSEClient(response.iter_lines())
             for event in client:
                 if event.event == "action_required":
                     action = json.loads(event.data)
                     tool_name = action.get("tool_name")
                     args = action.get("function_arguments", {})
 
-                    # execute tool
+                    # execute
                     result = tool_executor(tool_name, args)
                     if not isinstance(result, str):
                         result = json.dumps(result)
 
-                    # submit tool output
+                    # submit
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action.get("action_id"),
@@ -636,6 +637,6 @@ class RunsClient(BaseAPIClient):
                     )
                     break
 
-        listener_thread = threading.Thread(target=_listen_and_handle, daemon=True)
-        listener_thread.start()
-        listener_thread.join()
+        t = threading.Thread(target=_listen_and_handle, daemon=True)
+        t.start()
+        t.join()
