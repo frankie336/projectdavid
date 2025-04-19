@@ -1,5 +1,4 @@
 import json
-import os
 import threading
 import time
 from enum import Enum
@@ -602,21 +601,21 @@ class RunsClient(BaseAPIClient):
         'action_required', runs the executor, and submits the result.
         Blocks until the action is handled.
 
-        Requires the 'sseclient' package: pip install sseclient-py
+        Requires 'sseclient': pip install sseclient-py
         """
 
-        # ← include the `/v1` prefix so you hit the right route
         url = f"{self.base_url}/v1/runs/{run_id}/events"
-        headers = self.client.headers  # reuse your BaseAPIClient headers
+        headers = self.client.headers
 
         def _listen_and_handle():
-            # stream the SSE
-            response = requests.get(url, headers=headers, stream=True)
-            response.raise_for_status()
+            resp = requests.get(url, headers=headers, stream=True)
+            resp.raise_for_status()
 
-            # feed the line‑iterator into SSEClient
-            client = SSEClient(response.iter_lines())
-            for event in client:
+            # Wrap the line‑iterator in SSEClient
+            client = SSEClient(resp.iter_lines())
+
+            # Iterate over the parsed events
+            for event in client.events():
                 if event.event == "action_required":
                     action = json.loads(event.data)
                     tool_name = action.get("tool_name")
