@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/frankie336/projectdavid/compare/v1.11.11...v1.12.0) (2025-04-18)
+
+
+### Features
+
+* watch_run_events ([7c926d2](https://github.com/frankie336/projectdavid/commit/7c926d25ca96e3df4430dffeb3a570fc737f77ad))
+
 ## [1.11.11](https://github.com/frankie336/projectdavid/compare/v1.11.10...v1.11.11) (2025-04-18)
 
 
