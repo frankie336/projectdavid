@@ -17,6 +17,7 @@ validators~=0.34.0
 sentence-transformers~=4.0.1
 qdrant-client~=1.13.3
 
+sseclient-py
 # Entity SDK and shared models (from Test PyPI)
 projectdavid_common>=0.2.0,<0.3.0
 projectdavid

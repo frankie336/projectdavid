@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -8,6 +9,7 @@ import httpx
 from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.schemas.enums import StatusEnum
 from pydantic import ValidationError
+from sseclient import SSEClient
 
 from projectdavid.clients.base_client import BaseAPIClient
 
@@ -601,13 +603,14 @@ class RunsClient(BaseAPIClient):
         """
 
         url = f"{self.base_url}/runs/{run_id}/events"
-        headers = self._base_headers
+        # Use the HTTPX client's default headers
+        headers = self.client.headers
 
         def _listen_and_handle():
             for event in SSEClient(url, headers=headers):
                 if event.event == "action_required":
                     action = json.loads(event.data)
-                    tool_name = action["tool_name"]
+                    tool_name = action.get("tool_name")
                     args = action.get("function_arguments", {})
 
                     # execute
@@ -618,14 +621,14 @@ class RunsClient(BaseAPIClient):
                     # submit
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
-                        tool_id=action["action_id"],
+                        tool_id=action.get("action_id"),
                         content=result,
                         role="tool",
                         assistant_id=assistant_id,
                     )
-                    break  # done—exit the loop
+                    break  # exit after handling the first event
 
-        # Run the listener in a short‑lived thread so it can block safely
-        t = threading.Thread(target=_listen_and_handle, daemon=True)
-        t.start()
-        t.join()
+        # Run the listener in a daemon thread to avoid blocking
+        listener_thread = threading.Thread(target=_listen_and_handle, daemon=True)
+        listener_thread.start()
+        listener_thread.join()
