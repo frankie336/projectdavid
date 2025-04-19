@@ -8,7 +8,7 @@ httpx
 python-dotenv
 pytest>=7.0.0
 isort
-
+requests
 # Document and file parsing
 pdfplumber~=0.11.6
 validators~=0.34.0

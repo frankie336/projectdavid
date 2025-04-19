@@ -6,10 +6,11 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import httpx
+import requests  # used to open the SSE stream
 from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.schemas.enums import StatusEnum
 from pydantic import ValidationError
-from sseclient import SSEClient
+from sseclient import SSEClient  # pip install sseclient-py
 
 from projectdavid.clients.base_client import BaseAPIClient
 
@@ -600,25 +601,32 @@ class RunsClient(BaseAPIClient):
         Opens an SSE connection to /runs/{run_id}/events, waits for
         'action_required', runs the executor, and submits the result.
         Blocks until the action is handled.
+
+        Requires the 'sseclient' package: pip install sseclient-py
         """
 
         url = f"{self.base_url}/runs/{run_id}/events"
-        # Use the HTTPX client's default headers
-        headers = self.client.headers
+        headers = self.client.headers  # include auth headers
 
         def _listen_and_handle():
-            for event in SSEClient(url, headers=headers):
+            # Use requests to get a streaming response
+            response = requests.get(url, headers=headers, stream=True)
+            response.raise_for_status()
+
+            # Wrap the response iterator with SSEClient
+            client: SSEClient = SSEClient(response.iter_lines())
+            for event in client:
                 if event.event == "action_required":
                     action = json.loads(event.data)
                     tool_name = action.get("tool_name")
                     args = action.get("function_arguments", {})
 
-                    # execute
+                    # execute tool
                     result = tool_executor(tool_name, args)
                     if not isinstance(result, str):
                         result = json.dumps(result)
 
-                    # submit
+                    # submit tool output
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action.get("action_id"),
@@ -626,9 +634,8 @@ class RunsClient(BaseAPIClient):
                         role="tool",
                         assistant_id=assistant_id,
                     )
-                    break  # exit after handling the first event
+                    break
 
-        # Run the listener in a daemon thread to avoid blocking
         listener_thread = threading.Thread(target=_listen_and_handle, daemon=True)
         listener_thread.start()
         listener_thread.join()
