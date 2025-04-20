@@ -5,11 +5,11 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import httpx
-import requests  # used to open the SSE stream
+import requests
 from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.schemas.enums import StatusEnum
 from pydantic import ValidationError
-from sseclient import SSEClient  # pip install sseclient-py
+from sseclient import SSEClient
 
 from projectdavid.clients.base_client import BaseAPIClient
 
