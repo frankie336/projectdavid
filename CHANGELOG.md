@@ -1,3 +1,10 @@
+## [1.12.12](https://github.com/frankie336/projectdavid/compare/v1.12.11...v1.12.12) (2025-04-22)
+
+
+### Bug Fixes
+
+* base client ([3faadef](https://github.com/frankie336/projectdavid/commit/3faadef63a1a23ab6ec36a94a54905c2ee76d270))
+
 ## [1.12.11](https://github.com/frankie336/projectdavid/compare/v1.12.10...v1.12.11) (2025-04-22)
 
 
