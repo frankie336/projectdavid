@@ -1,3 +1,11 @@
+## [1.12.10](https://github.com/frankie336/projectdavid/compare/v1.12.9...v1.12.10) (2025-04-22)
+
+
+### Bug Fixes
+
+* projectdavid_common==0.10.6 ([a34f0c8](https://github.com/frankie336/projectdavid/commit/a34f0c8ea27213de8e66e8958ef0b2e0b5666c28))
+* projectdavid_common==0.10.6 ([8889fda](https://github.com/frankie336/projectdavid/commit/8889fda4f61165d81ff91e1c449633efc171180a))
+
 ## [1.12.9](https://github.com/frankie336/projectdavid/compare/v1.12.8...v1.12.9) (2025-04-22)
 
 
