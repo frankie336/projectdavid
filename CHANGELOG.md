@@ -1,3 +1,10 @@
+## [1.12.5](https://github.com/frankie336/projectdavid/compare/v1.12.4...v1.12.5) (2025-04-20)
+
+
+### Bug Fixes
+
+* files_client.py ([8191593](https://github.com/frankie336/projectdavid/commit/81915935ea5adef931c2902c67c28c0cf9e2d624))
+
 ## [1.12.4](https://github.com/frankie336/projectdavid/compare/v1.12.3...v1.12.4) (2025-04-19)
 
 
