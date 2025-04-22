@@ -1,3 +1,10 @@
+## [1.12.9](https://github.com/frankie336/projectdavid/compare/v1.12.8...v1.12.9) (2025-04-22)
+
+
+### Bug Fixes
+
+* base_client.py ([86a526d](https://github.com/frankie336/projectdavid/commit/86a526d04b00ea861e34c4f70649f89019ba6a16))
+
 ## [1.12.8](https://github.com/frankie336/projectdavid/compare/v1.12.7...v1.12.8) (2025-04-22)
 
 
