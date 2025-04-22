@@ -1,6 +1,4 @@
 # projectdavid/clients/threads_client.py
-
-import os
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -121,12 +119,22 @@ class ThreadsClient(BaseAPIClient):
     def list_threads(self, user_id: str) -> List[str]:
         logging_utility.info("Listing threads for user: %s", user_id)
         try:
-            response = self.client.get(f"/v1/users/{user_id}/threads")
+            response = self.client.get(f"/v1/threads/user/{user_id}")
             response.raise_for_status()
-            thread_ids = response.json()
-            return validator.ThreadIds(**thread_ids).thread_ids
+            # backend returns JSON array directly, e.g. ["t1","t2"]
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logging_utility.error(
+                "HTTP error listing threads: %d %s",
+                e.response.status_code,
+                e.response.text,
+            )
+            if e.response.status_code == 404:
+                # no threads yet
+                return []
+            raise
         except Exception as e:
-            logging_utility.error("Error listing threads: %s", str(e))
+            logging_utility.error("Unexpected error listing threads: %s", str(e))
             raise
 
     def delete_thread(self, thread_id: str) -> bool:

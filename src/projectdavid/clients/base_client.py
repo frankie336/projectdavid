@@ -1,12 +1,11 @@
 # projectdavid/clients/base_client.py (OLD VERSION - Reverted)
-
 import os
 from typing import Optional
 
 import httpx
-from projectdavid_common import UtilsInterface
+from projectdavid_common.utilities.logging_service import LoggingUtility
 
-logging_utility = UtilsInterface.LoggingUtility()
+logging_utility = LoggingUtility()
 
 
 class BaseAPIClient:
@@ -27,8 +26,8 @@ class BaseAPIClient:
         if not self.base_url:
             raise ValueError("Base URL must be provided via param or environment.")
 
-        # --- Default Headers (including application/json) ---
         headers = {"Content-Type": "application/json"}
+
         if self.api_key:
             headers["X-API-Key"] = self.api_key
             logging_utility.info("API Key provided and added to headers.")
@@ -36,7 +35,6 @@ class BaseAPIClient:
             logging_utility.warning(
                 "No API Key provided — protected endpoints may fail."
             )
-        # --- End Default Headers ---
 
         self.timeout = httpx.Timeout(
             timeout=timeout,
@@ -48,7 +46,7 @@ class BaseAPIClient:
         # Client is created WITH the default headers
         self.client = httpx.Client(
             base_url=self.base_url,
-            headers=headers,  # <-- Problematic header included here
+            headers=headers,
             timeout=self.timeout,
         )
 
@@ -58,7 +56,6 @@ class BaseAPIClient:
             self.timeout,
         )
 
-    # close, __enter__, __exit__ methods remain the same...
     def close(self) -> None:
         self.client.close()
 
