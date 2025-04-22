@@ -1,14 +1,28 @@
-# projectdavid/clients/base_client.py (OLD VERSION - Reverted)
+# projectdavid/clients/base_client.py
+"""
+BaseAPIClient
+
+Shared HTTP client that all project‑david service wrappers inherit from.
+The old version forced the header `Content‑Type: application/json` on every
+request, which broke multipart uploads.  That header has been removed—httpx
+will now pick the correct Content‑Type automatically based on the arguments
+you pass (`json=`, `data=`, `files=`, etc.).
+"""
+
+from __future__ import annotations
+
 import os
 from typing import Optional
 
 import httpx
-from projectdavid_common.utilities.logging_service import LoggingUtility
+from projectdavid_common import UtilsInterface
 
-logging_utility = LoggingUtility()
+logging_utility = UtilsInterface.LoggingUtility()
 
 
 class BaseAPIClient:
+    """Common httpx client with timeout & optional X‑API‑Key handling."""
+
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -17,17 +31,25 @@ class BaseAPIClient:
         connect_timeout: float = 10.0,
         read_timeout: float = 30.0,
         write_timeout: float = 30.0,
-    ):
+    ) -> None:
+        # ------------------------------------------------------------------
+        # Resolve configuration
+        # ------------------------------------------------------------------
         self.base_url = (
             base_url or os.getenv("ENTITIES_BASE_URL", "http://localhost:9000")
         ).rstrip("/")
         self.api_key = api_key or os.getenv("ENTITIES_API_KEY")
 
         if not self.base_url:
-            raise ValueError("Base URL must be provided via param or environment.")
+            raise ValueError(
+                "Base URL must be provided via parameter or environment variable."
+            )
 
-        headers = {"Content-Type": "application/json"}
-
+        # ------------------------------------------------------------------
+        # Build default headers
+        # NOTE: we do *not* set Content‑Type here—httpx will decide per request.
+        # ------------------------------------------------------------------
+        headers: dict[str, str] = {}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
             logging_utility.info("API Key provided and added to headers.")
@@ -36,6 +58,9 @@ class BaseAPIClient:
                 "No API Key provided — protected endpoints may fail."
             )
 
+        # ------------------------------------------------------------------
+        # Timeout configuration
+        # ------------------------------------------------------------------
         self.timeout = httpx.Timeout(
             timeout=timeout,
             connect=connect_timeout,
@@ -43,7 +68,9 @@ class BaseAPIClient:
             write=write_timeout,
         )
 
-        # Client is created WITH the default headers
+        # ------------------------------------------------------------------
+        # Underlying httpx client
+        # ------------------------------------------------------------------
         self.client = httpx.Client(
             base_url=self.base_url,
             headers=headers,
@@ -56,7 +83,11 @@ class BaseAPIClient:
             self.timeout,
         )
 
-    def close(self) -> None:
+    # ----------------------------------------------------------------------
+    # Convenience helpers
+    # ----------------------------------------------------------------------
+    def close(self) -> None:  # pragma: no cover
+        """Explicitly close the underlying httpx.Client."""
         self.client.close()
 
     def __enter__(self):
