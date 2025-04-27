@@ -1,3 +1,11 @@
+## [1.12.13](https://github.com/frankie336/projectdavid/compare/v1.12.12...v1.12.13) (2025-04-22)
+
+
+### Bug Fixes
+
+* list_threads ([ed56dd9](https://github.com/frankie336/projectdavid/commit/ed56dd952bd66e125a7082b2a63cd46ba32176a3))
+* Restore base client ([7c10684](https://github.com/frankie336/projectdavid/commit/7c10684c4d59aa30b33cf2c29f52a54805ddd60a))
+
 ## [1.12.12](https://github.com/frankie336/projectdavid/compare/v1.12.11...v1.12.12) (2025-04-22)
 
 
