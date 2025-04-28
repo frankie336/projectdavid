@@ -4,14 +4,16 @@ from typing import List, Optional
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import ValidationInterface
+from projectdavid_common.utilities.logging_service import LoggingUtility
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
-from projectdavid_common.utilities.logging_service import LoggingUtility
+
 ent_validator = ValidationInterface()
 load_dotenv()
 
 logging_utility = LoggingUtility()
+
 
 class ToolsClient(BaseAPIClient):
 
