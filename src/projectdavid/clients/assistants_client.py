@@ -100,7 +100,6 @@ class AssistantsClient(BaseAPIClient):
         * `tools`           – DB tool-config relationships (legacy)
         * `platform_tools`  – inline tool-spec list (new)
         """
-
         assistant_data = {
             "id": assistant_id,
             "name": name,
