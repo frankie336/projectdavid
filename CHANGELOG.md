@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/frankie336/projectdavid/compare/v1.13.0...v1.14.0) (2025-04-28)
+
+
+### Features
+
+* auto tools-attachment logic ([73ae06d](https://github.com/frankie336/projectdavid/commit/73ae06d01c3991e7a53dc066164d89dabce9dd06))
+
 # [1.13.0](https://github.com/frankie336/projectdavid/compare/v1.12.13...v1.13.0) (2025-04-27)
 
 
