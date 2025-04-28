@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/frankie336/projectdavid/compare/v1.12.13...v1.13.0) (2025-04-27)
+
+
+### Features
+
+* adding platform_tools ([a84c62b](https://github.com/frankie336/projectdavid/commit/a84c62b690c8ed9e87a309a042cc630931e0d62a))
+
 ## [1.12.13](https://github.com/frankie336/projectdavid/compare/v1.12.12...v1.12.13) (2025-04-22)
 
 
