@@ -4,10 +4,12 @@ from typing import Any, Dict, List, Optional
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
+from projectdavid_common.constants.platform import TOOLS_ID_MAP
 from projectdavid_common.constants.timeouts import DEFAULT_TIMEOUT  # noqa: F401
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
+from projectdavid.clients.tools_client import ToolsClient
 
 ent_validator = ValidationInterface()
 
@@ -76,6 +78,7 @@ class AssistantsClient(BaseAPIClient):
     # ------------------------------------------------------------------ #
     #  CRUD
     # ------------------------------------------------------------------ #
+
     def create_assistant(
         self,
         *,
@@ -92,11 +95,12 @@ class AssistantsClient(BaseAPIClient):
         assistant_id: Optional[str] = None,
     ) -> ent_validator.AssistantRead:
         """
-        Create an assistant.
+        Create an assistant and (optionally) attach any declared tools.
 
-        `tools`            -> relationship / DB tool_configs (unchanged)
-        `platform_tools`   -> new inline tool-spec list
+        * `tools`           – DB tool-config relationships (legacy)
+        * `platform_tools`  – inline tool-spec list (new)
         """
+
         assistant_data = {
             "id": assistant_id,
             "name": name,
@@ -112,6 +116,7 @@ class AssistantsClient(BaseAPIClient):
         }
 
         try:
+            # ── 1. validate & POST ────────────────────────────────────
             validated = ent_validator.AssistantCreate(**assistant_data)
             logging_utility.info("Creating assistant name=%s model=%s", name, model)
 
@@ -119,10 +124,51 @@ class AssistantsClient(BaseAPIClient):
                 "POST", "/v1/assistants", json=validated.model_dump()
             )
             created = self._parse_response(resp)
-
             validated_resp = ent_validator.AssistantRead(**created)
             logging_utility.info("Assistant created with id=%s", validated_resp.id)
+
+            # ── 2. POST-creation tool association (loop) ──────────────
+            if tools:
+                tools_client = ToolsClient(base_url=self.base_url, api_key=self.api_key)
+
+                for tool_cfg in tools:
+                    if not isinstance(tool_cfg, dict):
+                        logging_utility.warning(
+                            "Tool entry %s is not a dict – skipped.", tool_cfg
+                        )
+                        continue
+
+                    tool_type = tool_cfg.get("type")
+                    mapped_id = TOOLS_ID_MAP.get(tool_type)
+
+                    if not mapped_id:
+                        logging_utility.warning(
+                            "No mapping found for tool type '%s' – skipped.", tool_type
+                        )
+                        continue
+
+                    try:
+                        tools_client.associate_tool_with_assistant(
+                            assistant_id=validated_resp.id,
+                            tool_id=mapped_id,
+                        )
+                        logging_utility.info(
+                            "Associated %s (%s) with assistant %s",
+                            tool_type,
+                            mapped_id,
+                            validated_resp.id,
+                        )
+                    except Exception as assoc_err:
+                        # Non-fatal; log and continue to next tool
+                        logging_utility.warning(
+                            "Tool association failed for '%s' on assistant %s: %s",
+                            tool_type,
+                            validated_resp.id,
+                            assoc_err,
+                        )
+
             return validated_resp
+
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise AssistantsClientError(f"Validation error: {e}") from e
