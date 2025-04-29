@@ -87,6 +87,7 @@ class AssistantsClient(BaseAPIClient):
         instructions: str = "",
         tools: Optional[List[Dict[str, Any]]] = None,
         platform_tools: Optional[List[Dict[str, Any]]] = None,
+        tool_resources: Optional[Dict[str, Dict[str, Any]]] = None,  # NEW ⬅
         meta_data: Optional[Dict[str, Any]] = None,
         top_p: float = 1.0,
         temperature: float = 1.0,
@@ -97,7 +98,8 @@ class AssistantsClient(BaseAPIClient):
         Create an assistant and (optionally) attach any declared tools.
 
         * `tools`           – DB tool-config relationships (legacy)
-        * `platform_tools`  – inline tool-spec list (new)
+        * `platform_tools`  – inline tool-spec list
+        * `tool_resources`  – per-tool resource map  ← NEW
         """
         assistant_data = {
             "id": assistant_id,
@@ -107,6 +109,7 @@ class AssistantsClient(BaseAPIClient):
             "instructions": instructions,
             "tools": tools,
             "platform_tools": platform_tools,
+            "tool_resources": tool_resources,  # NEW ⬅
             "meta_data": meta_data,
             "top_p": top_p,
             "temperature": temperature,
@@ -190,6 +193,7 @@ class AssistantsClient(BaseAPIClient):
         updates.pop("id", None)
         updates.pop("assistant_id", None)
 
+        # Accept tool_resources in patch payload
         try:
             validated_updates = ent_validator.AssistantUpdate(**updates)
             resp = self._request_with_retries(
