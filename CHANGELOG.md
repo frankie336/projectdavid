@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/frankie336/projectdavid/compare/v1.16.0...v1.17.0) (2025-04-29)
+
+
+### Features
+
+* add tools_resources field ([d55bfd3](https://github.com/frankie336/projectdavid/commit/d55bfd320c3adcbc5afe3a4617288381271bafd8))
+
 # [1.16.0](https://github.com/frankie336/projectdavid/compare/v1.15.0...v1.16.0) (2025-04-28)
 
 
