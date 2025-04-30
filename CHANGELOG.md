@@ -1,3 +1,11 @@
+# [1.18.0](https://github.com/frankie336/projectdavid/compare/v1.17.0...v1.18.0) (2025-04-30)
+
+
+### Features
+
+* Drop user_id from create_vector_store(), inferring it from the API key. Add list_my_vector_stores() (token-scoped) and deprecates the old get_stores_by_user() ([7a22fcb](https://github.com/frankie336/projectdavid/commit/7a22fcbce8dbf80cd1cfa6a9790bfedbc5b1e85a))
+* Drop user_id from create_vector_store(), inferring it from the API key. Add list_my_vector_stores() (token-scoped) and deprecates the old get_stores_by_user() ([2ec3263](https://github.com/frankie336/projectdavid/commit/2ec326368e2ad58432a4b9608681d55ead6a4209))
+
 # [1.17.0](https://github.com/frankie336/projectdavid/compare/v1.16.0...v1.17.0) (2025-04-29)
 
 
