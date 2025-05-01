@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
 from projectdavid.clients.tools_client import ToolsClient
+from projectdavid.clients.vectors import VectorStoreClient
 
 ent_validator = ValidationInterface()
 
@@ -51,6 +52,31 @@ class AssistantsClient(BaseAPIClient):
     # ------------------------------------------------------------------ #
     #  INTERNAL HELPERS
     # ------------------------------------------------------------------ #
+    def _collect_vector_store_ids(
+        self,
+        tools: Optional[List[Dict[str, Any]]],
+        tool_resources: Optional[Dict[str, Dict[str, Any]]],
+    ) -> List[str]:
+        """
+        Return a de-duplicated, ordered list of vector_store_ids found in:
+          • tools[*]['vector_store_ids']
+          • tool_resources['file_search']['vector_store_ids']
+        """
+        ids: List[str] = []
+
+        if tools:
+            for cfg in tools:
+                ids.extend(cfg.get("vector_store_ids", []))
+
+        if tool_resources:
+            fs_res = tool_resources.get("file_search", {})
+            ids.extend(fs_res.get("vector_store_ids", []))
+
+        # preserve source-order but drop dupes
+        seen = set()
+        ordered_unique = [i for i in ids if not (i in seen or seen.add(i))]
+        return ordered_unique
+
     @staticmethod
     def _parse_response(response: httpx.Response):
         try:
@@ -87,7 +113,7 @@ class AssistantsClient(BaseAPIClient):
         instructions: str = "",
         tools: Optional[List[Dict[str, Any]]] = None,
         platform_tools: Optional[List[Dict[str, Any]]] = None,
-        tool_resources: Optional[Dict[str, Dict[str, Any]]] = None,  # NEW ⬅
+        tool_resources: Optional[Dict[str, Dict[str, Any]]] = None,
         meta_data: Optional[Dict[str, Any]] = None,
         top_p: float = 1.0,
         temperature: float = 1.0,
@@ -95,11 +121,10 @@ class AssistantsClient(BaseAPIClient):
         assistant_id: Optional[str] = None,
     ) -> ent_validator.AssistantRead:
         """
-        Create an assistant and (optionally) attach any declared tools.
+        Create an assistant and automatically:
 
-        * `tools`           – DB tool-config relationships (legacy)
-        * `platform_tools`  – inline tool-spec list
-        * `tool_resources`  – per-tool resource map  ← NEW
+        • associate legacy DB tools
+        • attach vector stores referenced by file-search tools/resources
         """
         assistant_data = {
             "id": assistant_id,
@@ -109,7 +134,7 @@ class AssistantsClient(BaseAPIClient):
             "instructions": instructions,
             "tools": tools,
             "platform_tools": platform_tools,
-            "tool_resources": tool_resources,  # NEW ⬅
+            "tool_resources": tool_resources,
             "meta_data": meta_data,
             "top_p": top_p,
             "temperature": temperature,
@@ -117,7 +142,7 @@ class AssistantsClient(BaseAPIClient):
         }
 
         try:
-            # ── 1. validate & POST ────────────────────────────────────
+            # ── 1. validate & POST ──────────────────────────────────────
             validated = ent_validator.AssistantCreate(**assistant_data)
             logging_utility.info("Creating assistant name=%s model=%s", name, model)
 
@@ -126,46 +151,51 @@ class AssistantsClient(BaseAPIClient):
             )
             created = self._parse_response(resp)
             validated_resp = ent_validator.AssistantRead(**created)
-            logging_utility.info("Assistant created with id=%s", validated_resp.id)
+            assistant_id = validated_resp.id
+            logging_utility.info("Assistant created with id=%s", assistant_id)
 
-            # ── 2. POST-creation tool association (loop) ──────────────
+            # ── 2. (optional) associate legacy DB tools ─────────────────
             if tools:
                 tools_client = ToolsClient(base_url=self.base_url, api_key=self.api_key)
-
-                for tool_cfg in tools:
-                    if not isinstance(tool_cfg, dict):
+                for cfg in tools:
+                    tool_type = cfg.get("type")
+                    mapped = TOOLS_ID_MAP.get(tool_type)
+                    if not mapped:
                         logging_utility.warning(
-                            "Tool entry %s is not a dict – skipped.", tool_cfg
+                            "No mapping for tool '%s' – skipped.", tool_type
                         )
                         continue
-
-                    tool_type = tool_cfg.get("type")
-                    mapped_id = TOOLS_ID_MAP.get(tool_type)
-
-                    if not mapped_id:
-                        logging_utility.warning(
-                            "No mapping found for tool type '%s' – skipped.", tool_type
-                        )
-                        continue
-
                     try:
                         tools_client.associate_tool_with_assistant(
-                            assistant_id=validated_resp.id,
-                            tool_id=mapped_id,
+                            assistant_id=assistant_id, tool_id=mapped
                         )
-                        logging_utility.info(
-                            "Associated %s (%s) with assistant %s",
-                            tool_type,
-                            mapped_id,
-                            validated_resp.id,
-                        )
-                    except Exception as assoc_err:
-                        # Non-fatal; log and continue to next tool
+                        logging_utility.info("→ linked %s (%s)", tool_type, mapped)
+                    except Exception as err:
                         logging_utility.warning(
-                            "Tool association failed for '%s' on assistant %s: %s",
+                            "Tool link failed for %s → %s: %s",
                             tool_type,
-                            validated_resp.id,
-                            assoc_err,
+                            assistant_id,
+                            err,
+                        )
+
+            # ── 3. attach any referenced vector stores ─────────────────
+            vs_ids = self._collect_vector_store_ids(tools, tool_resources)
+            if vs_ids:
+                vectors_client = VectorStoreClient(
+                    base_url=self.base_url, api_key=self.api_key
+                )
+                for vs_id in vs_ids:
+                    try:
+                        vectors_client.attach_vector_store_to_assistant(
+                            vector_store_id=vs_id, assistant_id=assistant_id
+                        )
+                        logging_utility.info("→ attached vector_store %s", vs_id)
+                    except Exception as err:
+                        logging_utility.warning(
+                            "Vector-store attach failed (%s → %s): %s",
+                            vs_id,
+                            assistant_id,
+                            err,
                         )
 
             return validated_resp
