@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/frankie336/projectdavid/compare/v1.18.0...v1.18.1) (2025-05-01)
+
+
+### Bug Fixes
+
+* Adding  tool_resources schema. ([116f587](https://github.com/frankie336/projectdavid/commit/116f5875fd07a6b185e48a811919fd8bb185a1e6))
+
 # [1.18.0](https://github.com/frankie336/projectdavid/compare/v1.17.0...v1.18.0) (2025-04-30)
 
 
