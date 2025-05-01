@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/frankie336/projectdavid/compare/v1.18.1...v1.19.0) (2025-05-01)
+
+
+### Features
+
+* attach any referenced vector stores ([ab57374](https://github.com/frankie336/projectdavid/commit/ab573748410640aa014194babcaf2016c746b4e0))
+
 ## [1.18.1](https://github.com/frankie336/projectdavid/compare/v1.18.0...v1.18.1) (2025-05-01)
 
 
