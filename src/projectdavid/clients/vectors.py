@@ -513,9 +513,20 @@ class VectorStoreClient:
         resp.raise_for_status()
         return ValidationInterface.VectorStoreRead.model_validate(resp.json())
 
+    # ────────────────────────────────────────────────────────────────
+    #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
+    # ────────────────────────────────────────────────────────────────
     def answer_question(
-        self, vector_store_id: str, query_text: str, k: int = 20
+        self,
+        vector_store_id: str,
+        query_text: str,
+        k: int = 20,
     ) -> Dict[str, Any]:
         hits = retriever.retrieve(self, vector_store_id, query_text, k)
-        hits = reranker.rerank(query_text, hits, top_k=10)  # optional
-        return synthesize_envelope(query_text, hits)
+        hits = reranker.rerank(query_text, hits, top_k=10)
+        return synthesize_envelope(
+            query_text,
+            hits,
+            api_key=self.api_key,  # pass through caller’s API key
+            base_url=self.base_url,  # and the same backend URL
+        )
