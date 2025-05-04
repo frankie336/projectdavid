@@ -11,21 +11,20 @@ from projectdavid_common.validation import (
 
 _id = UtilsInterface.IdentifierService()
 
-def make_envelope(query: str,
-                  hits: List[Dict[str, Any]],
-                  answer_text: str) -> dict:
+
+def make_envelope(query: str, hits: List[Dict[str, Any]], answer_text: str) -> dict:
     """Wrap search results in OpenAI‑style envelope."""
     # Build citations (one per hit here; de‑dupe as you wish)
     citations: List[FileCitation] = []
     for hit in hits:
-        file_id   = hit["meta_data"]["file_id"]
-        filename  = hit["meta_data"]["file_name"]
+        file_id = hit["meta_data"]["file_id"]
+        filename = hit["meta_data"]["file_name"]
         # naive locate — first occurrence of filename in answer
-        offset    = answer_text.find(filename)
+        offset = answer_text.find(filename)
         citations.append(FileCitation(index=offset, file_id=file_id, filename=filename))
 
     fs_call = FileSearchCall(
-        id=_id.generate_prefixed_id("fs"),   # e.g. fs_<uuid>
+        id=_id.generate_prefixed_id("fs"),  # e.g. fs_<uuid>
         queries=[query],
     )
 

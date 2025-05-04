@@ -25,11 +25,8 @@ log = UtilsInterface.LoggingUtility()
 
 
 def summarize_hits(query: str, hits: List[Dict[str, Any]]) -> str:
-    lines = [f"• {h['meta_data']['file_name']} (score {h['score']:.2f})"
-             for h in hits]
+    lines = [f"• {h['meta_data']['file_name']} (score {h['score']:.2f})" for h in hits]
     return f"Top files for **{query}**:\n" + "\n".join(lines)
-
-
 
 
 # --------------------------------------------------------------------------- #
@@ -409,13 +406,13 @@ class VectorStoreClient:
             self._search_vs_async(vector_store_id, query_text, top_k, filters)
         )
 
-
-    def search_vector_store_openai(self,
-                                   vector_store_id: str,
-                                   query_text: str,
-                                   top_k: int = 5,
-                                   filters: Optional[Dict] = None
-                                   ) -> Dict[str, Any]:
+    def search_vector_store_openai(
+        self,
+        vector_store_id: str,
+        query_text: str,
+        top_k: int = 5,
+        filters: Optional[Dict] = None,
+    ) -> Dict[str, Any]:
         """Vector search + OpenAI envelope."""
         hits = self.search_vector_store(vector_store_id, query_text, top_k, filters)
 
