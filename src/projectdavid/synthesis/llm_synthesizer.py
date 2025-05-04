@@ -14,7 +14,7 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt  # ←  relative “.prompt
 
 load_dotenv()
 
-DEFAULT_USER_ID = os.getenv("ENTITIES_USER_ID", "user_default")
+DEFAULT_USER_ID = "user_TUofmVbbjzFyMHo3YIihEv"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
 MAX_TOKENS = 4096
