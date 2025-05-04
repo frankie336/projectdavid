@@ -1,3 +1,10 @@
+## [1.25.2](https://github.com/frankie336/projectdavid/compare/v1.25.1...v1.25.2) (2025-05-04)
+
+
+### Bug Fixes
+
+* API key passthrough ([61fdd9a](https://github.com/frankie336/projectdavid/commit/61fdd9a6554e45c904b6aae3f778fd08013ef78b))
+
 ## [1.25.1](https://github.com/frankie336/projectdavid/compare/v1.25.0...v1.25.1) (2025-05-04)
 
 
