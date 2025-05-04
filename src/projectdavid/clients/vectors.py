@@ -18,9 +18,18 @@ from pydantic import BaseModel, Field
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
+from projectdavid.utils.vector_search_formatter import make_envelope
 
 load_dotenv()
 log = UtilsInterface.LoggingUtility()
+
+
+def summarize_hits(query: str, hits: List[Dict[str, Any]]) -> str:
+    lines = [f"• {h['meta_data']['file_name']} (score {h['score']:.2f})"
+             for h in hits]
+    return f"Top files for **{query}**:\n" + "\n".join(lines)
+
+
 
 
 # --------------------------------------------------------------------------- #
@@ -195,33 +204,54 @@ class VectorStoreClient:
         return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
 
     async def _add_file_async(
-        self, vector_store_id: str, p: Path, meta: Optional[Dict[str, Any]]
+        self,
+        vector_store_id: str,
+        p: Path,
+        meta: Optional[Dict[str, Any]],
     ) -> ValidationInterface.VectorStoreFileRead:
+        # ── 1.  Extract + embed  ─────────────────────────────────────────────
         processed = await self.file_processor.process_file(p)
         texts, vectors = processed["chunks"], processed["vectors"]
         if not texts:
             raise VectorStoreClientError(f"No content extracted from {p.name}")
 
+        # ── 2.  Base metadata for every chunk ────────────────────────────────
         base_md = meta or {}
         base_md.update({"source": str(p), "file_name": p.name})
-        chunk_md = [{**base_md, "chunk_index": i} for i in range(len(texts))]
 
+        # ── 3.  Generate a single file‑record ID for this upload ─────────────
+        file_record_id = f"vsf_{uuid.uuid4()}"  # ← NEW
+
+        # add file_id + chunk_index to every chunk’s metadata
+        chunk_md = [  # ← NEW
+            {  # ← NEW
+                **base_md,  # ← NEW
+                "chunk_index": i,  # ← NEW
+                "file_id": file_record_id,  # ← NEW
+            }  # ← NEW
+            for i in range(len(texts))  # ← NEW
+        ]  # ← NEW
+
+        # ── 4.  Store vectors + payloads in Qdrant ───────────────────────────
         self.vector_manager.add_to_store(
             store_name=vector_store_id,
             texts=texts,
             vectors=vectors,
-            metadata=chunk_md,
+            metadata=chunk_md,  # ← uses new list
         )
 
+        # ── 5.  Create / POST file record to API  ────────────────────────────
         payload = {
-            "file_id": f"vsf_{uuid.uuid4()}",
+            "file_id": file_record_id,  # ← NEW
             "file_name": p.name,
             "file_path": str(p),
             "status": "completed",
             "meta_data": meta or {},
         }
         resp = await self._request(
-            "POST", f"/v1/vector-stores/{vector_store_id}/files", json=payload
+            "POST",
+            f"/v1/vector-stores/{vector_store_id}/files",
+            json=payload,
         )
         return ValidationInterface.VectorStoreFileRead.model_validate(resp)
 
@@ -378,6 +408,21 @@ class VectorStoreClient:
         return self._run_sync(
             self._search_vs_async(vector_store_id, query_text, top_k, filters)
         )
+
+
+    def search_vector_store_openai(self,
+                                   vector_store_id: str,
+                                   query_text: str,
+                                   top_k: int = 5,
+                                   filters: Optional[Dict] = None
+                                   ) -> Dict[str, Any]:
+        """Vector search + OpenAI envelope."""
+        hits = self.search_vector_store(vector_store_id, query_text, top_k, filters)
+
+        # -> summarise into human text (can be very simple or call your LLM)
+        answer_text = summarize_hits(query_text, hits)
+
+        return make_envelope(query_text, hits, answer_text)
 
     def delete_vector_store(
         self,
