@@ -350,6 +350,30 @@ class VectorStoreClient:
             pass
         return asyncio.run(coro)
 
+    # ──────────────────────────────────────────────────────────────────
+    #  Helpers (private)
+    # ──────────────────────────────────────────────────────────────────
+    @staticmethod
+    def _normalise_hits(raw_hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Ensure each hit dict contains a top‑level 'meta_data' key so that all
+        downstream components (reranker, synthesizer, envelope builder) can
+        rely on a stable schema.
+        """
+        normalised: List[Dict[str, Any]] = []
+        for h in raw_hits:
+            md = h.get("meta_data") or h.get("metadata") or {}
+            normalised.append(
+                {
+                    "text": h["text"],
+                    "score": h["score"],
+                    "meta_data": md,
+                    "vector_id": h.get("vector_id"),
+                    "store_id": h.get("store_id"),
+                }
+            )
+        return normalised
+
     # Public API ---------------------------------------------------------- #
     def create_vector_store(
         self,
@@ -522,13 +546,20 @@ class VectorStoreClient:
         query_text: str,
         k: int = 20,
     ) -> Dict[str, Any]:
+        # 1️⃣  Retrieve initial candidates
         hits = retriever.retrieve(self, vector_store_id, query_text, k)
+
+        # 2️⃣  Optional cross‑encoder / LLM rerank
         hits = reranker.rerank(query_text, hits, top_k=10)
 
+        # 3️⃣  Normalise schema (guarantee 'meta_data')
+        hits = self._normalise_hits(hits)
+
+        # 4️⃣  Abstractive synthesis → OpenAI‑style envelope
         return synthesize_envelope(
             query_text,
             hits,
-            api_key=self.api_key,  # ← Project‑David key
-            base_url=self.base_url,
-            provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # optional
+            api_key=self.api_key,  # Project‑David key
+            base_url=self.base_url,  # Same backend
+            provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # Hyperbolic key
         )
