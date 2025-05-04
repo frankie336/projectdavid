@@ -406,6 +406,9 @@ class VectorStoreClient:
             self._search_vs_async(vector_store_id, query_text, top_k, filters)
         )
 
+    # ─────────────────────────────────────────────────────────────────────────────
+    #  OpenAI‑style search wrapper
+    # ─────────────────────────────────────────────────────────────────────────────
     def search_vector_store_openai(
         self,
         vector_store_id: str,
@@ -413,12 +416,46 @@ class VectorStoreClient:
         top_k: int = 5,
         filters: Optional[Dict] = None,
     ) -> Dict[str, Any]:
-        """Vector search + OpenAI envelope."""
-        hits = self.search_vector_store(vector_store_id, query_text, top_k, filters)
+        """
+        Run a semantic search against *vector_store_id* and return the results
+        wrapped in an OpenAI‑compatible envelope (file_search_call + assistant
+        message with file_citation annotations).
 
-        # -> summarise into human text (can be very simple or call your LLM)
+        Args:
+            vector_store_id: The store ID to query.
+            query_text:      Natural‑language search text.
+            top_k:           Maximum hits to retrieve.
+            filters:         Optional Qdrant payload filter dict.
+
+        Returns:
+            dict: JSON‑serialisable envelope identical to the OpenAI format.
+        """
+        # 1️⃣  Raw hits (list[dict] from VectorStoreManager.query_store)
+        raw_hits = self.search_vector_store(
+            vector_store_id=vector_store_id,
+            query_text=query_text,
+            top_k=top_k,
+            filters=filters,
+        )
+
+        # 2️⃣  Normalise / enrich each hit so downstream code never crashes
+        hits: List[Dict[str, Any]] = []
+        for h in raw_hits:
+            md = h.get("meta_data") or h.get("metadata") or {}
+            hits.append(
+                {
+                    "text": h["text"],
+                    "score": h["score"],
+                    "meta_data": md,
+                    "vector_id": h.get("vector_id"),
+                    "store_id": h.get("store_id"),
+                }
+            )
+
+        # 3️⃣  Generate human‑friendly answer text (LLM call or simple template)
         answer_text = summarize_hits(query_text, hits)
 
+        # 4️⃣  Wrap everything into an OpenAI envelope
         return make_envelope(query_text, hits, answer_text)
 
     def delete_vector_store(
