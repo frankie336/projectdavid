@@ -524,9 +524,11 @@ class VectorStoreClient:
     ) -> Dict[str, Any]:
         hits = retriever.retrieve(self, vector_store_id, query_text, k)
         hits = reranker.rerank(query_text, hits, top_k=10)
+
         return synthesize_envelope(
             query_text,
             hits,
-            api_key=self.api_key,  # pass through caller’s API key
-            base_url=self.base_url,  # and the same backend URL
+            api_key=self.api_key,  # ← Project‑David key
+            base_url=self.base_url,
+            provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # optional
         )

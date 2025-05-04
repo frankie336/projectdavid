@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import io, os
 from typing import TYPE_CHECKING, Dict, List, Optional
 
@@ -9,35 +8,37 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt
 
 load_dotenv()
 
-# ── Defaults pulled from env but overridable via params ──
-DEFAULT_USER_ID = os.getenv("ENTITIES_USER_ID", "user_pNBJo9ea4mzVNivMg8Bifq")
+DEFAULT_USER_ID = os.getenv("ENTITIES_USER_ID", "user_default")
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
 MAX_TOKENS = 4096
 
-if TYPE_CHECKING:  # noqa: F401
+if TYPE_CHECKING:
     from projectdavid import Entity
 
-_ENTITIES_CLIENT: Optional["Entity"] = None  # lazy init
+_ENTITIES_CLIENT: Optional["Entity"] = None
 
 
-def _count_tokens(s: str) -> int:
-    return len(s.encode()) // 4
+# ---------- helpers ------------------------------------------------- #
+def _count_tokens(text: str) -> int:
+    return len(text.encode()) // 4
 
 
+# ---------- main ---------------------------------------------------- #
 def synthesize_envelope(
     query: str,
     hits: List[Dict[str, any]],
     *,
-    api_key: str | None = None,  # ← new
-    base_url: str | None = None,  # ← optional
+    api_key: str | None = None,  # Project‑David key
+    base_url: str | None = None,
+    provider_api_key: str | None = None,  # Hyperbolic key
     top_n_ctx: int = 10,
     user_id: str = DEFAULT_USER_ID,
     model: str = DEFAULT_MODEL,
     provider: str = DEFAULT_PROVIDER,
 ) -> Dict[str, any]:
 
-    # ── pick passages within budget ──
+    # 1. trim context
     ctx, used = [], 0
     for h in hits[:top_n_ctx]:
         t = _count_tokens(h["text"])
@@ -48,30 +49,34 @@ def synthesize_envelope(
 
     prompt = build_user_prompt(query, ctx)
 
-    # ── lazy‑init Entities client ──
+    # 2. lazy‑init Entities client (cycle‑safe)
     global _ENTITIES_CLIENT
     if _ENTITIES_CLIENT is None:
-        from projectdavid import Entity  # local import (cycle‑safe)
+        from projectdavid import Entity
 
         _ENTITIES_CLIENT = Entity(
             base_url=base_url or os.getenv("BASE_URL", "http://localhost:9000"),
             api_key=api_key or os.getenv("ENTITIES_API_KEY"),
         )
 
-    # ── thread / assistant / run ──
+    # 3. thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
     assistant = _ENTITIES_CLIENT.assistants.create_assistant(
         name="synth‑ephemeral",
         instructions=SYSTEM_PROMPT,
     )
     msg = _ENTITIES_CLIENT.messages.create_message(
-        thread_id=thread.id, role="user", content=prompt, assistant_id=assistant.id
+        thread_id=thread.id,
+        role="user",
+        content=prompt,
+        assistant_id=assistant.id,
     )
     run = _ENTITIES_CLIENT.runs.create_run(
-        assistant_id=assistant.id, thread_id=thread.id
+        assistant_id=assistant.id,
+        thread_id=thread.id,
     )
 
-    # ── stream response ──
+    # 4. stream
     stream = _ENTITIES_CLIENT.synchronous_inference_stream
     stream.setup(
         user_id=user_id,
@@ -79,7 +84,7 @@ def synthesize_envelope(
         assistant_id=assistant.id,
         message_id=msg.id,
         run_id=run.id,
-        api_key=os.getenv("HYPERBOLIC_API_KEY"),
+        api_key=provider_api_key or os.getenv("HYPERBOLIC_API_KEY"),
     )
 
     out = io.StringIO()
