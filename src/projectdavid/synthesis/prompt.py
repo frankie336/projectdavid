@@ -7,11 +7,15 @@ Do NOT fabricate information.
 """
 
 
+# synthesis/prompt.py
 def build_user_prompt(query: str, passages: List[Dict[str, Any]]) -> str:
     segs = []
     for i, p in enumerate(passages, 1):
-        meta = p["meta_data"]
+        # tolerate either meta_data or metadata
+        meta = p.get("meta_data") or p.get("metadata") or {}
         page = f" page {meta['page']}" if meta.get("page") else ""
-        segs.append(f"[{i}] ({meta['file_id']}{page}) {p['text'][:500].strip()}")
+        segs.append(
+            f"[{i}] ({meta.get('file_id','?')}{page}) {p['text'][:500].strip()}"
+        )
     joined = "\n\n".join(segs)
     return f"User question: {query}\n\nExcerpts:\n{joined}\n\nAnswer:"
