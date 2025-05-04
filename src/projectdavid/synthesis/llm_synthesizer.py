@@ -15,10 +15,12 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt
 # ------------------------------------------------------------------ #
 load_dotenv()
 
-USER_ID = os.getenv("ENTITIES_USER_ID")
+USER_ID = "user_pNBJo9ea4mzVNivMg8Bifq"
 MODEL = "hyperbolic/deepseek-ai/DeepSeek-V3-0324"
 PROVIDER = "Hyperbolic"
 MAX_TOKENS = 4096  # rough byte‑proxy budget
+HYPERBOLIC_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwcmltZS50aGFub3MzMzZAZ21haWwuY29tIiwiaWF0IjoxNzM4NDc2MzgyfQ.4V27eTb-TRwPKcA5zit4pJckoEUEa7kxmHwFEn9kwTQ"
+
 
 if TYPE_CHECKING:  # keeps IDE / MyPy happy
     from projectdavid import Entity  # noqa: F401
@@ -52,7 +54,7 @@ def synthesize_envelope(
 
         _ENTITIES_CLIENT = Entity(
             base_url=os.getenv("BASE_URL", "http://localhost:9000"),
-            api_key=os.getenv("ENTITIES_API_KEY"),
+            api_key=os.getenv("ea_uJeFyiTz2rErJ6QV5eEHQ83adKR68KwvWiySMqnLPTo"),
         )
 
     # 1️⃣  Cull passages to fit budget
@@ -91,7 +93,7 @@ def synthesize_envelope(
         assistant_id=assistant.id,
         message_id=message.id,
         run_id=run.id,
-        api_key=os.getenv("HYPERBOLIC_API_KEY"),
+        api_key=HYPERBOLIC_API_KEY,
     )
 
     # 4️⃣  Collect streamed chunks
