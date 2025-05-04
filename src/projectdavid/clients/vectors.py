@@ -18,6 +18,8 @@ from pydantic import BaseModel, Field
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
+from projectdavid.synthesis import reranker, retriever
+from projectdavid.synthesis.llm_synthesizer import synthesize_envelope
 from projectdavid.utils.vector_search_formatter import make_envelope
 
 load_dotenv()
@@ -510,3 +512,10 @@ class VectorStoreClient:
         resp = self._sync_api_client.get(f"/v1/vector-stores/{vector_store_id}")
         resp.raise_for_status()
         return ValidationInterface.VectorStoreRead.model_validate(resp.json())
+
+    def answer_question(
+        self, vector_store_id: str, query_text: str, k: int = 20
+    ) -> Dict[str, Any]:
+        hits = retriever.retrieve(self, vector_store_id, query_text, k)
+        hits = reranker.rerank(query_text, hits, top_k=10)  # optional
+        return synthesize_envelope(query_text, hits)
