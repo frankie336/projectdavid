@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/frankie336/projectdavid/compare/v1.20.2...v1.21.0) (2025-05-04)
+
+
+### Features
+
+* Add support to display line and page numbers in vector search output ([08f656a](https://github.com/frankie336/projectdavid/commit/08f656a617577ab12a74504467020d3c44c8d244))
+
 ## [1.20.2](https://github.com/frankie336/projectdavid/compare/v1.20.1...v1.20.2) (2025-05-04)
 
 
