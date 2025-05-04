@@ -1,10 +1,17 @@
 from __future__ import annotations
-import io, os
+
+# ── stdlib ───────────────────────────────────────────────────────────
+import io
+import os
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+# ── third‑party ──────────────────────────────────────────────────────
 from dotenv import load_dotenv
-from ..utils.vector_search_formatter import make_envelope
+
+# ── internal / relative ──────────────────────────────────────────────
 from .prompt import SYSTEM_PROMPT, build_user_prompt
+from ..utils.vector_search_formatter import make_envelope
+
 
 load_dotenv()
 
