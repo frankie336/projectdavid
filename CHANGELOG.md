@@ -1,3 +1,11 @@
+# [1.20.0](https://github.com/frankie336/projectdavid/compare/v1.19.0...v1.20.0) (2025-05-04)
+
+
+### Features
+
+* Adding support for structured vector search output ([919c121](https://github.com/frankie336/projectdavid/commit/919c121598330215552b003c1c360c2e182353f4))
+* Adding support for structured vector search output ([e0d95ab](https://github.com/frankie336/projectdavid/commit/e0d95ab61bd2dc7d13f81b29107e9add980e3935))
+
 # [1.19.0](https://github.com/frankie336/projectdavid/compare/v1.18.1...v1.19.0) (2025-05-01)
 
 
