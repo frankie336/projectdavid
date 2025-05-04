@@ -201,54 +201,46 @@ class VectorStoreClient:
         return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
 
     async def _add_file_async(
-        self,
-        vector_store_id: str,
-        p: Path,
-        meta: Optional[Dict[str, Any]],
+        self, vector_store_id: str, p: Path, meta: Optional[Dict[str, Any]]
     ) -> ValidationInterface.VectorStoreFileRead:
-        # ── 1.  Extract + embed  ─────────────────────────────────────────────
         processed = await self.file_processor.process_file(p)
         texts, vectors = processed["chunks"], processed["vectors"]
-        if not texts:
-            raise VectorStoreClientError(f"No content extracted from {p.name}")
+        line_data = processed.get("line_data") or []  # ← NEW
 
-        # ── 2.  Base metadata for every chunk ────────────────────────────────
         base_md = meta or {}
         base_md.update({"source": str(p), "file_name": p.name})
 
-        # ── 3.  Generate a single file‑record ID for this upload ─────────────
-        file_record_id = f"vsf_{uuid.uuid4()}"  # ← NEW
+        file_record_id = f"vsf_{uuid.uuid4()}"
 
-        # add file_id + chunk_index to every chunk’s metadata
-        chunk_md = [  # ← NEW
-            {  # ← NEW
-                **base_md,  # ← NEW
-                "chunk_index": i,  # ← NEW
-                "file_id": file_record_id,  # ← NEW
-            }  # ← NEW
-            for i in range(len(texts))  # ← NEW
-        ]  # ← NEW
+        # Build per‑chunk payload, now including page/lines if present
+        chunk_md = []
+        for i in range(len(texts)):
+            payload = {
+                **base_md,
+                "chunk_index": i,
+                "file_id": file_record_id,
+            }
+            if i < len(line_data):  # ← NEW
+                payload.update(line_data[i])  # {'page': …, 'lines': …}
+            chunk_md.append(payload)
 
-        # ── 4.  Store vectors + payloads in Qdrant ───────────────────────────
         self.vector_manager.add_to_store(
             store_name=vector_store_id,
             texts=texts,
             vectors=vectors,
-            metadata=chunk_md,  # ← uses new list
+            metadata=chunk_md,
         )
 
-        # ── 5.  Create / POST file record to API  ────────────────────────────
-        payload = {
-            "file_id": file_record_id,  # ← NEW
-            "file_name": p.name,
-            "file_path": str(p),
-            "status": "completed",
-            "meta_data": meta or {},
-        }
         resp = await self._request(
             "POST",
             f"/v1/vector-stores/{vector_store_id}/files",
-            json=payload,
+            json={
+                "file_id": file_record_id,
+                "file_name": p.name,
+                "file_path": str(p),
+                "status": "completed",
+                "meta_data": meta or {},
+            },
         )
         return ValidationInterface.VectorStoreFileRead.model_validate(resp)
 

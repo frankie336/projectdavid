@@ -13,15 +13,39 @@ _id = UtilsInterface.IdentifierService()
 
 
 def make_envelope(query: str, hits: List[Dict[str, Any]], answer_text: str) -> dict:
-    """Wrap search results in OpenAI‑style envelope."""
-    # Build citations (one per hit here; de‑dupe as you wish)
+    """
+    Wrap a vector‑store search in an OpenAI‑style envelope.
+
+    * De‑duplicates citations so each file appears once.
+    * Adds optional page + line numbers when present in hit.meta_data.
+    * Computes char‑offset for each filename inside the generated answer text.
+    """
     citations: List[FileCitation] = []
+    seen_files = set()
+
     for hit in hits:
-        file_id = hit["meta_data"]["file_id"]
-        filename = hit["meta_data"]["file_name"]
-        # naive locate — first occurrence of filename in answer
+        md = hit["meta_data"]
+        file_id = md["file_id"]
+
+        # Skip duplicates
+        if file_id in seen_files:
+            continue
+        seen_files.add(file_id)
+
+        filename = md["file_name"]
+
+        # Locate first occurrence of the filename in answer_text (-1 if absent)
         offset = answer_text.find(filename)
-        citations.append(FileCitation(index=offset, file_id=file_id, filename=filename))
+
+        citations.append(
+            FileCitation(
+                index=offset,
+                file_id=file_id,
+                filename=filename,
+                page=md.get("page"),  # present for PDF chunks
+                lines=md.get("lines"),  # present for PDF chunks
+            )
+        )
 
     fs_call = FileSearchCall(
         id=_id.generate_prefixed_id("fs"),  # e.g. fs_<uuid>
