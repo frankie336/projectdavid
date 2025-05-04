@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/frankie336/projectdavid/compare/v1.22.0...v1.23.0) (2025-05-04)
+
+
+### Features
+
+* Retriever → (Optionally Reranker) → Synthesizer → Citation‑mapper ([a3a48b2](https://github.com/frankie336/projectdavid/commit/a3a48b2519aa5edd0a6c3ce1a8694e210dc3870a))
+
 # [1.22.0](https://github.com/frankie336/projectdavid/compare/v1.21.0...v1.22.0) (2025-05-04)
 
 
