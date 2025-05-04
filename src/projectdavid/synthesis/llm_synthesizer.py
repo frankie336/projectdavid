@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 from dotenv import load_dotenv
 
 # ── internal / relative ──────────────────────────────────────────────
-from .prompt import SYSTEM_PROMPT, build_user_prompt
-from ..utils.vector_search_formatter import make_envelope
+from prompt import SYSTEM_PROMPT, build_user_prompt
 
+from projectdavid.utils.vector_search_formatter import make_envelope
 
 load_dotenv()
 
