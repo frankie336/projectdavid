@@ -1,3 +1,18 @@
+# [1.25.0](https://github.com/frankie336/projectdavid/compare/v1.24.0...v1.25.0) (2025-05-04)
+
+
+### Bug Fixes
+
+* API key passthrough ([a088b61](https://github.com/frankie336/projectdavid/commit/a088b61115a83c6e6a1e6ee8de8d8142b2d158e1))
+* API key passthrough ([34d2653](https://github.com/frankie336/projectdavid/commit/34d2653fd62edc8fc3aae8f010f8da55a649dd2f))
+* API key passthrough ([acbe3d9](https://github.com/frankie336/projectdavid/commit/acbe3d91f01fbef0abf55ed8aa80b7ef446f6a56))
+* API key passthrough ([7333b45](https://github.com/frankie336/projectdavid/commit/7333b4566f22ad5695108ece3b5694befa74aa29))
+
+
+### Features
+
+* Retriever → (Optionally Reranker) → Synthesizer → Citation‑mapper ([307f494](https://github.com/frankie336/projectdavid/commit/307f4946ebc29f61533f978d6d2a7675e0469bd2))
+
 # [1.24.0](https://github.com/frankie336/projectdavid/compare/v1.23.0...v1.24.0) (2025-05-04)
 
 
