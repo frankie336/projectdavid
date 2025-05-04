@@ -1,41 +1,41 @@
 # synthesis/llm_synthesizer.py
-import io
-import itertools
-import json
+from __future__ import annotations
 
-# ------------------------------------------------------------------ #
-#  Configure once (env vars come from .env as in your demo script)   #
-# ------------------------------------------------------------------ #
+import io
 import os
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from dotenv import load_dotenv
-
-from projectdavid import Entity  # your SDK
 
 from ..utils.vector_search_formatter import make_envelope
 from .prompt import SYSTEM_PROMPT, build_user_prompt
 
+# ------------------------------------------------------------------ #
+#  Environment & constants                                           #
+# ------------------------------------------------------------------ #
 load_dotenv()
 
-_ENTITIES_CLIENT = Entity(
-    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
-    api_key=os.getenv("ENTITIES_API_KEY"),
-)
-
-USER_ID = os.getenv("ENTITIES_USER_ID")  # for streams
+USER_ID = os.getenv("ENTITIES_USER_ID")
 MODEL = "hyperbolic/deepseek-ai/DeepSeek-V3-0324"
 PROVIDER = "Hyperbolic"
-MAX_TOKENS = 4096  # budget guard
+MAX_TOKENS = 4096  # rough byte‑proxy budget
 
+if TYPE_CHECKING:  # keeps IDE / MyPy happy
+    from projectdavid import Entity  # noqa: F401
 
-def _count_tokens(text: str) -> int:
-    # Cheap byte‑level proxy; adjust if you wire in a tokenizer later
-    return len(text.encode("utf‑8")) // 4  # rough 4‑byte/ token
+_ENTITIES_CLIENT = None  # will be initialised lazily
 
 
 # ------------------------------------------------------------------ #
-#  Public API: synthesize_envelope()                                 #
+#  Helpers                                                          #
+# ------------------------------------------------------------------ #
+def _count_tokens(text: str) -> int:
+    """Rough 4‑byte‑per‑token proxy. Replace with tokenizer if needed."""
+    return len(text.encode("utf‑8")) // 4
+
+
+# ------------------------------------------------------------------ #
+#  Public API                                                       #
 # ------------------------------------------------------------------ #
 def synthesize_envelope(
     query: str,
@@ -46,19 +46,28 @@ def synthesize_envelope(
     Generate an abstractive answer + citations using your Hyperbolic‑backed
     model and return the OpenAI‑style envelope.
     """
-    # 1️⃣  Pick passages that fit the token/byte budget
+    global _ENTITIES_CLIENT
+    if _ENTITIES_CLIENT is None:  # ← lazy import breaks the cycle
+        from projectdavid import Entity  # local import
+
+        _ENTITIES_CLIENT = Entity(
+            base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+            api_key=os.getenv("ENTITIES_API_KEY"),
+        )
+
+    # 1️⃣  Cull passages to fit budget
     ctx_passages, used = [], 0
     for h in hits[:top_n_ctx]:
         t = _count_tokens(h["text"])
-        if used + t > MAX_TOKENS - 2048:  # leave headroom for answer
+        if used + t > MAX_TOKENS - 2048:  # reserve answer space
             break
         ctx_passages.append(h)
         used += t
 
-    # 2️⃣  Build the composite user prompt
+    # 2️⃣  Build prompt
     user_prompt = build_user_prompt(query, ctx_passages)
 
-    # 3️⃣  Kick off a “one‑off assistant” run via synchronous stream
+    # 3️⃣  One‑shot assistant run via synchronous stream
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[USER_ID])
     assistant = _ENTITIES_CLIENT.assistants.create_assistant(
         name="synth‑ephemeral",
@@ -85,7 +94,7 @@ def synthesize_envelope(
         api_key=os.getenv("HYPERBOLIC_API_KEY"),
     )
 
-    # 4️⃣  Collect streamed chunks into the final answer text
+    # 4️⃣  Collect streamed chunks
     out = io.StringIO()
     for chunk in stream.stream_chunks(
         provider=PROVIDER,
@@ -96,5 +105,5 @@ def synthesize_envelope(
 
     answer_text = out.getvalue().strip()
 
-    # 5️⃣  Wrap in OpenAI‑style envelope with citations
+    # 5️⃣  Wrap in OpenAI‑style envelope
     return make_envelope(query, ctx_passages, answer_text)
