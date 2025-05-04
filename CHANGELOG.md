@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/frankie336/projectdavid/compare/v1.20.0...v1.20.1) (2025-05-04)
+
+
+### Bug Fixes
+
+* Add Metadata Wrapping to search_vector_store_openai ([8879ad0](https://github.com/frankie336/projectdavid/commit/8879ad0faec499e1b5e6d5f68b23c84d9a637cf7))
+
 # [1.20.0](https://github.com/frankie336/projectdavid/compare/v1.19.0...v1.20.0) (2025-05-04)
 
 
