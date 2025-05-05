@@ -413,7 +413,7 @@ class VectorStoreClient:
             raise FileNotFoundError(f"File not found: {p}")
         return self._run_sync(self._add_file_async(vector_store_id, p, user_metadata))
 
-    def search_vector_store(
+    def unstructured_vector_file_search(
         self,
         vector_store_id: str,
         query_text: str,
@@ -427,7 +427,7 @@ class VectorStoreClient:
     # ─────────────────────────────────────────────────────────────────────────────
     #  OpenAI‑style search wrapper
     # ─────────────────────────────────────────────────────────────────────────────
-    def search_vector_store_openai(
+    def simple_vector_file_search(
         self,
         vector_store_id: str,
         query_text: str,
@@ -449,7 +449,7 @@ class VectorStoreClient:
             dict: JSON‑serialisable envelope identical to the OpenAI format.
         """
         # 1️⃣  Raw hits (list[dict] from VectorStoreManager.query_store)
-        raw_hits = self.search_vector_store(
+        raw_hits = self.unstructured_vector_file_search(
             vector_store_id=vector_store_id,
             query_text=query_text,
             top_k=top_k,
@@ -540,7 +540,7 @@ class VectorStoreClient:
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
     # ────────────────────────────────────────────────────────────────
-    def answer_question(
+    def vector_file_search(
         self,
         vector_store_id: str,
         query_text: str,
