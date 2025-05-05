@@ -540,7 +540,7 @@ class VectorStoreClient:
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
     # ────────────────────────────────────────────────────────────────
-    def vector_file_search(
+    def file_search(
         self,
         vector_store_id: str,
         query_text: str,
