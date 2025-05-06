@@ -1,3 +1,10 @@
+## [1.25.4](https://github.com/frankie336/projectdavid/compare/v1.25.3...v1.25.4) (2025-05-06)
+
+
+### Bug Fixes
+
+* method name changes ([8de1fdf](https://github.com/frankie336/projectdavid/commit/8de1fdf1bf3225dbf5bf4788b914a4a90db04e63))
+
 ## [1.25.3](https://github.com/frankie336/projectdavid/compare/v1.25.2...v1.25.3) (2025-05-05)
 
 
