@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 
 from sentence_transformers import CrossEncoder
 
-# Try to load the reranker model safely
 try:
     _cross = CrossEncoder(
         "cross-encoder/ms-marco-MiniLM-L-6-v2",
