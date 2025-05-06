@@ -1,3 +1,10 @@
+## [1.25.5](https://github.com/frankie336/projectdavid/compare/v1.25.4...v1.25.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* Replace raw file_id tokens with human‑friendly file_name ([a92abf2](https://github.com/frankie336/projectdavid/commit/a92abf28bcf9f1dfd852ed27ae500bcc12ad7219))
+
 ## [1.25.4](https://github.com/frankie336/projectdavid/compare/v1.25.3...v1.25.4) (2025-05-06)
 
 
