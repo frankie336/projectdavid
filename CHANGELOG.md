@@ -1,3 +1,15 @@
+## [1.25.3](https://github.com/frankie336/projectdavid/compare/v1.25.2...v1.25.3) (2025-05-05)
+
+
+### Bug Fixes
+
+* Make vector search method names intuitive ([b3aca19](https://github.com/frankie336/projectdavid/commit/b3aca191ba3a0d09fad00ddf63f274c6ea5b3990))
+* Make vector search method names intuitive ([fff4b97](https://github.com/frankie336/projectdavid/commit/fff4b9726d3995653f7f4bd38b67125710ad7b79))
+* Make vector search method names intuitive ([84d1d6f](https://github.com/frankie336/projectdavid/commit/84d1d6f43399a658e327af72972ef054a19fcf40))
+* Make vector search method names intuitive ([2e0741c](https://github.com/frankie336/projectdavid/commit/2e0741cd13d646e42f6aeebc66af68b1479518c7))
+* Make vector search method names intuitive ([001e931](https://github.com/frankie336/projectdavid/commit/001e93173114ccb3cf2a0631f036a65e7cd0572f))
+* Make vector search method names intuitive ([e2b4b7c](https://github.com/frankie336/projectdavid/commit/e2b4b7c1a1ff2f6dd6bc3e4708382304d57e2216))
+
 ## [1.25.2](https://github.com/frankie336/projectdavid/compare/v1.25.1...v1.25.2) (2025-05-04)
 
 
