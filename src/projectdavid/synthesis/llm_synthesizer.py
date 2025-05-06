@@ -7,30 +7,31 @@ from typing import TYPE_CHECKING, Dict, List, Optional
 # third‑party
 from dotenv import load_dotenv
 
+# internal
 from ..utils.vector_search_formatter import make_envelope
-
-# internal / relative
-from .prompt import SYSTEM_PROMPT, build_user_prompt  # ←  relative “.prompt”
+from .prompt import SYSTEM_PROMPT, build_user_prompt  # relative import
 
 load_dotenv()
 
+# ── defaults ─────────────────────────────────────────────────────────
 DEFAULT_USER_ID = "user_TUofmVbbjzFyMHo3YIihEv"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
 MAX_TOKENS = 4096
 
-if TYPE_CHECKING:
-    from projectdavid import Entity
+if TYPE_CHECKING:  # keep IDE / MyPy happy, avoid real import cycle
+    from projectdavid import Entity  # noqa: F401
 
-_ENTITIES_CLIENT: Optional["Entity"] = None
+_ENTITIES_CLIENT: Optional["Entity"] = None  # lazy‑initialised singleton
 
 
-# ---------- helpers ------------------------------------------------- #
+# ── helper -----------------------------------------------------------
 def _count_tokens(text: str) -> int:
+    """Rough byte→token conversion (4 bytes ≈ 1 token)."""
     return len(text.encode()) // 4
 
 
-# ---------- main ---------------------------------------------------- #
+# ── public API -------------------------------------------------------
 def synthesize_envelope(
     query: str,
     hits: List[Dict[str, any]],
@@ -43,29 +44,28 @@ def synthesize_envelope(
     model: str = DEFAULT_MODEL,
     provider: str = DEFAULT_PROVIDER,
 ) -> Dict[str, any]:
-
-    # 1. trim context
+    # 1️⃣  Trim context to fit token budget
     ctx, used = [], 0
     for h in hits[:top_n_ctx]:
         t = _count_tokens(h["text"])
-        if used + t > MAX_TOKENS - 2048:
+        if used + t > MAX_TOKENS - 2048:  # leave room for answer
             break
         ctx.append(h)
         used += t
 
     prompt = build_user_prompt(query, ctx)
 
-    # 2. lazy‑init Entities client (cycle‑safe)
+    # 2️⃣  Lazy‑init Entities client (cycle‑safe)
     global _ENTITIES_CLIENT
     if _ENTITIES_CLIENT is None:
-        from projectdavid import Entity
+        from projectdavid import Entity  # local import
 
         _ENTITIES_CLIENT = Entity(
             base_url=base_url or os.getenv("BASE_URL", "http://localhost:9000"),
             api_key=api_key or os.getenv("ENTITIES_API_KEY"),
         )
 
-    # 3. thread / assistant / run
+    # 3️⃣  Spin up thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
     assistant = _ENTITIES_CLIENT.assistants.create_assistant(
         name="synth‑ephemeral",
@@ -82,7 +82,7 @@ def synthesize_envelope(
         thread_id=thread.id,
     )
 
-    # 4. stream
+    # 4️⃣  Stream the LLM response
     stream = _ENTITIES_CLIENT.synchronous_inference_stream
     stream.setup(
         user_id=user_id,
@@ -95,8 +95,21 @@ def synthesize_envelope(
 
     out = io.StringIO()
     for chunk in stream.stream_chunks(
-        provider=provider, model=model, timeout_per_chunk=60.0
+        provider=provider,
+        model=model,
+        timeout_per_chunk=60.0,
     ):
         out.write(chunk.get("content", ""))
 
-    return make_envelope(query, ctx, out.getvalue().strip())
+    answer_text = out.getvalue().strip()
+
+    # 5️⃣  Replace raw file_id tokens with human‑friendly file_name
+    for h in ctx:
+        fid = h["meta_data"].get("file_id")
+        fname = h["meta_data"].get("file_name")
+        if fid and fname:
+            # word‑boundary safe replacement
+            answer_text = answer_text.replace(fid, fname)
+
+    # 6️⃣  Wrap into OpenAI‑style envelope with citations intact
+    return make_envelope(query, ctx, answer_text)
