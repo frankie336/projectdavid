@@ -1,13 +1,22 @@
+"""
+Light‑weight retrieval helper.
+
+* Accepts **any** client that exposes `vector_file_search_raw(...)`
+* Returns the raw ANN hits (each already containing meta_data)
+"""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Dict, List, Protocol
 
-# ── Conditional import only for static analysis / IDEs ──────────────────
-if TYPE_CHECKING:
+# ── Conditional import only for type‑checkers / IDEs ───────────────────────
+if TYPE_CHECKING:  # pragma: no cover
     from ..clients.vectors import VectorStoreClient
 
 
-# ── Lightweight structural type so MyPy still knows the shape ───────────
+# ── Structural type so MyPy / static analysis knows the shape ─────────────
 class VectorStoreLike(Protocol):
-    def search_vector_store(  # noqa: D401
+    def vector_file_search_raw(  # noqa: D401  (method is a verb phrase)
         self,
         vector_store_id: str,
         query_text: str,
@@ -16,7 +25,7 @@ class VectorStoreLike(Protocol):
     ) -> List[Dict[str, Any]]: ...
 
 
-# ── Public helper ───────────────────────────────────────────────────────
+# ── Public helper ─────────────────────────────────────────────────────────
 def retrieve(
     client: "VectorStoreLike",
     vector_store_id: str,
@@ -25,19 +34,30 @@ def retrieve(
     filters: Dict | None = None,
 ) -> List[Dict[str, Any]]:
     """
-    Raw similarity search (already includes page & line in meta_data).
+    Run a raw similarity search against *vector_store_id*.
 
-    Args:
-        client:          Any object implementing `search_vector_store`.
-        vector_store_id: The store to query.
-        query:           Natural‑language question.
-        k:               Number of passages to return.
-        filters:         Optional Qdrant payload filter.
+    The underlying client must implement **vector_file_search_raw**; results
+    already include any chunk‑level metadata (page, lines, file_id, …).
 
-    Returns:
-        List of hit dicts enriched with meta_data.
+    Parameters
+    ----------
+    client:
+        Any object that satisfies the ``VectorStoreLike`` protocol.
+    vector_store_id:
+        The target vector store to query.
+    query:
+        Natural‑language search string.
+    k:
+        Number of top passages to return (default 20).
+    filters:
+        Optional Qdrant payload‑filter dictionary.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        Raw hit dictionaries in the standard Project‑David schema.
     """
-    return client.search_vector_store(
+    return client.vector_file_search_raw(
         vector_store_id=vector_store_id,
         query_text=query,
         top_k=k,

@@ -413,7 +413,7 @@ class VectorStoreClient:
             raise FileNotFoundError(f"File not found: {p}")
         return self._run_sync(self._add_file_async(vector_store_id, p, user_metadata))
 
-    def unstructured_vector_file_search(
+    def vector_file_search_raw(
         self,
         vector_store_id: str,
         query_text: str,
@@ -425,7 +425,7 @@ class VectorStoreClient:
         )
 
     # ─────────────────────────────────────────────────────────────────────────────
-    #  OpenAI‑style search wrapper
+    #  MID‑LEVEL: envelope but **no** rerank / synthesis
     # ─────────────────────────────────────────────────────────────────────────────
     def simple_vector_file_search(
         self,
@@ -449,7 +449,7 @@ class VectorStoreClient:
             dict: JSON‑serialisable envelope identical to the OpenAI format.
         """
         # 1️⃣  Raw hits (list[dict] from VectorStoreManager.query_store)
-        raw_hits = self.unstructured_vector_file_search(
+        raw_hits = self.vector_file_search_raw(
             vector_store_id=vector_store_id,
             query_text=query_text,
             top_k=top_k,
