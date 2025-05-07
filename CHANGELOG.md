@@ -1,3 +1,10 @@
+## [1.25.7](https://github.com/frankie336/projectdavid/compare/v1.25.6...v1.25.7) (2025-05-07)
+
+
+### Bug Fixes
+
+* cross-encoder/ms-marco-MiniLM-L-6-v2 ([a54173d](https://github.com/frankie336/projectdavid/commit/a54173dcae46e03b3961285d189d4ca466d96546))
+
 ## [1.25.6](https://github.com/frankie336/projectdavid/compare/v1.25.5...v1.25.6) (2025-05-06)
 
 
