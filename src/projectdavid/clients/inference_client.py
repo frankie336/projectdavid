@@ -6,7 +6,7 @@ from typing import AsyncGenerator, Optional
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
-from projectdavid_common.schemas.stream import StreamRequest
+from projectdavid_common.validation import StreamRequest
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
