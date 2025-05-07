@@ -1,3 +1,10 @@
+## [1.25.6](https://github.com/frankie336/projectdavid/compare/v1.25.5...v1.25.6) (2025-05-06)
+
+
+### Bug Fixes
+
+* resolve import error ([3e45ddd](https://github.com/frankie336/projectdavid/commit/3e45dddc627c4d6be2be2bdd34be14fa2cc08e7b))
+
 ## [1.25.5](https://github.com/frankie336/projectdavid/compare/v1.25.4...v1.25.5) (2025-05-06)
 
 
