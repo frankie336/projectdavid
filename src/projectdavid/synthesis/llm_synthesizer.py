@@ -27,7 +27,7 @@ _ENTITIES_CLIENT: Optional["Entity"] = None  # lazy‑initialised singleton
 
 # ── helper -----------------------------------------------------------
 def _count_tokens(text: str) -> int:
-    """Rough byte→token conversion (4 bytes ≈ 1 token)."""
+    """Rough byte→token conversion (4bytes ≈ 1token)."""
     return len(text.encode()) // 4
 
 
@@ -67,10 +67,16 @@ def synthesize_envelope(
 
     # 3️⃣  Spin up thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
+
+
     assistant = _ENTITIES_CLIENT.assistants.create_assistant(
         name="synth‑ephemeral",
         instructions=SYSTEM_PROMPT,
     )
+
+
+
+
     msg = _ENTITIES_CLIENT.messages.create_message(
         thread_id=thread.id,
         role="user",
