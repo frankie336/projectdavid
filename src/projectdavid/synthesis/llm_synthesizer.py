@@ -15,6 +15,7 @@ load_dotenv()
 
 # ── defaults ─────────────────────────────────────────────────────────
 DEFAULT_USER_ID = "user_TUofmVbbjzFyMHo3YIihEv"
+ASSISTANT_ID = "plt_ast_mFySSaT11K0qM6RmFoOpW6"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
 MAX_TOKENS = 4096
@@ -24,12 +25,10 @@ if TYPE_CHECKING:  # keep IDE / MyPy happy, avoid real import cycle
 
 _ENTITIES_CLIENT: Optional["Entity"] = None  # lazy‑initialised singleton
 
-
 # ── helper -----------------------------------------------------------
 def _count_tokens(text: str) -> int:
     """Rough byte→token conversion (4bytes ≈ 1token)."""
     return len(text.encode()) // 4
-
 
 # ── public API -------------------------------------------------------
 def synthesize_envelope(
@@ -68,19 +67,15 @@ def synthesize_envelope(
     # 3️⃣  Spin up thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
 
-    assistant = _ENTITIES_CLIENT.assistants.create_assistant(
-        name="synth‑ephemeral",
-        instructions=SYSTEM_PROMPT,
-    )
-
     msg = _ENTITIES_CLIENT.messages.create_message(
         thread_id=thread.id,
         role="user",
         content=prompt,
-        assistant_id=assistant.id,
+        assistant_id=ASSISTANT_ID,
     )
+
     run = _ENTITIES_CLIENT.runs.create_run(
-        assistant_id=assistant.id,
+        assistant_id=ASSISTANT_ID,
         thread_id=thread.id,
     )
 
@@ -89,7 +84,7 @@ def synthesize_envelope(
     stream.setup(
         user_id=user_id,
         thread_id=thread.id,
-        assistant_id=assistant.id,
+        assistant_id=ASSISTANT_ID,
         message_id=msg.id,
         run_id=run.id,
         api_key=provider_api_key or os.getenv("HYPERBOLIC_API_KEY"),
