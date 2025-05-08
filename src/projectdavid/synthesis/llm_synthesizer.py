@@ -81,7 +81,6 @@ def synthesize_envelope(
         assistant_id=DEFAULT_ASSISTANT,
     )
 
-
     run = _ENTITIES_CLIENT.runs.create_run(
         assistant_id=DEFAULT_ASSISTANT,
         thread_id=thread.id,
