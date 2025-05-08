@@ -25,10 +25,12 @@ if TYPE_CHECKING:  # keep IDE / MyPy happy, avoid real import cycle
 
 _ENTITIES_CLIENT: Optional["Entity"] = None  # lazy‑initialised singleton
 
+
 # ── helper -----------------------------------------------------------
 def _count_tokens(text: str) -> int:
     """Rough byte→token conversion (4bytes ≈ 1token)."""
     return len(text.encode()) // 4
+
 
 # ── public API -------------------------------------------------------
 def synthesize_envelope(
