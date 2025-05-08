@@ -1,3 +1,11 @@
+## [1.26.6](https://github.com/frankie336/projectdavid/compare/v1.26.5...v1.26.6) (2025-05-08)
+
+
+### Bug Fixes
+
+* user_36xmJoz1ywAiuOAxYvKq2Z ([41cfe2d](https://github.com/frankie336/projectdavid/commit/41cfe2d161477db801e6fe979cf983f3bca6057f))
+* user_36xmJoz1ywAiuOAxYvKq2Z ([4620760](https://github.com/frankie336/projectdavid/commit/46207605a1a1f2e2a9cd8712e4168dc2ad593275))
+
 ## [1.26.5](https://github.com/frankie336/projectdavid/compare/v1.26.4...v1.26.5) (2025-05-08)
 
 
