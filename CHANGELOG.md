@@ -1,3 +1,11 @@
+# [1.26.0](https://github.com/frankie336/projectdavid/compare/v1.25.8...v1.26.0) (2025-05-08)
+
+
+### Features
+
+* PLATFORM_ASSISTANT_ID_MAP ([fd4ea9a](https://github.com/frankie336/projectdavid/commit/fd4ea9a9d2d0aa3fa4aa8806035dc08ab76b3fd5))
+* PLATFORM_ASSISTANT_ID_MAP ([8605783](https://github.com/frankie336/projectdavid/commit/8605783b0dce176777713b6fcbf1a57af43727ce))
+
 ## [1.25.8](https://github.com/frankie336/projectdavid/compare/v1.25.7...v1.25.8) (2025-05-07)
 
 
