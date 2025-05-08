@@ -14,6 +14,7 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt  # relative import
 load_dotenv()
 
 # ── defaults ─────────────────────────────────────────────────────────
+DEFAULT_ASSISTANT = "plt_ast_mFySSaT11K0qM6RmFoOpW6"
 DEFAULT_USER_ID = "user_hMcVBDyO810lkLw59RXvAS"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
@@ -77,10 +78,12 @@ def synthesize_envelope(
         thread_id=thread.id,
         role="user",
         content=prompt,
-        assistant_id="plt_ast_mFySSaT11K0qM6RmFoOpW6",
+        assistant_id=DEFAULT_ASSISTANT,
     )
+
+
     run = _ENTITIES_CLIENT.runs.create_run(
-        assistant_id="plt_ast_mFySSaT11K0qM6RmFoOpW6",
+        assistant_id=DEFAULT_ASSISTANT,
         thread_id=thread.id,
     )
 
