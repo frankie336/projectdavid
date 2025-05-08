@@ -1,3 +1,11 @@
+## [1.26.1](https://github.com/frankie336/projectdavid/compare/v1.26.0...v1.26.1) (2025-05-08)
+
+
+### Bug Fixes
+
+* remove ephemeral assistant creation ([579c486](https://github.com/frankie336/projectdavid/commit/579c486e4018dd6f7e04286a09a33190fba50166))
+* remove ephemeral assistant creation ([6fe937c](https://github.com/frankie336/projectdavid/commit/6fe937c578577741b3afb5a58bb96a5fb0e0618b))
+
 # [1.26.0](https://github.com/frankie336/projectdavid/compare/v1.25.8...v1.26.0) (2025-05-08)
 
 
