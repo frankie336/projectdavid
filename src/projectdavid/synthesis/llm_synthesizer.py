@@ -14,7 +14,7 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt  # relative import
 load_dotenv()
 
 # ── defaults ─────────────────────────────────────────────────────────
-DEFAULT_USER_ID = "user_TUofmVbbjzFyMHo3YIihEv"
+DEFAULT_USER_ID = "user_36xmJoz1ywAiuOAxYvKq2Z"
 ASSISTANT_ID = "plt_ast_mFySSaT11K0qM6RmFoOpW6"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
