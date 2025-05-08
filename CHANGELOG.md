@@ -1,3 +1,12 @@
+## [1.25.8](https://github.com/frankie336/projectdavid/compare/v1.25.7...v1.25.8) (2025-05-07)
+
+
+### Bug Fixes
+
+* Pydantic schema – make participant_ids optional ([621a3fe](https://github.com/frankie336/projectdavid/commit/621a3fef75092dfff4d375cfeda4699644f6c380))
+* Pydantic schema – make participant_ids optional ([1d01162](https://github.com/frankie336/projectdavid/commit/1d0116257cf445f20fc5b1a10e87c9147d96b855))
+* Pydantic schema – make participant_ids optional ([af2bdb5](https://github.com/frankie336/projectdavid/commit/af2bdb5b74f5f392ae21c1e971c7c2cd97104d9e))
+
 ## [1.25.7](https://github.com/frankie336/projectdavid/compare/v1.25.6...v1.25.7) (2025-05-07)
 
 
