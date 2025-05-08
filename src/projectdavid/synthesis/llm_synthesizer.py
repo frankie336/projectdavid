@@ -14,8 +14,7 @@ from .prompt import SYSTEM_PROMPT, build_user_prompt  # relative import
 load_dotenv()
 
 # ── defaults ─────────────────────────────────────────────────────────
-DEFAULT_USER_ID = "user_36xmJoz1ywAiuOAxYvKq2Z"
-ASSISTANT_ID = "plt_ast_mFySSaT11K0qM6RmFoOpW6"
+DEFAULT_USER_ID = "user_TUofmVbbjzFyMHo3YIihEv"
 DEFAULT_MODEL = os.getenv("HYPERBOLIC_MODEL", "hyperbolic/deepseek-ai/DeepSeek-V3-0324")
 DEFAULT_PROVIDER = os.getenv("HYPERBOLIC_PROVIDER", "Hyperbolic")
 MAX_TOKENS = 4096
@@ -69,15 +68,19 @@ def synthesize_envelope(
     # 3️⃣  Spin up thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
 
+    assistant = _ENTITIES_CLIENT.assistants.create_assistant(
+        name="synth‑ephemeral",
+        instructions=SYSTEM_PROMPT,
+    )
+
     msg = _ENTITIES_CLIENT.messages.create_message(
         thread_id=thread.id,
         role="user",
         content=prompt,
-        assistant_id=ASSISTANT_ID,
+        assistant_id=assistant.id,
     )
-
     run = _ENTITIES_CLIENT.runs.create_run(
-        assistant_id=ASSISTANT_ID,
+        assistant_id=assistant.id,
         thread_id=thread.id,
     )
 
@@ -86,7 +89,7 @@ def synthesize_envelope(
     stream.setup(
         user_id=user_id,
         thread_id=thread.id,
-        assistant_id=ASSISTANT_ID,
+        assistant_id=assistant.id,
         message_id=msg.id,
         run_id=run.id,
         api_key=provider_api_key or os.getenv("HYPERBOLIC_API_KEY"),
