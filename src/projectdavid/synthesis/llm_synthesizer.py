@@ -77,10 +77,10 @@ def synthesize_envelope(
         thread_id=thread.id,
         role="user",
         content=prompt,
-        assistant_id=assistant.id,
+        assistant_id="plt_ast_mFySSaT11K0qM6RmFoOpW6",
     )
     run = _ENTITIES_CLIENT.runs.create_run(
-        assistant_id=assistant.id,
+        assistant_id="plt_ast_mFySSaT11K0qM6RmFoOpW6",
         thread_id=thread.id,
     )
 
