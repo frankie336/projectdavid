@@ -115,5 +115,11 @@ def synthesize_envelope(
             # word‑boundary safe replacement
             answer_text = answer_text.replace(fid, fname)
 
-    # 6️⃣  Wrap into OpenAI‑style envelope with citations intact
+    # 6️⃣  Clean up the thread to free resources
+    try:
+        _ENTITIES_CLIENT.threads.delete_thread(thread.id)
+    except Exception as e:
+        print(f"Failed to delete thread {thread.id}: {e}")
+
+    # 7️⃣  Wrap into OpenAI‑style envelope with citations intact
     return make_envelope(query, ctx, answer_text)
