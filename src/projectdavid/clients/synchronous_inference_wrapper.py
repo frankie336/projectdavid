@@ -42,7 +42,7 @@ class SynchronousInferenceStream:
         model: str,
         *,  # Following parameters are keyword-only.
         api_key: Optional[str] = None,
-        timeout_per_chunk: float = 30.0,
+        timeout_per_chunk: float = 280.0,
     ) -> Generator[dict, None, None]:
         """
         Streams inference response chunks synchronously by wrapping an async generator.

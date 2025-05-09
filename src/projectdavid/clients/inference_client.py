@@ -25,9 +25,9 @@ class InferenceClient(BaseAPIClient):
         super().__init__(
             base_url=base_url,
             api_key=api_key,
-            timeout=60.0,
+            timeout=280.0,
             connect_timeout=10.0,
-            read_timeout=30.0,
+            read_timeout=280.0,
             write_timeout=30.0,
         )
         logging_utility.info("InferenceClient initialized using BaseAPIClient.")
