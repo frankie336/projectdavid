@@ -1,3 +1,10 @@
+## [1.26.8](https://github.com/frankie336/projectdavid/compare/v1.26.7...v1.26.8) (2025-05-09)
+
+
+### Bug Fixes
+
+* timers ([6e0743b](https://github.com/frankie336/projectdavid/commit/6e0743bd8c04b51b170ab962678802fb686611a1))
+
 ## [1.26.7](https://github.com/frankie336/projectdavid/compare/v1.26.6...v1.26.7) (2025-05-08)
 
 
