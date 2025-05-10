@@ -247,11 +247,23 @@ class VectorStoreClient:
         return ValidationInterface.VectorStoreFileRead.model_validate(resp)
 
     async def _search_vs_async(
-        self, vector_store_id: str, query_text: str, top_k: int, filters: Optional[Dict]
+        self,
+        vector_store_id: str,
+        query_text: str,
+        top_k: int,
+        filters: Optional[Dict] = None,
+        vector_store_host: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
+        # Use the provided vector_store_host if specified, otherwise fall back to the default
+        if vector_store_host:
+            vector_manager = VectorStoreManager(vector_store_host=vector_store_host)
+        else:
+            vector_manager = self.vector_manager
+
         store = self.retrieve_vector_store_sync(vector_store_id)
         vec = self.file_processor.embedding_model.encode(query_text).tolist()
-        return self.vector_manager.query_store(
+
+        return vector_manager.query_store(
             store_name=store.collection_name,
             query_vector=vec,
             top_k=top_k,
@@ -419,9 +431,12 @@ class VectorStoreClient:
         query_text: str,
         top_k: int = 5,
         filters: Optional[Dict] = None,
+        vector_store_host: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         return self._run_sync(
-            self._search_vs_async(vector_store_id, query_text, top_k, filters)
+            self._search_vs_async(
+                vector_store_id, query_text, top_k, filters, vector_store_host
+            )
         )
 
     # ─────────────────────────────────────────────────────────────────────────────
@@ -545,21 +560,48 @@ class VectorStoreClient:
         vector_store_id: str,
         query_text: str,
         k: int = 20,
+        vector_store_host: Optional[str] = None,
     ) -> Dict[str, Any]:
-        # 1️⃣  Retrieve initial candidates
-        hits = retriever.retrieve(self, vector_store_id, query_text, k)
+        """
+        Run a full file search with optional cross-encoder rerank and envelope synthesis.
 
-        # 2️⃣  Optional cross‑encoder / LLM rerank
-        hits = reranker.rerank(query_text, hits, top_k=10)
+        Parameters
+        ----------
+        vector_store_id : str
+            The ID of the target vector store to query.
+        query_text : str
+            The natural-language search text.
+        k : int, optional
+            The maximum number of hits to retrieve (default is 20).
+        vector_store_host : Optional[str], optional
+            An optional override for the default vector store host.
 
-        # 3️⃣  Normalise schema (guarantee 'meta_data')
+        Returns
+        -------
+        Dict[str, Any]
+            An OpenAI-style envelope containing the synthesized response.
+        """
+
+        # 1️⃣ Retrieve initial candidates (now with optional vector_store_host passthrough)
+        hits = retriever.retrieve(
+            self,
+            vector_store_id=vector_store_id,
+            query=query_text,
+            k=k,
+            vector_store_host=vector_store_host,
+        )
+
+        # 2️⃣ Optional cross-encoder / LLM rerank
+        hits = reranker.rerank(query_text, hits, top_k=min(len(hits), 10))
+
+        # 3️⃣ Normalize schema (guarantee 'meta_data')
         hits = self._normalise_hits(hits)
 
-        # 4️⃣  Abstractive synthesis → OpenAI‑style envelope
+        # 4️⃣ Abstractive synthesis → OpenAI-style envelope
         return synthesize_envelope(
             query_text,
             hits,
-            api_key=self.api_key,  # Project‑David key
+            api_key=self.api_key,  # Project-David key
             base_url=self.base_url,  # Same backend
             provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # Hyperbolic key
         )

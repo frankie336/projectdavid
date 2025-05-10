@@ -7,7 +7,7 @@ Light‑weight retrieval helper.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Protocol
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
 # ── Conditional import only for type‑checkers / IDEs ───────────────────────
 if TYPE_CHECKING:  # pragma: no cover
@@ -16,12 +16,13 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # ── Structural type so MyPy / static analysis knows the shape ─────────────
 class VectorStoreLike(Protocol):
-    def vector_file_search_raw(  # noqa: D401  (method is a verb phrase)
+    def vector_file_search_raw(
         self,
         vector_store_id: str,
         query_text: str,
         top_k: int = 5,
         filters: Dict | None = None,
+        vector_store_host: Optional[str] = None,
     ) -> List[Dict[str, Any]]: ...
 
 
@@ -31,7 +32,8 @@ def retrieve(
     vector_store_id: str,
     query: str,
     k: int = 20,
-    filters: Dict | None = None,
+    filters: Optional[Dict] = None,
+    vector_store_host: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
     Run a raw similarity search against *vector_store_id*.
@@ -51,6 +53,8 @@ def retrieve(
         Number of top passages to return (default 20).
     filters:
         Optional Qdrant payload‑filter dictionary.
+    vector_store_host:
+        Optionally override the default vector store host for this query.
 
     Returns
     -------
@@ -62,4 +66,5 @@ def retrieve(
         query_text=query,
         top_k=k,
         filters=filters,
+        vector_store_host=vector_store_host,
     )
