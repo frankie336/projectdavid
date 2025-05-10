@@ -1,3 +1,11 @@
+## [1.26.10](https://github.com/frankie336/projectdavid/compare/v1.26.9...v1.26.10) (2025-05-10)
+
+
+### Bug Fixes
+
+* Migrate to DEFAULT_ASSISTANT ([613cf00](https://github.com/frankie336/projectdavid/commit/613cf0015385ea8cbccbd34a71adddac5e7c9bdf))
+* Migrate to DEFAULT_ASSISTANT ([1ef337a](https://github.com/frankie336/projectdavid/commit/1ef337a114593ec0c5b449ccd877a5ec24c5a14e))
+
 ## [1.26.9](https://github.com/frankie336/projectdavid/compare/v1.26.8...v1.26.9) (2025-05-10)
 
 
