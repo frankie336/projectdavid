@@ -69,10 +69,6 @@ def synthesize_envelope(
     # 3️⃣  Spin up thread / assistant / run
     thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
 
-    assistant = _ENTITIES_CLIENT.assistants.create_assistant(
-        name="synth‑ephemeral",
-        instructions=SYSTEM_PROMPT,
-    )
 
     msg = _ENTITIES_CLIENT.messages.create_message(
         thread_id=thread.id,
@@ -91,7 +87,7 @@ def synthesize_envelope(
     stream.setup(
         user_id=user_id,
         thread_id=thread.id,
-        assistant_id=assistant.id,
+        assistant_id=DEFAULT_ASSISTANT,
         message_id=msg.id,
         run_id=run.id,
         api_key=provider_api_key or os.getenv("HYPERBOLIC_API_KEY"),
