@@ -39,35 +39,52 @@ class ThreadsClient(BaseAPIClient):
             raise
 
     def create_thread(
-        self, participant_ids: List[str], meta_data: Optional[Dict[str, Any]] = None
+        self,
+        participant_ids: Optional[List[str]] = None,
+        meta_data: Optional[Dict[str, Any]] = None,
     ) -> validator.ThreadRead:
+        """
+        Create a new conversation thread.
+
+        Parameters
+        ----------
+        participant_ids:
+            Optional list of participant IDs. If **None** (or an empty list) the
+            back‑end will default to *“the authenticated user only”*.
+        meta_data:
+            Arbitrary key/value metadata to attach to the thread.
+        """
         meta_data = meta_data or {}
-        thread_data = validator.ThreadCreate(
-            participant_ids=participant_ids, meta_data=meta_data
-        ).model_dump()
+
+        payload = validator.ThreadCreate(
+            participant_ids=participant_ids or None,  # ✨ schema wants None, not []
+            meta_data=meta_data,
+        ).model_dump(exclude_none=True)
+
         logging_utility.info(
-            "Creating thread with %d participants", len(participant_ids)
+            "Creating thread (participants=%s)",
+            "default-user" if participant_ids in (None, []) else len(participant_ids),
         )
+
         try:
-            response = self.client.post("/v1/threads", json=thread_data)
-            response.raise_for_status()
-            created_thread = response.json()
-            return validator.ThreadRead(**created_thread)
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
+            resp = self.client.post("/v1/threads", json=payload)
+            resp.raise_for_status()
+            return validator.ThreadRead.model_validate(resp.json())
+
+        except ValidationError as ve:
+            logging_utility.error("ThreadCreate validation failed: %s", ve.json())
+            raise ValueError(f"Validation error when creating thread: {ve}") from ve
+
+        except httpx.HTTPStatusError as he:
             logging_utility.error(
-                "HTTP error occurred while creating thread: %s", str(e)
-            )
-            logging_utility.error(
-                "Status code: %d, Response text: %s",
-                e.response.status_code,
-                e.response.text,
+                "HTTP %d while creating thread: %s",
+                he.response.status_code,
+                he.response.text,
             )
             raise
-        except Exception as e:
-            logging_utility.error("Unexpected error creating thread: %s", str(e))
+
+        except Exception as exc:
+            logging_utility.exception("Unexpected error creating thread")
             raise
 
     def retrieve_thread(self, thread_id: str) -> validator.ThreadRead:
