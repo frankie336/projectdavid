@@ -1,3 +1,10 @@
+## [1.26.9](https://github.com/frankie336/projectdavid/compare/v1.26.8...v1.26.9) (2025-05-10)
+
+
+### Bug Fixes
+
+* vector store host address passthrough ([9ce8f51](https://github.com/frankie336/projectdavid/commit/9ce8f51a6f55516d93bd452009461631f7a07059))
+
 ## [1.26.8](https://github.com/frankie336/projectdavid/compare/v1.26.7...v1.26.8) (2025-05-09)
 
 
