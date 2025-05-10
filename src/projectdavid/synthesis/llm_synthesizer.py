@@ -67,7 +67,7 @@ def synthesize_envelope(
         )
 
     # 3️⃣  Spin up thread / assistant / run
-    thread = _ENTITIES_CLIENT.threads.create_thread(participant_ids=[user_id])
+    thread = _ENTITIES_CLIENT.threads.create_thread()
 
     msg = _ENTITIES_CLIENT.messages.create_message(
         thread_id=thread.id,
