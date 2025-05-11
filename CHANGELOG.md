@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/frankie336/projectdavid/compare/v1.26.13...v1.27.0) (2025-05-11)
+
+
+### Features
+
+* get_user_store_ids ([e5d074d](https://github.com/frankie336/projectdavid/commit/e5d074d2a77cec7c9987cab5efb04c8de9c689f8))
+
 ## [1.26.13](https://github.com/frankie336/projectdavid/compare/v1.26.12...v1.26.13) (2025-05-10)
 
 
