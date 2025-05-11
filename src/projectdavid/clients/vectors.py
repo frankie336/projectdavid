@@ -202,6 +202,39 @@ class VectorStoreClient:
         resp = await self._request("GET", "/v1/vector-stores")
         return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
 
+    # ------------------------------------------------------------------ #
+    # NEW  admin‑aware creation helper
+    # ------------------------------------------------------------------ #
+    async def _create_vs_for_user_async(
+        self,
+        owner_id: str,
+        name: str,
+        vector_size: int,
+        distance_metric: str,
+        config: Optional[Dict[str, Any]],
+    ) -> ValidationInterface.VectorStoreRead:
+        shared_id = self.identifier_service.generate_vector_id()
+        self.vector_manager.create_store(
+            collection_name=shared_id,
+            vector_size=vector_size,
+            distance=distance_metric.upper(),
+        )
+        payload = {
+            "shared_id": shared_id,
+            "name": name,
+            "vector_size": vector_size,
+            "distance_metric": distance_metric.upper(),
+            "config": config or {},
+        }
+        # pass owner_id as query‑param (backend enforces admin‑only)
+        resp = await self._request(
+            "POST",
+            "/v1/vector-stores",
+            json=payload,
+            params={"owner_id": owner_id},
+        )
+        return ValidationInterface.VectorStoreRead.model_validate(resp)
+
     async def _add_file_async(
         self, vector_store_id: str, p: Path, meta: Optional[Dict[str, Any]]
     ) -> ValidationInterface.VectorStoreFileRead:
@@ -400,6 +433,60 @@ class VectorStoreClient:
             self._create_vs_async(name, vector_size, distance_metric, config)
         )
 
+    # ------------------------------------------------------------------ #
+    # NEW  admin‑aware creation helper
+    # ------------------------------------------------------------------ #
+    async def _create_vs_for_user_async(
+        self,
+        owner_id: str,
+        name: str,
+        vector_size: int,
+        distance_metric: str,
+        config: Optional[Dict[str, Any]],
+    ) -> ValidationInterface.VectorStoreRead:
+        shared_id = self.identifier_service.generate_vector_id()
+        self.vector_manager.create_store(
+            collection_name=shared_id,
+            vector_size=vector_size,
+            distance=distance_metric.upper(),
+        )
+        payload = {
+            "shared_id": shared_id,
+            "name": name,
+            "vector_size": vector_size,
+            "distance_metric": distance_metric.upper(),
+            "config": config or {},
+        }
+        # pass owner_id as query‑param (backend enforces admin‑only)
+        resp = await self._request(
+            "POST",
+            "/v1/vector-stores",
+            json=payload,
+            params={"owner_id": owner_id},
+        )
+        return ValidationInterface.VectorStoreRead.model_validate(resp)
+
+    def create_vector_store_for_user(
+        self,
+        owner_id: str,
+        name: str,
+        *,
+        vector_size: int = 384,
+        distance_metric: str = "Cosine",
+        config: Optional[Dict[str, Any]] = None,
+    ) -> ValidationInterface.VectorStoreRead:
+        """
+        **Admin‑only** helper → create a store on behalf of *owner_id*.
+
+        The caller’s API‑key must belong to an admin; otherwise the
+        request will be rejected by the server with HTTP 403.
+        """
+        return self._run_sync(
+            self._create_vs_for_user_async(
+                owner_id, name, vector_size, distance_metric, config
+            )
+        )
+
     def list_my_vector_stores(self) -> List[ValidationInterface.VectorStoreRead]:
         """List all non-deleted stores owned by the caller."""
         return self._run_sync(self._list_my_vs_async())
@@ -529,60 +616,6 @@ class VectorStoreClient:
         assistant_id: str,
     ) -> List[ValidationInterface.VectorStoreRead]:
         return self._run_sync(self._get_assistant_vs_async(assistant_id))
-
-    def get_user_store_ids(
-        self,
-        user_id: Optional[str] = None,
-        all_stores: bool = False,
-        include_inactive: bool = False,
-        name_filter: Optional[str] = "file_search",
-    ) -> List[ValidationInterface.VectorStoreRead]:
-        """
-        Retrieve a user's vector-store IDs.
-
-        Args:
-            user_id (Optional[str]): Explicit user ID (admin only).
-                                     Defaults to the current authenticated user.
-            all_stores (bool): Return **all** store IDs instead of only the personal
-                               *file_search* store.
-            include_inactive (bool): Include stores that are not in *active* status.
-            name_filter (Optional[str]): Match a specific store name (ignored if empty
-                                         when *all_stores=True*).
-
-        Returns:
-            List[ValidationInterface.VectorStoreRead]: A list of vector-store models.
-
-        Raises:
-            VectorStoreClientError: If the API request fails or the response is invalid.
-        """
-        # Prepare query parameters
-        params = {
-            "all_stores": str(all_stores).lower(),
-            "include_inactive": str(include_inactive).lower(),
-        }
-
-        if name_filter:
-            params["name_filter"] = name_filter
-
-        if user_id:
-            params["user_id"] = user_id  # Admin override
-
-        try:
-            # Send the API request
-            resp = self._sync_api_client.get("/v1/vector-stores/ids", params=params)
-            resp.raise_for_status()
-            store_data = resp.json()
-
-            # Validate each returned store
-            return [
-                ValidationInterface.VectorStoreRead.model_validate(store)
-                for store in store_data
-            ]
-
-        except Exception as exc:
-            raise VectorStoreClientError(
-                f"Failed to retrieve vector-store IDs: {exc}"
-            ) from exc
 
     def attach_vector_store_to_assistant(
         self,
