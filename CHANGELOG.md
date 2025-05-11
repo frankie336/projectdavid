@@ -1,3 +1,10 @@
+## [1.26.13](https://github.com/frankie336/projectdavid/compare/v1.26.12...v1.26.13) (2025-05-10)
+
+
+### Bug Fixes
+
+* create_thread-make-participant-ids-optional0.62 ([a73854c](https://github.com/frankie336/projectdavid/commit/a73854cee21decee90e10fb861cdb6c5bf91ff84))
+
 ## [1.26.12](https://github.com/frankie336/projectdavid/compare/v1.26.11...v1.26.12) (2025-05-10)
 
 
