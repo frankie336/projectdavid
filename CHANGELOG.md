@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/frankie336/projectdavid/compare/v1.28.0...v1.29.0) (2025-05-13)
+
+
+### Features
+
+* Associate runs with user_id ([eed69dc](https://github.com/frankie336/projectdavid/commit/eed69dc724df730657ab3fba305950d3e67398b6))
+
 # [1.28.0](https://github.com/frankie336/projectdavid/compare/v1.27.0...v1.28.0) (2025-05-11)
 
 
