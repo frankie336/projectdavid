@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/frankie336/projectdavid/compare/v1.27.0...v1.28.0) (2025-05-11)
+
+
+### Features
+
+* allow an admin to choose the owner ([2aac857](https://github.com/frankie336/projectdavid/commit/2aac857f58c7bd828e980a2eb00eac52ef16fb6c))
+
 # [1.27.0](https://github.com/frankie336/projectdavid/compare/v1.26.13...v1.27.0) (2025-05-11)
 
 
