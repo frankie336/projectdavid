@@ -41,23 +41,20 @@ class RunsClient(BaseAPIClient):
         self,
         assistant_id: str,
         thread_id: str,
-        instructions: Optional[str] = "",
-        meta_data: Optional[Dict[str, Any]] = {},
+        instructions: str = "",
+        meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.Run:
         """
-        Create a new run using the provided assistant_id, thread_id, and instructions.
-        Returns a Run Pydantic model.
+        Create a run. The server injects user_id from the API‑key that
+        authenticates this client, so we **do not** send user_id.
 
-        Args:
-            assistant_id (str): The assistant's ID.
-            thread_id (str): The thread's ID.
-            instructions (Optional[str]): Instructions for the run.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            Run: The created run.
+        Returns a fully‑populated Run model (read schema).
         """
-        run_data = ent_validator.Run(
+        if meta_data is None:
+            meta_data = {}
+
+        # Use *write* schema (RunCreate) so user_id remains optional
+        run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
             assistant_id=assistant_id,
             thread_id=thread_id,
@@ -66,7 +63,7 @@ class RunsClient(BaseAPIClient):
             cancelled_at=None,
             completed_at=None,
             created_at=int(time.time()),
-            expires_at=int(time.time()) + 3600,  # 1 hour later
+            expires_at=int(time.time()) + 3600,
             failed_at=None,
             incomplete_details=None,
             last_error=None,
@@ -78,7 +75,7 @@ class RunsClient(BaseAPIClient):
             required_action=None,
             response_format="text",
             started_at=None,
-            status="pending",
+            status=ent_validator.RunStatus.pending,
             tool_choice="none",
             tools=[],
             truncation_strategy={},
@@ -89,30 +86,27 @@ class RunsClient(BaseAPIClient):
         )
 
         logging_utility.info(
-            "Creating run for assistant_id: %s, thread_id: %s", assistant_id, thread_id
+            "Creating run for assistant_id=%s thread_id=%s", assistant_id, thread_id
         )
-        logging_utility.debug("Run data: %s", run_data.dict())
+        logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            response = self.client.post("/v1/runs", json=run_data.dict())
-            response.raise_for_status()
-            created_run_data = response.json()
+            resp = self.client.post("/v1/runs", json=run_payload.model_dump())
+            resp.raise_for_status()
 
-            # Validate the response using the Run model
-            validated_run = ent_validator.Run(**created_run_data)
-            logging_utility.info(
-                "Run created successfully with id: %s", validated_run.id
-            )
-            return validated_run
+            # Validate response with the *read* schema
+            run_out = ent_validator.Run(**resp.json())
+            logging_utility.info("Run created successfully: %s", run_out.id)
+            return run_out
 
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
+            raise ValueError(f"Validation error: {e}") from e
         except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while creating run: %s", str(e))
+            logging_utility.error("HTTP error during run creation: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error("An error occurred while creating run: %s", str(e))
+            logging_utility.error("Unexpected error during run creation: %s", str(e))
             raise
 
     def retrieve_run(self, run_id: str) -> ent_validator.RunReadDetailed:

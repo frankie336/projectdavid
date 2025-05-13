@@ -433,39 +433,6 @@ class VectorStoreClient:
             self._create_vs_async(name, vector_size, distance_metric, config)
         )
 
-    # ------------------------------------------------------------------ #
-    # NEW  admin‑aware creation helper
-    # ------------------------------------------------------------------ #
-    async def _create_vs_for_user_async(
-        self,
-        owner_id: str,
-        name: str,
-        vector_size: int,
-        distance_metric: str,
-        config: Optional[Dict[str, Any]],
-    ) -> ValidationInterface.VectorStoreRead:
-        shared_id = self.identifier_service.generate_vector_id()
-        self.vector_manager.create_store(
-            collection_name=shared_id,
-            vector_size=vector_size,
-            distance=distance_metric.upper(),
-        )
-        payload = {
-            "shared_id": shared_id,
-            "name": name,
-            "vector_size": vector_size,
-            "distance_metric": distance_metric.upper(),
-            "config": config or {},
-        }
-        # pass owner_id as query‑param (backend enforces admin‑only)
-        resp = await self._request(
-            "POST",
-            "/v1/vector-stores",
-            json=payload,
-            params={"owner_id": owner_id},
-        )
-        return ValidationInterface.VectorStoreRead.model_validate(resp)
-
     def create_vector_store_for_user(
         self,
         owner_id: str,
