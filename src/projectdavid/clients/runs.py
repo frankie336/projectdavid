@@ -37,72 +37,46 @@ class RunsClient(BaseAPIClient):
         )
         logging_utility.info("RunsClient ready at: %s", self.base_url)
 
+    # clients/runs.py  (inside RunsClient)
+
     def create_run(
         self,
         assistant_id: str,
         thread_id: str,
-        user_id: str,
         instructions: str = "",
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.Run:
         """
-        Create a run. The server expects user_id to be injected explicitly,
-        which is passed in from the authenticated API key.
-
+        Create a run. user_id is NOT sent; the server pulls it from the API key.
         Returns a fully‑populated Run model (read schema).
         """
-        if meta_data is None:
-            meta_data = {}
+        meta_data = meta_data or {}
 
-        # Construct the RunCreate payload, including user_id
-        run_payload = ent_validator.RunCreate(
+        # Build RunCreate (user_id is optional & defaults to None)
+        payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
-            user_id=user_id,  # ← Ensure user_id is included
             assistant_id=assistant_id,
             thread_id=thread_id,
             instructions=instructions,
             meta_data=meta_data,
-            cancelled_at=None,
-            completed_at=None,
             created_at=int(time.time()),
             expires_at=int(time.time()) + 3600,
-            failed_at=None,
-            incomplete_details=None,
-            last_error=None,
-            max_completion_tokens=1000,
-            max_prompt_tokens=500,
-            model="llama3.1",
-            object="run",
-            parallel_tool_calls=False,
-            required_action=None,
-            response_format="text",
-            started_at=None,
             status=ent_validator.RunStatus.pending,
-            tool_choice="none",
-            tools=[],
-            truncation_strategy={},
-            usage=None,
-            temperature=0.7,
-            top_p=0.9,
-            tool_resources={},
         )
+
+        # Don’t leak user_id even if Pydantic included the key
+        json_body = payload.model_dump()
+        json_body.pop("user_id", None)
 
         logging_utility.info(
-            "Creating run for user_id=%s, assistant_id=%s, thread_id=%s",
-            user_id,
-            assistant_id,
-            thread_id,
+            "Creating run (assistant_id=%s, thread_id=%s)", assistant_id, thread_id
         )
-        logging_utility.debug("Run payload: %s", run_payload.model_dump())
+        logging_utility.debug("Run payload (user_id stripped): %s", json_body)
 
         try:
-            resp = self.client.post("/v1/runs", json=run_payload.model_dump())
+            resp = self.client.post("/v1/runs", json=json_body)
             resp.raise_for_status()
-
-            # Validate response with the *read* schema
-            run_out = ent_validator.Run(**resp.json())
-            logging_utility.info("Run created successfully: %s", run_out.id)
-            return run_out
+            return ent_validator.Run(**resp.json())
 
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
