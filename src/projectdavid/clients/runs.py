@@ -41,21 +41,23 @@ class RunsClient(BaseAPIClient):
         self,
         assistant_id: str,
         thread_id: str,
+        user_id: str,
         instructions: str = "",
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.Run:
         """
-        Create a run. The server injects user_id from the API‑key that
-        authenticates this client, so we **do not** send user_id.
+        Create a run. The server expects user_id to be injected explicitly,
+        which is passed in from the authenticated API key.
 
         Returns a fully‑populated Run model (read schema).
         """
         if meta_data is None:
             meta_data = {}
 
-        # Use *write* schema (RunCreate) so user_id remains optional
+        # Construct the RunCreate payload, including user_id
         run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
+            user_id=user_id,  # ← Ensure user_id is included
             assistant_id=assistant_id,
             thread_id=thread_id,
             instructions=instructions,
@@ -86,7 +88,10 @@ class RunsClient(BaseAPIClient):
         )
 
         logging_utility.info(
-            "Creating run for assistant_id=%s thread_id=%s", assistant_id, thread_id
+            "Creating run for user_id=%s, assistant_id=%s, thread_id=%s",
+            user_id,
+            assistant_id,
+            thread_id,
         )
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
