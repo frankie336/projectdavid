@@ -87,10 +87,11 @@ class RunsClient(BaseAPIClient):
         )
 
         logging_utility.info(
-            "Creating run for user_id=%s, assistant_id=%s, thread_id=%s",
+            "Creating run for assistant_id=%s, thread_id=%s",
             assistant_id,
             thread_id,
         )
+
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
