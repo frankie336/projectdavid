@@ -12,7 +12,6 @@ from pydantic import ValidationError
 from sseclient import SSEClient
 
 from projectdavid.clients.base_client import BaseAPIClient
-
 ent_validator = ValidationInterface()
 logging_utility = UtilsInterface.LoggingUtility()
 
