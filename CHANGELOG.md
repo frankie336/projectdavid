@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/frankie336/projectdavid/compare/v1.29.0...v1.29.1) (2025-05-13)
+
+
+### Bug Fixes
+
+* project_david_common 16.0.2 -->project_david_common 17.0.0 ([8e3691f](https://github.com/frankie336/projectdavid/commit/8e3691ffc18082fb6de540104e89674a5a354d63))
+
 # [1.29.0](https://github.com/frankie336/projectdavid/compare/v1.28.0...v1.29.0) (2025-05-13)
 
 
