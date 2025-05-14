@@ -1,3 +1,10 @@
+## [1.29.6](https://github.com/frankie336/projectdavid/compare/v1.29.5...v1.29.6) (2025-05-14)
+
+
+### Bug Fixes
+
+* Creating run for assistant_id=%s, thread_id=%s ([9898eb6](https://github.com/frankie336/projectdavid/commit/9898eb6b9d0f6b4525f97517937e6c22a898cea6))
+
 ## [1.29.5](https://github.com/frankie336/projectdavid/compare/v1.29.4...v1.29.5) (2025-05-14)
 
 
