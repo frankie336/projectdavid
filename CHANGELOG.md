@@ -1,3 +1,10 @@
+## [1.29.4](https://github.com/frankie336/projectdavid/compare/v1.29.3...v1.29.4) (2025-05-14)
+
+
+### Bug Fixes
+
+* RunsClient.create_run—drop user_id ([4ee4d74](https://github.com/frankie336/projectdavid/commit/4ee4d74029ac6719ab0accc1d04fdca11b06fa1d))
+
 ## [1.29.3](https://github.com/frankie336/projectdavid/compare/v1.29.2...v1.29.3) (2025-05-14)
 
 
