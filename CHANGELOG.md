@@ -1,3 +1,10 @@
+## [1.29.3](https://github.com/frankie336/projectdavid/compare/v1.29.2...v1.29.3) (2025-05-14)
+
+
+### Bug Fixes
+
+* user-id logic ([d1a8ab4](https://github.com/frankie336/projectdavid/commit/d1a8ab4f4a0e855cc935d80048f2818a4b03ca26))
+
 ## [1.29.2](https://github.com/frankie336/projectdavid/compare/v1.29.1...v1.29.2) (2025-05-14)
 
 
