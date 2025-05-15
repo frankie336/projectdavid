@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 import httpx
 import requests
 from projectdavid_common import UtilsInterface, ValidationInterface
-from projectdavid_common.schemas.enums import StatusEnum
+from projectdavid_common.validation import StatusEnum
 from pydantic import ValidationError
 from sseclient import SSEClient
 
@@ -76,7 +76,7 @@ class RunsClient(BaseAPIClient):
             required_action=None,
             response_format="text",
             started_at=None,
-            status=ent_validator.RunStatus.pending,
+            status=StatusEnum.queued,
             tool_choice="none",
             tools=[],
             truncation_strategy={},
