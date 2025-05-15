@@ -1,3 +1,10 @@
+## [1.29.8](https://github.com/frankie336/projectdavid/compare/v1.29.7...v1.29.8) (2025-05-15)
+
+
+### Bug Fixes
+
+* status=StatusEnum.queued ([50a00e9](https://github.com/frankie336/projectdavid/commit/50a00e95ed7f5159e20e3e7d9378314849fd7571))
+
 ## [1.29.7](https://github.com/frankie336/projectdavid/compare/v1.29.6...v1.29.7) (2025-05-14)
 
 
