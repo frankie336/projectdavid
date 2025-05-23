@@ -609,7 +609,7 @@ class VectorStoreClient:
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
     # ────────────────────────────────────────────────────────────────
-    def file_search(
+    def attended_file_search(
         self,
         vector_store_id: str,
         query_text: str,
@@ -659,3 +659,58 @@ class VectorStoreClient:
             base_url=self.base_url,  # Same backend
             provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # Hyperbolic key
         )
+
+    # ────────────────────────────────────────────────────────────────
+    #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
+    # ────────────────────────────────────────────────────────────────
+    def unattended_file_search(
+        self,
+        vector_store_id: str,
+        query_text: str,
+        k: int = 20,
+        vector_store_host: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Perform a search over the file vector store and return normalized retrieval hits.
+
+        This method executes a bare search pipeline: it retrieves vector-based candidates
+        using semantic similarity, optionally applies reranking (e.g., cross-encoder or LLM-based),
+        and normalizes the result schema. It does not perform synthesis or construct an OpenAI-style envelope.
+
+        Use this when you want direct access to retrieved content for custom downstream handling,
+        logging, inspection, or separate orchestration logic.
+
+        Parameters
+        ----------
+        vector_store_id : str
+            The ID of the vector store to search within.
+        query_text : str
+            The user query in natural language.
+        k : int, optional
+            The number of top hits to retrieve (default is 20).
+        vector_store_host : Optional[str], optional
+            Optional override for the vector store host (e.g., when calling remote Qdrant).
+
+        Returns
+        -------
+        Dict[str, Any]
+            A normalized list of retrieval results (each with metadata and score),
+            without abstraction, synthesis, or formatting.
+        """
+
+        # 1️⃣ Retrieve initial candidates (now with optional vector_store_host passthrough)
+        hits = retriever.retrieve(
+            self,
+            vector_store_id=vector_store_id,
+            query=query_text,
+            k=k,
+            vector_store_host=vector_store_host,
+        )
+
+        # 2️⃣ Optional cross-encoder / LLM rerank
+        hits = reranker.rerank(query_text, hits, top_k=min(len(hits), 10))
+
+        # 3️⃣ Normalize schema (guarantee 'meta_data')
+        hits = self._normalise_hits(hits)
+
+        return hits
