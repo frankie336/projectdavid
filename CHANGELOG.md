@@ -1,3 +1,10 @@
+## [1.29.9](https://github.com/frankie336/projectdavid/compare/v1.29.8...v1.29.9) (2025-05-15)
+
+
+### Bug Fixes
+
+* enforce specific platform tool types ([8a00b62](https://github.com/frankie336/projectdavid/commit/8a00b62548b36d491d0df5b5cc2e6aa190d61c8b))
+
 ## [1.29.8](https://github.com/frankie336/projectdavid/compare/v1.29.7...v1.29.8) (2025-05-15)
 
 
