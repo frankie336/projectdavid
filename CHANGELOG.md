@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/frankie336/projectdavid/compare/v1.30.0...v1.30.1) (2025-05-24)
+
+
+### Bug Fixes
+
+* get_or_create_file_search_store ([688e07f](https://github.com/frankie336/projectdavid/commit/688e07fc800b927ed8d4f5657092454d576cc014))
+
 # [1.30.0](https://github.com/frankie336/projectdavid/compare/v1.29.9...v1.30.0) (2025-05-23)
 
 
