@@ -466,16 +466,10 @@ class VectorStoreClient:
     # ───────────────────────────────────────────────────────────────
     #  NEW: real per-user listing (admin-only)
     # ───────────────────────────────────────────────────────────────
-    async def _list_vs_by_user_async(
-        self, user_id: str
-    ) -> List[ValidationInterface.VectorStoreRead]:
-        """
-        Admin-scope helper – fetch every (non-deleted) vector-store
-        belonging to **user_id**.
-        """
+    async def _list_vs_by_user_async(self, user_id: str):
         resp = await self._request(
             "GET",
-            "/v1/vector-stores",
+            "/v1/vector-stores/admin/by-user",
             params={"owner_id": user_id},
         )
         return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
