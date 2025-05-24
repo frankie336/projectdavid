@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/frankie336/projectdavid/compare/v1.29.9...v1.30.0) (2025-05-23)
+
+
+### Features
+
+* Add unattended_file_search method ([2885400](https://github.com/frankie336/projectdavid/commit/288540003a0553a77ed316be5fd182911f202cd4))
+
 ## [1.29.9](https://github.com/frankie336/projectdavid/compare/v1.29.8...v1.29.9) (2025-05-15)
 
 
