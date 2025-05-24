@@ -1,3 +1,11 @@
+## [1.30.3](https://github.com/frankie336/projectdavid/compare/v1.30.2...v1.30.3) (2025-05-24)
+
+
+### Bug Fixes
+
+* restores the original behaviour while still ([c75c5fd](https://github.com/frankie336/projectdavid/commit/c75c5fdc562d7988b5db69cc582fa9e3ab0fa8d3))
+* restores the original behaviour while still ([c9c15ef](https://github.com/frankie336/projectdavid/commit/c9c15ef7187abe766c87b5f7c6de60bf8203c4fc))
+
 ## [1.30.2](https://github.com/frankie336/projectdavid/compare/v1.30.1...v1.30.2) (2025-05-24)
 
 
