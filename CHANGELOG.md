@@ -1,3 +1,10 @@
+## [1.30.4](https://github.com/frankie336/projectdavid/compare/v1.30.3...v1.30.4) (2025-05-24)
+
+
+### Bug Fixes
+
+* change async def _list_vs_by_user_async to admin endpoint ([5b7ae9c](https://github.com/frankie336/projectdavid/commit/5b7ae9ca9334dba5a431b0feafb7cf55699fa1db))
+
 ## [1.30.3](https://github.com/frankie336/projectdavid/compare/v1.30.2...v1.30.3) (2025-05-24)
 
 
