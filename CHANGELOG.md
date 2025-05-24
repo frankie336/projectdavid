@@ -1,3 +1,11 @@
+## [1.30.2](https://github.com/frankie336/projectdavid/compare/v1.30.1...v1.30.2) (2025-05-24)
+
+
+### Bug Fixes
+
+* get_vector_store ([779714c](https://github.com/frankie336/projectdavid/commit/779714c3c73ad1258e86ccfa4c0f11666c98c7fe))
+* restores the original behaviour while still ([9224b8f](https://github.com/frankie336/projectdavid/commit/9224b8f37e962fa115e6686eabe58a295bc6eb3b))
+
 ## [1.30.1](https://github.com/frankie336/projectdavid/compare/v1.30.0...v1.30.1) (2025-05-24)
 
 
