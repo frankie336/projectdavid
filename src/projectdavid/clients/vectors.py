@@ -3,7 +3,6 @@
 
 Token-scoped HTTP client + local Qdrant helper for vector-store operations.
 """
-
 import asyncio
 import os
 import uuid
