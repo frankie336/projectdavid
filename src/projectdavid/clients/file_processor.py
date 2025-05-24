@@ -138,7 +138,6 @@ class FileProcessor:
         }
 
     # ——— NEW: CSV pipeline ——— #
-
     async def _process_csv(
         self, file_path: Path, text_field: str = "description"
     ) -> Dict[str, Any]:

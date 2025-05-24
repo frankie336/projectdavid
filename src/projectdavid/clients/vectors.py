@@ -454,66 +454,6 @@ class VectorStoreClient:
             )
         )
 
-    # ───────────────────────────────────────────────────────────────
-    #  Convenience: ensure a per-user “file_search” store exists
-    # ───────────────────────────────────────────────────────────────
-    def get_or_create_file_search_store(self, user_id: Optional[str] = None) -> str:
-        """
-        Return the *oldest* vector-store named **file_search** for ``user_id``;
-        create one if none exist.
-
-        Parameters
-        ----------
-        user_id : Optional[str]
-            • If **None**  → operate on *this* API-key’s stores
-            • If not None → *admin-only*  – look up / create on behalf of ``user_id``
-
-        Returns
-        -------
-        str
-            The vector-store **id**.
-        """
-
-        # 1️⃣  Fetch candidate stores
-        if user_id is None:
-            # Normal user context – only see caller-owned stores
-            stores = self.list_my_vector_stores()
-        else:
-            # Admin context – may inspect another user’s stores
-            stores = self.get_stores_by_user(_user_id=user_id)
-
-        file_search_stores = [s for s in stores if s.name == "file_search"]
-
-        if file_search_stores:
-            # 2️⃣  Pick the *earliest* (oldest created_at) to keep things stable
-            chosen = min(
-                file_search_stores,
-                key=lambda s: (s.created_at or 0),
-            )
-            log.info(
-                "Re-using existing 'file_search' store %s for user %s",
-                chosen.id,
-                user_id or "<self>",
-            )
-            return chosen.id
-
-        # 3️⃣  Nothing found → create a fresh store
-        if user_id is None:
-            new_store = self.create_vector_store(name="file_search")
-        else:
-            # Requires admin API-key
-            new_store = self.create_vector_store_for_user(
-                owner_id=user_id,
-                name="file_search",
-            )
-
-        log.info(
-            "Created new 'file_search' store %s for user %s",
-            new_store.id,
-            user_id or "<self>",
-        )
-        return new_store.id
-
     def list_my_vector_stores(self) -> List[ValidationInterface.VectorStoreRead]:
         """List all non-deleted stores owned by the caller."""
         return self._run_sync(self._list_my_vs_async())
@@ -731,31 +671,23 @@ class VectorStoreClient:
         vector_store_host: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Perform a search over the file vector store and return normalized retrieval hits.
-
-        This method executes a bare search pipeline: it retrieves vector-based candidates
-        using semantic similarity, optionally applies reranking (e.g., cross-encoder or LLM-based),
-        and normalizes the result schema. It does not perform synthesis or construct an OpenAI-style envelope.
-
-        Use this when you want direct access to retrieved content for custom downstream handling,
-        logging, inspection, or separate orchestration logic.
+        Run a full file search with optional cross-encoder rerank and envelope synthesis.
 
         Parameters
         ----------
         vector_store_id : str
-            The ID of the vector store to search within.
+            The ID of the target vector store to query.
         query_text : str
-            The user query in natural language.
+            The natural-language search text.
         k : int, optional
-            The number of top hits to retrieve (default is 20).
+            The maximum number of hits to retrieve (default is 20).
         vector_store_host : Optional[str], optional
-            Optional override for the vector store host (e.g., when calling remote Qdrant).
+            An optional override for the default vector store host.
 
         Returns
         -------
         Dict[str, Any]
-            A normalized list of retrieval results (each with metadata and score),
-            without abstraction, synthesis, or formatting.
+            An OpenAI-style envelope containing the synthesized response.
         """
 
         # 1️⃣ Retrieve initial candidates (now with optional vector_store_host passthrough)
@@ -774,3 +706,5 @@ class VectorStoreClient:
         hits = self._normalise_hits(hits)
 
         return hits
+
+
