@@ -457,6 +457,48 @@ class VectorStoreClient:
     # ───────────────────────────────────────────────────────────────
     #  Convenience: ensure a per-user “file_search” store exists
     # ───────────────────────────────────────────────────────────────
+    # unchanged … (get_or_create_file_search_store)
+
+    def list_my_vector_stores(self) -> List[ValidationInterface.VectorStoreRead]:
+        """List all non-deleted stores owned by *this* API-key’s user."""
+        return self._run_sync(self._list_my_vs_async())
+
+    # ───────────────────────────────────────────────────────────────
+    #  NEW: real per-user listing (admin-only)
+    # ───────────────────────────────────────────────────────────────
+    async def _list_vs_by_user_async(
+        self, user_id: str
+    ) -> List[ValidationInterface.VectorStoreRead]:
+        """
+        Admin-scope helper – fetch every (non-deleted) vector-store
+        belonging to **user_id**.
+        """
+        resp = await self._request(
+            "GET",
+            "/v1/vector-stores",
+            params={"owner_id": user_id},
+        )
+        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
+
+    def get_stores_by_user(
+        self,
+        _user_id: str,
+    ) -> List[ValidationInterface.VectorStoreRead]:  # noqa: ARG002
+        """
+        ⚠️ **Deprecated** – prefer impersonating the user’s API-key or using
+        the newer RBAC endpoints, but keep working for legacy code.
+        """
+        warnings.warn(
+            "`get_stores_by_user()` is deprecated; use `list_my_vector_stores()` or "
+            "`VectorStoreClient(list_my_vector_stores)` with an impersonated key.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._run_sync(self._list_vs_by_user_async(_user_id))
+
+    # ───────────────────────────────────────────────────────────────
+    #  Convenience: ensure a per-user “file_search” store exists
+    # ───────────────────────────────────────────────────────────────
     def get_or_create_file_search_store(self, user_id: Optional[str] = None) -> str:
         """
         Return the *oldest* vector-store named **file_search** for ``user_id``;
@@ -513,20 +555,6 @@ class VectorStoreClient:
             user_id or "<self>",
         )
         return new_store.id
-
-    def list_my_vector_stores(self) -> List[ValidationInterface.VectorStoreRead]:
-        """List all non-deleted stores owned by the caller."""
-        return self._run_sync(self._list_my_vs_async())
-
-    def get_stores_by_user(
-        self, _user_id: str
-    ) -> List[ValidationInterface.VectorStoreRead]:  # noqa: ARG002
-        warnings.warn(
-            "`get_stores_by_user()` is deprecated; use `list_my_vector_stores()`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.list_my_vector_stores()
 
     def add_file_to_vector_store(
         self,
