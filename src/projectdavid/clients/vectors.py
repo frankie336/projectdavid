@@ -561,6 +561,69 @@ class VectorStoreClient:
             raise FileNotFoundError(f"File not found: {p}")
         return self._run_sync(self._add_file_async(vector_store_id, p, user_metadata))
 
+
+    def delete_vector_store(
+        self,
+        vector_store_id: str,
+        permanent: bool = False,
+    ) -> Dict[str, Any]:
+        return self._run_sync(self._delete_vs_async(vector_store_id, permanent))
+
+    def delete_file_from_vector_store(
+        self,
+        vector_store_id: str,
+        file_path: str,
+    ) -> Dict[str, Any]:
+        return self._run_sync(self._delete_file_async(vector_store_id, file_path))
+
+    def list_store_files(
+        self,
+        vector_store_id: str,
+    ) -> List[ValidationInterface.VectorStoreFileRead]:
+        return self._run_sync(self._list_store_files_async(vector_store_id))
+
+    def update_vector_store_file_status(
+        self,
+        vector_store_id: str,
+        file_id: str,
+        status: ValidationInterface.StatusEnum,
+        error_message: Optional[str] = None,
+    ) -> ValidationInterface.VectorStoreFileRead:
+        return self._run_sync(
+            self._update_file_status_async(
+                vector_store_id, file_id, status, error_message
+            )
+        )
+
+    def get_vector_stores_for_assistant(
+        self,
+        assistant_id: str,
+    ) -> List[ValidationInterface.VectorStoreRead]:
+        return self._run_sync(self._get_assistant_vs_async(assistant_id))
+
+    def attach_vector_store_to_assistant(
+        self,
+        vector_store_id: str,
+        assistant_id: str,
+    ) -> bool:
+        return self._run_sync(self._attach_vs_async(vector_store_id, assistant_id))
+
+    def detach_vector_store_from_assistant(
+        self,
+        vector_store_id: str,
+        assistant_id: str,
+    ) -> bool:
+        return self._run_sync(self._detach_vs_async(vector_store_id, assistant_id))
+
+    def retrieve_vector_store_sync(
+        self,
+        vector_store_id: str,
+    ) -> ValidationInterface.VectorStoreRead:
+        resp = self._sync_api_client.get(f"/v1/vector-stores/{vector_store_id}")
+        resp.raise_for_status()
+        return ValidationInterface.VectorStoreRead.model_validate(resp.json())
+
+
     def vector_file_search_raw(
         self,
         vector_store_id: str,
@@ -627,66 +690,6 @@ class VectorStoreClient:
         # 4️⃣  Wrap everything into an OpenAI envelope
         return make_envelope(query_text, hits, answer_text)
 
-    def delete_vector_store(
-        self,
-        vector_store_id: str,
-        permanent: bool = False,
-    ) -> Dict[str, Any]:
-        return self._run_sync(self._delete_vs_async(vector_store_id, permanent))
-
-    def delete_file_from_vector_store(
-        self,
-        vector_store_id: str,
-        file_path: str,
-    ) -> Dict[str, Any]:
-        return self._run_sync(self._delete_file_async(vector_store_id, file_path))
-
-    def list_store_files(
-        self,
-        vector_store_id: str,
-    ) -> List[ValidationInterface.VectorStoreFileRead]:
-        return self._run_sync(self._list_store_files_async(vector_store_id))
-
-    def update_vector_store_file_status(
-        self,
-        vector_store_id: str,
-        file_id: str,
-        status: ValidationInterface.StatusEnum,
-        error_message: Optional[str] = None,
-    ) -> ValidationInterface.VectorStoreFileRead:
-        return self._run_sync(
-            self._update_file_status_async(
-                vector_store_id, file_id, status, error_message
-            )
-        )
-
-    def get_vector_stores_for_assistant(
-        self,
-        assistant_id: str,
-    ) -> List[ValidationInterface.VectorStoreRead]:
-        return self._run_sync(self._get_assistant_vs_async(assistant_id))
-
-    def attach_vector_store_to_assistant(
-        self,
-        vector_store_id: str,
-        assistant_id: str,
-    ) -> bool:
-        return self._run_sync(self._attach_vs_async(vector_store_id, assistant_id))
-
-    def detach_vector_store_from_assistant(
-        self,
-        vector_store_id: str,
-        assistant_id: str,
-    ) -> bool:
-        return self._run_sync(self._detach_vs_async(vector_store_id, assistant_id))
-
-    def retrieve_vector_store_sync(
-        self,
-        vector_store_id: str,
-    ) -> ValidationInterface.VectorStoreRead:
-        resp = self._sync_api_client.get(f"/v1/vector-stores/{vector_store_id}")
-        resp.raise_for_status()
-        return ValidationInterface.VectorStoreRead.model_validate(resp.json())
 
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
