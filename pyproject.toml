@@ -26,7 +26,11 @@ dependencies = [
     "validators>=0.29.0,<0.35.0",
     "sentence-transformers>=3.4.0,<5.0",
     "sseclient-py",
-     "requests"
+     "requests",
+      "python-magic",
+    "python-docx",
+    "python-pptx",
+
 ]
 
 classifiers = [

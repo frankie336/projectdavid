@@ -561,7 +561,6 @@ class VectorStoreClient:
             raise FileNotFoundError(f"File not found: {p}")
         return self._run_sync(self._add_file_async(vector_store_id, p, user_metadata))
 
-
     def delete_vector_store(
         self,
         vector_store_id: str,
@@ -622,7 +621,6 @@ class VectorStoreClient:
         resp = self._sync_api_client.get(f"/v1/vector-stores/{vector_store_id}")
         resp.raise_for_status()
         return ValidationInterface.VectorStoreRead.model_validate(resp.json())
-
 
     def vector_file_search_raw(
         self,
@@ -689,7 +687,6 @@ class VectorStoreClient:
 
         # 4️⃣  Wrap everything into an OpenAI envelope
         return make_envelope(query_text, hits, answer_text)
-
 
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
