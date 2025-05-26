@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/frankie336/projectdavid/compare/v1.30.4...v1.31.0) (2025-05-26)
+
+
+### Features
+
+* expand file-processing-types ([f6267c9](https://github.com/frankie336/projectdavid/commit/f6267c94e230e8390c2439907f8df7b45c69da2f))
+
 ## [1.30.4](https://github.com/frankie336/projectdavid/compare/v1.30.3...v1.30.4) (2025-05-24)
 
 
