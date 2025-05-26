@@ -17,8 +17,7 @@ validators~=0.34.0
 sentence-transformers~=4.0.1
 qdrant-client~=1.13.3
 
-python-magic
-python-docx
+ypython-docx
 python-pptx
 
 sseclient-py

@@ -1,7 +1,6 @@
 import asyncio
 import csv
 import json
-import mimetypes
 import re
 import textwrap
 from concurrent.futures import ThreadPoolExecutor
@@ -10,10 +9,9 @@ from typing import Any, Dict, List, Tuple, Union
 
 try:  # Python 3.11+
     from typing import LiteralString
-except ImportError:  # 3.9 - 3.10
+except ImportError:  # 3.9–3.10
     from typing_extensions import LiteralString
 
-import magic
 import numpy as np
 import pdfplumber
 from docx import Document
@@ -54,54 +52,30 @@ class FileProcessor:
             raise ValueError(f"{file_path.name} > {mb} MB limit")
 
     # ------------------------------------------------------------------ #
-    #  File-type detection (extension + MIME)
+    #  File-type detection  (simple extension map – NO libmagic)
     # ------------------------------------------------------------------ #
     def _detect_file_type(self, file_path: Path) -> str:
         """
-        Return a handler tag:
+        Return one of:
 
-            • 'pdf'     • 'csv'
-            • 'json'    • 'office'
-            • 'text'
+            • 'pdf'   • 'csv'   • 'json'
+            • 'office' (.doc/.docx/.pptx)
+            • 'text'  (code / markup / plain text)
 
-        Raises *ValueError* on anything unknown.
+        Raises *ValueError* if the extension is not recognised.
         """
-        # 1️⃣  Best-effort MIME sniff
-        mime_type: str | None = None
-        if magic is not None:
-            try:
-                mime_type = magic.from_file(str(file_path), mime=True)
-            except Exception:
-                mime_type = None
-
-        # 2️⃣  Fallback → mimetypes
-        if not mime_type:
-            mime_type, _ = mimetypes.guess_type(file_path.name)
-
         suffix = file_path.suffix.lower()
 
-        PDF_MIMES = {"application/pdf"}
-        CSV_MIMES = {"text/csv", "application/csv"}
-        JSON_MIMES = {"application/json"}
-        OFFICE_MIMES = {
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        }
-        TEXT_MIMES = {
-            "text/plain",
-            "text/markdown",
-            "text/x-python",
-            "text/x-c",
-            "text/x-c++",
-            "text/x-java-source",
-            "text/x-script.python",
-            "text/html",
-            "text/css",
-            "application/typescript",
-            "text/javascript",
-        }
-        TEXT_EXTS = {
+        if suffix == ".pdf":
+            return "pdf"
+        if suffix == ".csv":
+            return "csv"
+        if suffix == ".json":
+            return "json"
+        if suffix in {".doc", ".docx", ".pptx"}:
+            return "office"
+
+        text_exts = {
             ".txt",
             ".md",
             ".rst",
@@ -120,32 +94,10 @@ class FileProcessor:
             ".html",
             ".css",
         }
-
-        # --- PDF ---
-        if mime_type in PDF_MIMES or suffix == ".pdf":
-            return "pdf"
-
-        # --- CSV ---
-        if mime_type in CSV_MIMES or suffix == ".csv":
-            return "csv"
-
-        # --- JSON ---
-        if mime_type in JSON_MIMES or suffix == ".json":
-            return "json"
-
-        # --- Office documents ---
-        if mime_type in OFFICE_MIMES or suffix in {".doc", ".docx", ".pptx"}:
-            return "office"
-
-        # --- Generic text / code / markup ---
-        if mime_type in TEXT_MIMES or suffix in TEXT_EXTS:
+        if suffix in text_exts:
             return "text"
 
-        # --- Unsupported ---
-        raise ValueError(
-            f"Unsupported file type for '{file_path.name}': "
-            f"MIME={mime_type or 'unknown'}  extension={suffix}"
-        )
+        raise ValueError(f"Unsupported file type: {file_path.name} (ext={suffix})")
 
     # ------------------------------------------------------------------ #
     #  Public entry-point
@@ -156,19 +108,17 @@ class FileProcessor:
         self.validate_file(file_path)
         ftype = self._detect_file_type(file_path)
 
-        if ftype == "pdf":
-            return await self._process_pdf(file_path)
-        if ftype == "text":
-            return await self._process_text(file_path)
-        if ftype == "csv":
-            return await self._process_csv(file_path)
-        if ftype == "office":
-            return await self._process_office(file_path)
-        if ftype == "json":
-            return await self._process_json(file_path)
+        dispatch_map = {
+            "pdf": self._process_pdf,
+            "text": self._process_text,
+            "csv": self._process_csv,
+            "office": self._process_office,
+            "json": self._process_json,
+        }
+        if ftype not in dispatch_map:
+            raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-        # Safety net (should never hit)
-        raise ValueError(f"Unsupported file type: {file_path.suffix}")
+        return await dispatch_map[ftype](file_path)
 
     # ------------------------------------------------------------------ #
     #  PDF

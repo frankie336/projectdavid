@@ -27,7 +27,6 @@ dependencies = [
     "sentence-transformers>=3.4.0,<5.0",
     "sseclient-py",
      "requests",
-      "python-magic",
     "python-docx",
     "python-pptx",
 
