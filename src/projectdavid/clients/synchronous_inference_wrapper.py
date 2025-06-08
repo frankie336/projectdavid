@@ -97,6 +97,11 @@ class SynchronousInferenceStream:
                     LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
+                # allow hot_code to bypass suppression
+                if chunk.get("type") == "hot_code":
+                    yield chunk
+                    continue
+
                 # inline content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
@@ -105,7 +110,8 @@ class SynchronousInferenceStream:
 
                     # additional raw inline suppression for partial JSON
                     if (
-                        '"name": "code_interpreter"' in chunk["content"]
+                        suppress_fc
+                        and '"name": "code_interpreter"' in chunk["content"]
                         and '"arguments": {"code"' in chunk["content"]
                     ):
                         LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
