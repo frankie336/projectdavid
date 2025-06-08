@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/frankie336/projectdavid/compare/v1.31.0...v1.31.1) (2025-05-26)
+
+
+### Bug Fixes
+
+* Remove magic dependency when finding file type ([7063c14](https://github.com/frankie336/projectdavid/commit/7063c14c3d9f21bc9bd9579d4d7d2c55004a627f))
+
 # [1.31.0](https://github.com/frankie336/projectdavid/compare/v1.30.4...v1.31.0) (2025-05-26)
 
 
