@@ -11,16 +11,12 @@ LOG = UtilsInterface.LoggingUtility()
 
 
 class SynchronousInferenceStream:
-    """Wrap an async token/JSON stream in a synchronous iterator while
-    hiding function-call payloads from the UI.
-    """
-
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
-    # ------------------------------------------------------------------ #
-    # construction / setup
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------
+    # ctor / setup
+    # --------------------------------------------------------------
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -46,9 +42,9 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------
     # main streaming entry-point
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------
     def stream_chunks(
         self,
         provider: str,
@@ -58,23 +54,14 @@ class SynchronousInferenceStream:
         timeout_per_chunk: float = 280.0,
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
-        """
-        Yield provider chunks synchronously.
 
-        When *suppress_fc* is True:
+        resolved_api_key = api_key or self.api_key
 
-        • `{"type":"function_call", …}` chunks are dropped.
-        • Inline `<fc> … </fc>` text is stripped.
-        • *Everything else* is forwarded unchanged.
-        """
-
-        resolved_key = api_key or self.api_key
-
-        async def _async_gen():
+        async def _stream_chunks_async():
             async for chk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
-                api_key=resolved_key,
+                api_key=resolved_api_key,
                 thread_id=self.thread_id,
                 message_id=self.message_id,
                 run_id=self.run_id,
@@ -82,9 +69,9 @@ class SynchronousInferenceStream:
             ):
                 yield chk
 
-        agen = _async_gen().__aiter__()
+        agen = _stream_chunks_async().__aiter__()
 
-        # ---------- inline suppressor chain ----------------------------
+        # ---------- suppression chain ----------
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
@@ -94,27 +81,28 @@ class SynchronousInferenceStream:
 
         else:
 
-            def _filter_text(txt: str) -> str:  # noqa: D401
-                return txt  # pass-through
+            def _filter_text(txt: str) -> str:  # no-op
+                return txt
 
-        # ---------- main loop ------------------------------------------
+        # ---------------------------------------
+
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # ① provider-labelled function_call  → drop
+                # provider-labelled function_call
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug("[SUPPRESSOR] dropped provider function_call chunk")
+                    LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
-                # ② never touch hot_code
+                # allow hot_code to bypass suppression
                 if chunk.get("type") == "hot_code":
                     yield chunk
                     continue
 
-                # ③ never touch code_interpreter_stream previews
+                # allow code_interpreter_stream to bypass suppression
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
@@ -122,32 +110,35 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
-                # ④ scrub inline <fc> tags in plain-text content
+                # inline content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        # completely removed (or still buffering) – skip emit
+                        continue  # fully suppressed (or still peeking)
+
+                    if (
+                        suppress_fc
+                        and '"name": "code_interpreter"' in chunk["content"]
+                        and '"arguments": {"code"' in chunk["content"]
+                    ):
+                        LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
                         continue
 
-                # ⑤ forward every other chunk verbatim
                 yield chunk
 
             except StopAsyncIteration:
                 LOG.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                LOG.error(
-                    "[TimeoutError] no chunk received for %.1f s – aborting",
-                    timeout_per_chunk,
-                )
+                LOG.error("[TimeoutError] Timeout occurred, stopping stream.")
                 break
-            except Exception as exc:  # pylint: disable=broad-except
-                LOG.error("Streaming error: %s", exc, exc_info=True)
+            except Exception as e:
+                LOG.error("Unexpected error during streaming completions: %s", e)
                 break
 
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------
     # housekeeping
-    # ------------------------------------------------------------------ #
+    # --------------------------------------------------------------
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
