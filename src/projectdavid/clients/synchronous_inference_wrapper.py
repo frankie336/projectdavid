@@ -102,6 +102,11 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # allow hot_code_output to bypass suppression
+                if chunk.get("type") == "hot_code_output":
+                    yield chunk
+                    continue
+
                 # allow code_interpreter_stream to bypass suppression
                 if (
                     chunk.get("stream_type") == "code_execution"
