@@ -1,3 +1,10 @@
+## [1.32.10](https://github.com/frankie336/projectdavid/compare/v1.32.9...v1.32.10) (2025-06-08)
+
+
+### Bug Fixes
+
+* Let content through-3 ([3b6d66e](https://github.com/frankie336/projectdavid/commit/3b6d66edcaf1e3c1550b111f0ef88c35871b28bc)), closes [throu#3](https://github.com/throu/issues/3)
+
 ## [1.32.9](https://github.com/frankie336/projectdavid/compare/v1.32.8...v1.32.9) (2025-06-08)
 
 
