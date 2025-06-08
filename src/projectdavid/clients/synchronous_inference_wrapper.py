@@ -80,6 +80,7 @@ class SynchronousInferenceStream:
                 return _peek_gate.feed(txt)
 
         else:
+
             def _filter_text(txt: str) -> str:  # no-op
                 return txt
 
