@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/frankie336/projectdavid/compare/v1.31.1...v1.32.0) (2025-06-08)
+
+
+### Features
+
+* Integrate function call suppression. The provides optional methods to clean <fc><\fc> wrapped function calls from stream. ([05b357e](https://github.com/frankie336/projectdavid/commit/05b357e17a5dfacc019bfea106d3be560878df4b))
+
 ## [1.31.1](https://github.com/frankie336/projectdavid/compare/v1.31.0...v1.31.1) (2025-05-26)
 
 
