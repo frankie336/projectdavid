@@ -3,6 +3,7 @@ from contextlib import suppress
 from typing import Generator, Optional
 
 from projectdavid_common import UtilsInterface
+
 from projectdavid.utils.function_call_suppressor import FunctionCallSuppressor
 from projectdavid.utils.peek_gate import PeekGate
 
@@ -90,9 +91,11 @@ class SynchronousInferenceStream:
 
             def _filter_text(txt: str) -> str:
                 return _peek_gate.feed(txt)
+
         else:
-            def _filter_text(txt: str) -> str:     # noqa: D401
-                return txt                         # pass-through
+
+            def _filter_text(txt: str) -> str:  # noqa: D401
+                return txt  # pass-through
 
         # ---------- main loop ------------------------------------------
         while True:
