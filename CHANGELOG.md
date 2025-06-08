@@ -1,3 +1,10 @@
+## [1.32.6](https://github.com/frankie336/projectdavid/compare/v1.32.5...v1.32.6) (2025-06-08)
+
+
+### Bug Fixes
+
+*  code_execution chunks now bypass suppression ([e2762d4](https://github.com/frankie336/projectdavid/commit/e2762d49fc1b8ed60235be98a512e29eea4f3d4a))
+
 ## [1.32.5](https://github.com/frankie336/projectdavid/compare/v1.32.4...v1.32.5) (2025-06-08)
 
 
