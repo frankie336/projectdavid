@@ -1,3 +1,10 @@
+## [1.32.9](https://github.com/frankie336/projectdavid/compare/v1.32.8...v1.32.9) (2025-06-08)
+
+
+### Bug Fixes
+
+* Let hot_code_output through-1 ([92e3619](https://github.com/frankie336/projectdavid/commit/92e36194eb22245da4371ac9dbf7dc896f3b3345)), closes [throu#1](https://github.com/throu/issues/1)
+
 ## [1.32.8](https://github.com/frankie336/projectdavid/compare/v1.32.7...v1.32.8) (2025-06-08)
 
 
