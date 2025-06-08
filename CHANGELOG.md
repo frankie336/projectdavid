@@ -1,3 +1,10 @@
+## [1.32.3](https://github.com/frankie336/projectdavid/compare/v1.32.2...v1.32.3) (2025-06-08)
+
+
+### Bug Fixes
+
+*  hot_code chunks now bypass suppression ([4f908e0](https://github.com/frankie336/projectdavid/commit/4f908e0a678f58fa3ea039f6f19c8787fc8e8260))
+
 ## [1.32.2](https://github.com/frankie336/projectdavid/compare/v1.32.1...v1.32.2) (2025-06-08)
 
 
