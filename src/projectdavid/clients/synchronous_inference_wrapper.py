@@ -71,59 +71,18 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ---------- suppression chain ----------
-        if suppress_fc:
-            _suppressor = FunctionCallSuppressor()
-            _peek_gate = PeekGate(_suppressor)
-
-            def _filter_text(txt: str) -> str:
-                return _peek_gate.feed(txt)
-
-        else:
-
-            def _filter_text(txt: str) -> str:  # no-op
-                return txt
-
-        # ---------------------------------------
-
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # provider-labelled function_call
+                # ✅ Suppress only actual top-level function_call chunks
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
+                    LOG.debug("[SUPPRESSOR] blocked top-level function_call chunk")
                     continue
 
-                # allow hot_code to bypass suppression
-                if chunk.get("type") == "hot_code":
-                    yield chunk
-                    continue
-
-                # allow code_interpreter_stream to bypass suppression
-                if (
-                    chunk.get("stream_type") == "code_execution"
-                    and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
-                ):
-                    yield chunk
-                    continue
-
-                # inline content
-                if isinstance(chunk.get("content"), str):
-                    chunk["content"] = _filter_text(chunk["content"])
-                    if chunk["content"] == "":
-                        continue  # fully suppressed (or still peeking)
-
-                    if (
-                        suppress_fc
-                        and '"name": "code_interpreter"' in chunk["content"]
-                        and '"arguments": {"code"' in chunk["content"]
-                    ):
-                        LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
-                        continue
-
+                # ✅ Allow all other content implicitly
                 yield chunk
 
             except StopAsyncIteration:
