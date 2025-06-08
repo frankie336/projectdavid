@@ -97,7 +97,16 @@ class SynchronousInferenceStream:
                     LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
+                # ------------------------------------------------------
+                # allow the assistants response1 to bypass suppression
+                # -------------------------------------------------------
+                if chunk.get("type") == "content":
+                    yield chunk
+                    continue
+
+                # -------------------------------------
                 # allow hot_code to bypass suppression
+                # ------------------------------------
                 if chunk.get("type") == "hot_code":
                     yield chunk
                     continue
@@ -107,7 +116,9 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # -------------------------------------------------------
                 # allow code_interpreter_stream to bypass suppression
+                # --------------------------------------------------------
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
