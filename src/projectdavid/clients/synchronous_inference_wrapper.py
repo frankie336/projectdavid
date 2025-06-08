@@ -126,7 +126,9 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # ---------------------------------
                 # inline content
+                # ----------------------------------
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
@@ -138,6 +140,16 @@ class SynchronousInferenceStream:
                         and '"arguments": {"code"' in chunk["content"]
                     ):
                         LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
+                        continue
+                    # ---------------------------------------------------------------
+                    # Filter and supress file_search inline
+                    # ---------------------------------------------------------------
+                    if (
+                        suppress_fc
+                        and '"name": "file_search"' in chunk["content"]
+                        and '"arguments": {"query_text"' in chunk["content"]
+                    ):
+                        LOG.debug("[SUPPRESSOR] inline file_search match blocked")
                         continue
 
                 yield chunk
