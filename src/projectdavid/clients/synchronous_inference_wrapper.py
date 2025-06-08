@@ -49,15 +49,14 @@ class SynchronousInferenceStream:
         self,
         provider: str,
         model: str,
-        *,  # keyword-only from here
+        *,
         api_key: Optional[str] = None,
         timeout_per_chunk: float = 280.0,
-        suppress_fc: bool = True,  # ← NEW switch
+        suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
 
         resolved_api_key = api_key or self.api_key
 
-        # ------------- build async generator ----------------------
         async def _stream_chunks_async():
             async for chk in self.inference_client.stream_inference_response(
                 provider=provider,
@@ -72,10 +71,10 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ------------- optional suppression chain -----------------
+        # ---------- suppression chain ----------
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
-            _peek_gate = PeekGate(_suppressor)  # 2 KB default
+            _peek_gate = PeekGate(_suppressor)
 
             def _filter_text(txt: str) -> str:
                 return _peek_gate.feed(txt)
@@ -85,7 +84,7 @@ class SynchronousInferenceStream:
             def _filter_text(txt: str) -> str:  # no-op
                 return txt
 
-        # ----------------------------------------------------------
+        # ---------------------------------------
 
         while True:
             try:
@@ -93,19 +92,16 @@ class SynchronousInferenceStream:
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # --- provider-labelled function_call blocks -------
+                # provider-labelled function_call
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug(
-                        "[SUPPRESSOR] blocked provider-labelled function_call chunk"
-                    )
+                    LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
-                # --- inline content filtering --------------------
+                # inline content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
-                    if not chunk["content"]:
-                        # fully suppressed → skip forwarding
-                        continue
+                    if chunk["content"] == "":
+                        continue  # fully suppressed (or still peeking)
 
                 yield chunk
 

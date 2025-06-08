@@ -1,3 +1,6 @@
+# ------------------------------------------------------------------
+# utils.function_call_suppressor (unchanged except for logger)
+# ------------------------------------------------------------------
 import re
 
 from projectdavid_common.utilities.logging_service import LoggingUtility
@@ -5,9 +8,6 @@ from projectdavid_common.utilities.logging_service import LoggingUtility
 LOG = LoggingUtility()
 
 
-# ─────────────────────────────────────────────────────────────────────
-#  function-call filter helpers  (unchanged except for logger)
-# ─────────────────────────────────────────────────────────────────────
 class FunctionCallSuppressor:
     OPEN_RE = re.compile(r"<\s*fc\s*>", re.I)
     CLOSE_RE = re.compile(r"</\s*fc\s*>", re.I)
@@ -16,10 +16,9 @@ class FunctionCallSuppressor:
         self.in_fc = False
         self.buf = ""
 
-    def filter_chunk(self, chunk: str) -> str:
-        self.buf += chunk
+    def filter_chunk(self, txt: str) -> str:
+        self.buf += txt
         out = ""
-
         while self.buf:
             if not self.in_fc:
                 m = self.OPEN_RE.search(self.buf)
@@ -34,7 +33,7 @@ class FunctionCallSuppressor:
             else:
                 m = self.CLOSE_RE.search(self.buf)
                 if not m:
-                    break  # wait for more tokens
+                    break
                 LOG.debug("[SUPPRESSOR] </fc> detected — block suppressed")
                 self.buf = self.buf[m.end() :]
                 self.in_fc = False
