@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/frankie336/projectdavid/compare/v1.32.0...v1.32.1) (2025-06-08)
+
+
+### Bug Fixes
+
+* supress mode suppressing all content ([657ab23](https://github.com/frankie336/projectdavid/commit/657ab23668337133ce93995a6acce4b503d12fce))
+
 # [1.32.0](https://github.com/frankie336/projectdavid/compare/v1.31.1...v1.32.0) (2025-06-08)
 
 
