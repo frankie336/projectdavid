@@ -3,7 +3,6 @@ from contextlib import suppress
 from typing import Generator, Optional
 
 from projectdavid_common import UtilsInterface
-
 from projectdavid.utils.function_call_suppressor import FunctionCallSuppressor
 from projectdavid.utils.peek_gate import PeekGate
 
@@ -11,7 +10,9 @@ LOG = UtilsInterface.LoggingUtility()
 
 
 class SynchronousInferenceStream:
-    """Wrap an async streaming generator and expose it synchronously."""
+    """Wrap an async token/JSON stream in a synchronous iterator while
+    hiding function-call payloads from the UI.
+    """
 
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
@@ -57,20 +58,22 @@ class SynchronousInferenceStream:
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
         """
-        Yield provider chunks synchronously.  When *suppress_fc* is True we
+        Yield provider chunks synchronously.
 
-        1. completely drop top-level `type="function_call"` chunks, and
-        2. scrub inline `<fc> … </fc>` sections inside text using the
-           PeekGate + FunctionCallSuppressor chain.
+        When *suppress_fc* is True:
+
+        • `{"type":"function_call", …}` chunks are dropped.
+        • Inline `<fc> … </fc>` text is stripped.
+        • *Everything else* is forwarded unchanged.
         """
 
-        resolved_api_key = api_key or self.api_key
+        resolved_key = api_key or self.api_key
 
-        async def _stream_chunks_async():
+        async def _async_gen():
             async for chk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
-                api_key=resolved_api_key,
+                api_key=resolved_key,
                 thread_id=self.thread_id,
                 message_id=self.message_id,
                 run_id=self.run_id,
@@ -78,20 +81,18 @@ class SynchronousInferenceStream:
             ):
                 yield chk
 
-        agen = _stream_chunks_async().__aiter__()
+        agen = _async_gen().__aiter__()
 
-        # ---------- build inline filter --------------------------------
+        # ---------- inline suppressor chain ----------------------------
         if suppress_fc:
-            suppressor = FunctionCallSuppressor()
-            peek_gate = PeekGate(suppressor)
+            _suppressor = FunctionCallSuppressor()
+            _peek_gate = PeekGate(_suppressor)
 
             def _filter_text(txt: str) -> str:
-                return peek_gate.feed(txt)
-
+                return _peek_gate.feed(txt)
         else:
-
-            def _filter_text(txt: str) -> str:  # no-op
-                return txt
+            def _filter_text(txt: str) -> str:     # noqa: D401
+                return txt                         # pass-through
 
         # ---------- main loop ------------------------------------------
         while True:
@@ -100,16 +101,17 @@ class SynchronousInferenceStream:
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # ① drop provider-labelled function_call objects
+                # ① provider-labelled function_call  → drop
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug("[SUPPRESSOR] stripped top-level function_call chunk")
+                    LOG.debug("[SUPPRESSOR] dropped provider function_call chunk")
                     continue
 
-                # ② never touch hot-code or code-interpreter file previews
+                # ② never touch hot_code
                 if chunk.get("type") == "hot_code":
                     yield chunk
                     continue
 
+                # ③ never touch code_interpreter_stream previews
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
@@ -117,14 +119,14 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
-                # ③ filter inline text (<fc> blocks) *only* when content is str
+                # ④ scrub inline <fc> tags in plain-text content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        # Either the text is still in PeekGate’s buffer
-                        # or it was fully suppressed – skip for now.
+                        # completely removed (or still buffering) – skip emit
                         continue
 
+                # ⑤ forward every other chunk verbatim
                 yield chunk
 
             except StopAsyncIteration:
@@ -132,11 +134,12 @@ class SynchronousInferenceStream:
                 break
             except asyncio.TimeoutError:
                 LOG.error(
-                    "[Timeout] chunk wait exceeded %.1f s – aborting", timeout_per_chunk
+                    "[TimeoutError] no chunk received for %.1f s – aborting",
+                    timeout_per_chunk,
                 )
                 break
             except Exception as exc:  # pylint: disable=broad-except
-                LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
+                LOG.error("Streaming error: %s", exc, exc_info=True)
                 break
 
     # ------------------------------------------------------------------ #
