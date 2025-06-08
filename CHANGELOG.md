@@ -1,3 +1,10 @@
+## [1.32.2](https://github.com/frankie336/projectdavid/compare/v1.32.1...v1.32.2) (2025-06-08)
+
+
+### Bug Fixes
+
+* supress mode code_interpreter_calls ([d7862d8](https://github.com/frankie336/projectdavid/commit/d7862d87234d1647ab7e4ba700971ed24d4a228e))
+
 ## [1.32.1](https://github.com/frankie336/projectdavid/compare/v1.32.0...v1.32.1) (2025-06-08)
 
 
