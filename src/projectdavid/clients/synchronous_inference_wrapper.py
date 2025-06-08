@@ -103,6 +103,14 @@ class SynchronousInferenceStream:
                     if chunk["content"] == "":
                         continue  # fully suppressed (or still peeking)
 
+                    # additional raw inline suppression for partial JSON
+                    if (
+                        '"name": "code_interpreter"' in chunk["content"]
+                        and '"arguments": {"code"' in chunk["content"]
+                    ):
+                        LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
+                        continue
+
                 yield chunk
 
             except StopAsyncIteration:
