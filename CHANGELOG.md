@@ -1,3 +1,11 @@
+## [1.32.7](https://github.com/frankie336/projectdavid/compare/v1.32.6...v1.32.7) (2025-06-08)
+
+
+### Bug Fixes
+
+* Let every other chunk pass straight through ([c0a11bb](https://github.com/frankie336/projectdavid/commit/c0a11bbfd5fbbb0247792fdfb12f4001b76dc8aa))
+* Let every other chunk pass straight through-1 ([bf102db](https://github.com/frankie336/projectdavid/commit/bf102dbaa71d610f4ba4b6e2ed99ffe640fdd40c)), closes [throu#1](https://github.com/throu/issues/1)
+
 ## [1.32.6](https://github.com/frankie336/projectdavid/compare/v1.32.5...v1.32.6) (2025-06-08)
 
 
