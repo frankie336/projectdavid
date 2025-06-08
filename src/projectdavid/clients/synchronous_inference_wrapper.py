@@ -80,7 +80,6 @@ class SynchronousInferenceStream:
                 return _peek_gate.feed(txt)
 
         else:
-
             def _filter_text(txt: str) -> str:  # no-op
                 return txt
 
@@ -102,13 +101,20 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # allow code_interpreter_stream to bypass suppression
+                if (
+                    chunk.get("stream_type") == "code_execution"
+                    and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
+                ):
+                    yield chunk
+                    continue
+
                 # inline content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
                         continue  # fully suppressed (or still peeking)
 
-                    # additional raw inline suppression for partial JSON
                     if (
                         suppress_fc
                         and '"name": "code_interpreter"' in chunk["content"]
