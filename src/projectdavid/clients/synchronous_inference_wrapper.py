@@ -97,6 +97,12 @@ class SynchronousInferenceStream:
                     LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
+                if suppress_fc and isinstance(chunk.get("content"), str):
+                    chunk["content"] = _filter_text(chunk["content"])
+                    if chunk["content"] == "":
+                        # fully suppressed (either buffering or an <fc> block)
+                        continue
+
                 # ------------------------------------------------------
                 # allow the assistants response1 to bypass suppression
                 # -------------------------------------------------------
@@ -126,6 +132,7 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+
                 # ---------------------------------
                 # inline content
                 # ----------------------------------
@@ -141,9 +148,8 @@ class SynchronousInferenceStream:
                     ):
                         LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
                         continue
-                    # ---------------------------------------------------------------
-                    # Filter and supress file_search inline
-                    # ---------------------------------------------------------------
+
+
                     if (
                         suppress_fc
                         and '"name": "file_search"' in chunk["content"]
