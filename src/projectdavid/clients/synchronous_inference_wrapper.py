@@ -14,7 +14,7 @@ class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
-    # ────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -24,6 +24,7 @@ class SynchronousInferenceStream:
         self.run_id: Optional[str] = None
         self.api_key: Optional[str] = None
 
+    # ────────────────────────────────────────────────────────────
     def setup(
         self,
         user_id: str,
@@ -40,7 +41,7 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
-    # ────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     def stream_chunks(
         self,
         provider: str,
@@ -72,15 +73,28 @@ class SynchronousInferenceStream:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
 
-            def _filter_text(txt: str) -> str:
+            def _filter_text(txt: str) -> str:  # noqa: D401
                 return _peek_gate.feed(txt)
 
         else:
 
-            def _filter_text(txt: str) -> str:
+            def _filter_text(txt: str) -> str:  # noqa: D401
                 return txt
 
-        # ── main loop ───────────────────────────────────────────────
+        # helper – drain any leftover bytes still buffered
+        def _flush_tail() -> Optional[dict]:
+            """
+            Force-flush PeekGate / FunctionCallSuppressor so the last few
+            characters (kept for safety-margin) reach the frontend.
+            Returns a ready-to-stream chunk or None.
+            """
+            if suppress_fc:
+                tail = _filter_text("")  # empty feed ⇒ flush
+                if tail:
+                    return {"type": "content", "content": tail}
+            return None
+
+        # ── main loop ─────────────────────────────────────────────
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
@@ -108,23 +122,31 @@ class SynchronousInferenceStream:
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        # fully suppressed (either buffering or an <fc> block)
-                        continue
+                        continue  # fully suppressed / still buffering
 
                 # ④ everything else streams unchanged
                 yield chunk
 
+            # ─────────── graceful endings ───────────
             except StopAsyncIteration:
+                if tail := _flush_tail():
+                    yield tail
                 LOG.info("Stream completed normally.")
                 break
+
             except asyncio.TimeoutError:
+                if tail := _flush_tail():
+                    yield tail
                 LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
                 break
+
             except Exception as exc:  # noqa: BLE001
+                if tail := _flush_tail():
+                    yield tail
                 LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
                 break
 
-    # ────────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
