@@ -108,9 +108,9 @@ class SynchronousInferenceStream:
                 )
 
                 # ① drop provider-labelled function_call objects
-                #if suppress_fc and chunk.get("type") == "function_call":
-                    #LOG.debug("[SUPPRESS] provider function_call dropped")
-                    #continue
+                # if suppress_fc and chunk.get("type") == "function_call":
+                # LOG.debug("[SUPPRESS] provider function_call dropped")
+                # continue
 
                 # ② hot-code & file-preview payloads always pass
                 if chunk.get("type") in ("hot_code", "hot_code_output"):
