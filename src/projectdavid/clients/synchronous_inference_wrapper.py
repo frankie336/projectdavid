@@ -42,6 +42,7 @@ class SynchronousInferenceStream:
         self.api_key = api_key
 
     # ────────────────────────────────────────────────────────────
+    # ────────────────────────────────────────────────────────────
     def stream_chunks(
         self,
         provider: str,
@@ -109,13 +110,14 @@ class SynchronousInferenceStream:
 
                 # ① drop provider-labelled function_call objects
                 # if suppress_fc and chunk.get("type") == "function_call":
-                # LOG.debug("[SUPPRESS] provider function_call dropped")
-                # continue
+                #     LOG.debug("[SUPPRESS] provider function_call dropped")
+                #     continue
 
-                # ② hot-code & file-preview payloads always pass
-                if chunk.get("type") in ("hot_code", "hot_code_output"):
+                # ② hot-code, status, and code-interpreter payloads always pass
+                if chunk.get("type") in ("hot_code", "hot_code_output", "status"):
                     yield chunk
                     continue
+
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
