@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "projectdavid"
-version = "1.32.13"
+version = "1.32.14"
 description = "Python SDK for interacting with the Entities Assistant API."
 readme = "README.md"
 authors = [
