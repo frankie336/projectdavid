@@ -18,7 +18,7 @@ class PeekGate:
       chunks can still be caught.
     """
 
-    SAFETY_MARGIN = 8  # enough to hold "<fc>" + whitespace
+    SAFETY_MARGIN = 0  # enough to hold "<fc>" + whitespace
 
     def __init__(self, downstream: FunctionCallSuppressor, peek_limit: int = 2048):
         self.downstream = downstream
