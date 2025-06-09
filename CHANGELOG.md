@@ -1,3 +1,10 @@
+## [1.32.20](https://github.com/frankie336/projectdavid/compare/v1.32.19...v1.32.20) (2025-06-09)
+
+
+### Bug Fixes
+
+* parse run_id into emission. ([60ace8c](https://github.com/frankie336/projectdavid/commit/60ace8cf669c873c40a1b031740b2f7103a59c53))
+
 ## [1.32.19](https://github.com/frankie336/projectdavid/compare/v1.32.18...v1.32.19) (2025-06-09)
 
 
