@@ -1,3 +1,10 @@
+## [1.32.19](https://github.com/frankie336/projectdavid/compare/v1.32.18...v1.32.19) (2025-06-09)
+
+
+### Bug Fixes
+
+* Add support for type: status chunks ([27c4227](https://github.com/frankie336/projectdavid/commit/27c4227ef3e3c95c28c37549090285f86a09fc49))
+
 ## [1.32.18](https://github.com/frankie336/projectdavid/compare/v1.32.17...v1.32.18) (2025-06-09)
 
 
