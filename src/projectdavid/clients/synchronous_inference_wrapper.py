@@ -81,17 +81,18 @@ class SynchronousInferenceStream:
             def _filter_text(txt: str) -> str:  # noqa: D401
                 return txt
 
-        # helper – drain any leftover bytes still buffered
-        def _flush_tail() -> Optional[dict]:
-            """
-            Force-flush PeekGate / FunctionCallSuppressor so the last few
-            characters (kept for safety-margin) reach the frontend.
-            Returns a ready-to-stream chunk or None.
-            """
-            if suppress_fc:
-                tail = _filter_text("")  # empty feed ⇒ flush
-                if tail:
-                    return {"type": "content", "content": tail}
+        # helper – drain **all** residual bytes from the chain
+        def _drain_filters() -> Optional[dict]:
+            if not suppress_fc:
+                return None
+            parts: list[str] = []
+            while True:
+                out = _filter_text("")  # empty feed ⇒ “give me whatever’s left”
+                if not out:
+                    break
+                parts.append(out)
+            if parts:
+                return {"type": "content", "content": "".join(parts)}
             return None
 
         # ── main loop ─────────────────────────────────────────────
@@ -129,19 +130,19 @@ class SynchronousInferenceStream:
 
             # ─────────── graceful endings ───────────
             except StopAsyncIteration:
-                if tail := _flush_tail():
+                if tail := _drain_filters():
                     yield tail
                 LOG.info("Stream completed normally.")
                 break
 
             except asyncio.TimeoutError:
-                if tail := _flush_tail():
+                if tail := _drain_filters():
                     yield tail
                 LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
                 break
 
             except Exception as exc:  # noqa: BLE001
-                if tail := _flush_tail():
+                if tail := _drain_filters():
                     yield tail
                 LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
                 break
