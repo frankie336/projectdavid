@@ -132,7 +132,6 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
-
                 # ---------------------------------
                 # inline content
                 # ----------------------------------
@@ -148,7 +147,6 @@ class SynchronousInferenceStream:
                     ):
                         LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
                         continue
-
 
                     if (
                         suppress_fc
