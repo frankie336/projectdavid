@@ -86,11 +86,16 @@ class SynchronousInferenceStream:
             if not suppress_fc:
                 return None
             parts: list[str] = []
+            # 1) normal draining loop
             while True:
-                out = _filter_text("")  # empty feed ⇒ “give me whatever’s left”
+                out = _filter_text("")
                 if not out:
                     break
                 parts.append(out)
+            # 2) force-drain the ≤ 8 safety-margin tail
+            if not _peek_gate.suppressing and _peek_gate.buf:
+                parts.append(_peek_gate.buf)
+                _peek_gate.buf = ""
             if parts:
                 return {"type": "content", "content": "".join(parts)}
             return None
@@ -111,7 +116,6 @@ class SynchronousInferenceStream:
                 if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
-
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
@@ -128,7 +132,7 @@ class SynchronousInferenceStream:
                 # ④ everything else streams unchanged
                 yield chunk
 
-            # ─────────── graceful endings ───────────
+            # graceful endings ------------------------------------------------
             except StopAsyncIteration:
                 if tail := _drain_filters():
                     yield tail
