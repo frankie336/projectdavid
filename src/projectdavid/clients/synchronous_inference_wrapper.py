@@ -14,9 +14,7 @@ class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
-    # --------------------------------------------------------------
-    # ctor / setup
-    # --------------------------------------------------------------
+    # ────────────────────────────────────────────────────────────────
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -42,9 +40,7 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
-    # --------------------------------------------------------------
-    # main streaming entry-point
-    # --------------------------------------------------------------
+    # ────────────────────────────────────────────────────────────────
     def stream_chunks(
         self,
         provider: str,
@@ -71,7 +67,7 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ---------- suppression chain ----------
+        # ── build the <fc> suppressor chain ─────────────────────────
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
@@ -81,50 +77,26 @@ class SynchronousInferenceStream:
 
         else:
 
-            def _filter_text(txt: str) -> str:  # no-op
+            def _filter_text(txt: str) -> str:
                 return txt
 
-        # ---------------------------------------
-
+        # ── main loop ───────────────────────────────────────────────
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # provider-labelled function_call
+                # ① drop provider-labelled function_call objects
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
+                    LOG.debug("[SUPPRESS] provider function_call dropped")
                     continue
 
-                if suppress_fc and isinstance(chunk.get("content"), str):
-                    chunk["content"] = _filter_text(chunk["content"])
-                    if chunk["content"] == "":
-                        # fully suppressed (either buffering or an <fc> block)
-                        continue
-
-                # ------------------------------------------------------
-                # allow the assistants response1 to bypass suppression
-                # -------------------------------------------------------
-                if chunk.get("type") == "content":
+                # ② hot-code & file-preview payloads always pass
+                if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
 
-                # -------------------------------------
-                # allow hot_code to bypass suppression
-                # ------------------------------------
-                if chunk.get("type") == "hot_code":
-                    yield chunk
-                    continue
-
-                # allow hot_code_output to bypass suppression
-                if chunk.get("type") == "hot_code_output":
-                    yield chunk
-                    continue
-
-                # -------------------------------------------------------
-                # allow code_interpreter_stream to bypass suppression
-                # --------------------------------------------------------
                 if (
                     chunk.get("stream_type") == "code_execution"
                     and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
@@ -132,45 +104,27 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
-                # ---------------------------------
-                # inline content
-                # ----------------------------------
+                # ③ ordinary TEXT content — run through the <fc> filter
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        continue  # fully suppressed (or still peeking)
-
-                    if (
-                        suppress_fc
-                        and '"name": "code_interpreter"' in chunk["content"]
-                        and '"arguments": {"code"' in chunk["content"]
-                    ):
-                        LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
+                        # fully suppressed (either buffering or an <fc> block)
                         continue
 
-                    if (
-                        suppress_fc
-                        and '"name": "file_search"' in chunk["content"]
-                        and '"arguments": {"query_text"' in chunk["content"]
-                    ):
-                        LOG.debug("[SUPPRESSOR] inline file_search match blocked")
-                        continue
-
+                # ④ everything else streams unchanged
                 yield chunk
 
             except StopAsyncIteration:
                 LOG.info("Stream completed normally.")
                 break
             except asyncio.TimeoutError:
-                LOG.error("[TimeoutError] Timeout occurred, stopping stream.")
+                LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
                 break
-            except Exception as e:
-                LOG.error("Unexpected error during streaming completions: %s", e)
+            except Exception as exc:  # noqa: BLE001
+                LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
                 break
 
-    # --------------------------------------------------------------
-    # housekeeping
-    # --------------------------------------------------------------
+    # ────────────────────────────────────────────────────────────────
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
