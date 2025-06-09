@@ -1,3 +1,10 @@
+## [1.32.13](https://github.com/frankie336/projectdavid/compare/v1.32.12...v1.32.13) (2025-06-09)
+
+
+### Bug Fixes
+
+* Filter and supress file_search inline-4 ([c255c3b](https://github.com/frankie336/projectdavid/commit/c255c3b2ef93c784ca90504d34d523c32457223e))
+
 ## [1.32.12](https://github.com/frankie336/projectdavid/compare/v1.32.11...v1.32.12) (2025-06-09)
 
 
