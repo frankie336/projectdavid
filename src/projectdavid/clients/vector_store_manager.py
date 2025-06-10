@@ -18,8 +18,12 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant  # unified import
 from qdrant_client.models import FieldCondition, Filter, MatchValue, Range
 
-from .base_vector_store import (BaseVectorStore, StoreExistsError,
-                                StoreNotFoundError, VectorStoreError)
+from .base_vector_store import (
+    BaseVectorStore,
+    StoreExistsError,
+    StoreNotFoundError,
+    VectorStoreError,
+)
 
 load_dotenv()
 log = UtilsInterface.LoggingUtility()

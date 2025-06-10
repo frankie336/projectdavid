@@ -69,3 +69,6 @@ dev = [
       "pytesseract>=0.3 ; extra == 'vision'",
       "geoloc-regio-net>=0.2.0 ; extra == 'vision'",
 ]
+
+[tool.isort]
+profile = "black"

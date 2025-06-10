@@ -5,8 +5,7 @@ import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.constants.platform import TOOLS_ID_MAP
-from projectdavid_common.constants.timeouts import \
-    DEFAULT_TIMEOUT  # noqa: F401
+from projectdavid_common.constants.timeouts import DEFAULT_TIMEOUT  # noqa: F401
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
