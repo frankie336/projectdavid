@@ -1,3 +1,10 @@
+## [1.32.21](https://github.com/frankie336/projectdavid/compare/v1.32.20...v1.32.21) (2025-06-10)
+
+
+### Bug Fixes
+
+* allow status chunks to bypass suppression ([9a21581](https://github.com/frankie336/projectdavid/commit/9a2158156b85c1685aff65925c17730722972ddb))
+
 ## [1.32.20](https://github.com/frankie336/projectdavid/compare/v1.32.19...v1.32.20) (2025-06-09)
 
 
