@@ -18,12 +18,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant  # unified import
 from qdrant_client.models import FieldCondition, Filter, MatchValue, Range
 
-from .base_vector_store import (
-    BaseVectorStore,
-    StoreExistsError,
-    StoreNotFoundError,
-    VectorStoreError,
-)
+from .base_vector_store import (BaseVectorStore, StoreExistsError,
+                                StoreNotFoundError, VectorStoreError)
 
 load_dotenv()
 log = UtilsInterface.LoggingUtility()
@@ -50,11 +46,18 @@ class VectorStoreManager(BaseVectorStore):
     def create_store(
         self,
         collection_name: str,
+        *,
         vector_size: int = 384,
         distance: str = "COSINE",
+        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,
     ) -> dict:
+        """
+        Create or recreate a Qdrant collection.  By default creates a single-vector
+        collection with `vector_size`.  To define multi-vector schema, pass
+        `vectors_config` mapping field names to VectorParams.
+        """
         try:
-            # quick existence check
+            # existence check
             if any(
                 col.name == collection_name
                 for col in self.client.get_collections().collections
@@ -65,16 +68,27 @@ class VectorStoreManager(BaseVectorStore):
             if dist not in qdrant.Distance.__members__:
                 raise ValueError(f"Invalid distance metric '{distance}'")
 
+            # choose schema
+            if vectors_config:
+                config = vectors_config
+            else:
+                config = {
+                    "_default": qdrant.VectorParams(
+                        size=vector_size, distance=qdrant.Distance[dist]
+                    )
+                }
+
+            # recreate with full schema
             self.client.recreate_collection(
                 collection_name=collection_name,
-                vectors_config=qdrant.VectorParams(
-                    size=vector_size, distance=qdrant.Distance[dist]
-                ),
+                vectors_config=config,
             )
+            # record metadata for each field
             self.active_stores[collection_name] = {
                 "created_at": int(time.time()),
                 "vector_size": vector_size,
                 "distance": dist,
+                "fields": list(config.keys()),
             }
             log.info("Created Qdrant collection %s", collection_name)
             return {"collection_name": collection_name, "status": "created"}
@@ -103,8 +117,9 @@ class VectorStoreManager(BaseVectorStore):
                 "name": store_name,
                 "status": "active",
                 "vectors_count": info.points_count,
-                "configuration": info.config.params["default"],
+                "configuration": info.config.params,
                 "created_at": self.active_stores[store_name]["created_at"],
+                "fields": self.active_stores[store_name].get("fields"),
             }
         except Exception as e:
             log.error("Store info failed: %s", e)
@@ -119,6 +134,8 @@ class VectorStoreManager(BaseVectorStore):
         texts: List[str],
         vectors: List[List[float]],
         metadata: List[dict],
+        *,
+        vector_name: Optional[str] = None,  # NEW
     ):
         if not vectors:
             raise ValueError("Empty vectors list")
@@ -136,7 +153,13 @@ class VectorStoreManager(BaseVectorStore):
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
         try:
-            self.client.upsert(collection_name=store_name, points=points, wait=True)
+            # pass vector_name if multi-column
+            self.client.upsert(
+                collection_name=store_name,
+                points=points,
+                wait=True,
+                vector_name=vector_name,  # ignored if None
+            )
             return {"status": "success", "points_inserted": len(points)}
         except Exception as e:
             log.error("Add‑to‑store failed: %s", e)
@@ -189,15 +212,25 @@ class VectorStoreManager(BaseVectorStore):
         query_vector: List[float],
         top_k: int = 5,
         filters: Optional[dict] = None,
+        *,
+        vector_field: Optional[str] = None,  # ← NEW
         score_threshold: float = 0.0,
         offset: int = 0,
         limit: Optional[int] = None,
     ) -> List[dict]:
-        """Run a similarity search that works with any 1.x qdrant‑client."""
+        """
+        Run a similarity search against *store_name*.
+
+        • Works with any Qdrant-client ≥ 1.0
+        • `vector_field` lets you target a non-default vector column
+          (e.g. ``\"caption_vector\"`` for image stores).  Pass **None**
+          to use the collection’s default vector.
+        """
 
         limit = limit or top_k
         flt = self._dict_to_filter(filters) if filters else None
 
+        # ── shared kwargs ----------------------------------------------------
         common: Dict[str, Any] = dict(
             collection_name=store_name,
             query_vector=query_vector,
@@ -207,20 +240,21 @@ class VectorStoreManager(BaseVectorStore):
             with_payload=True,
             with_vectors=False,
         )
+        if vector_field:  # ← inject when requested
+            common["vector_name"] = vector_field
 
+        # ── call search (new client first, fallback to old) ------------------
         try:
-            # Newer clients (≥ 1.6) use `filter=`
-            res = self.client.search(**common, filter=flt)  # type: ignore[arg-type]
+            res = self.client.search(**common, filter=flt)  # ≥ 1.6
         except AssertionError as ae:
             if "Unknown arguments" not in str(ae):
                 raise
-            # Older clients use `query_filter=`
-            res = self.client.search(**common, query_filter=flt)  # type: ignore[arg-type]
-
+            res = self.client.search(**common, query_filter=flt)  # < 1.6
         except Exception as e:
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
 
+        # ── normalise result -------------------------------------------------
         return [
             {
                 "id": p.id,

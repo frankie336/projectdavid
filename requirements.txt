@@ -11,6 +11,7 @@ isort
 requests
 # Document and file parsing
 pdfplumber~=0.11.6
+open_clip
 validators~=0.34.0
 
 # Embeddings and vector storage
