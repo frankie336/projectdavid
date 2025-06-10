@@ -494,27 +494,89 @@ class VectorStoreClient:
 
     def create_vector_vision_store(
         self,
-        name: str = "vision",
-    ):
+        name: str,
+        *,
+        vector_size: int = 384,
+        distance_metric: str = "Cosine",
+        config: Optional[Dict[str, Any]] = None,
+        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
+    ) -> ValidationInterface.VectorStoreRead:
 
-        vectors_config = {
-            # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
-            "image_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Language embeddings of your BLIP-2 captions → 1024-D
-            "caption_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
-            "region_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Geo-location unit vectors (RegioNet) → 3-D
-            "geo_vector": qdrant.VectorParams(size=3, distance=qdrant.Distance.COSINE),
-        }
+        if not vectors_config:
+            vectors_config = {
+                # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
+                "image_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Language embeddings of your BLIP-2 captions → 1024-D
+                "caption_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
+                "region_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Geo-location unit vectors (RegioNet) → 3-D
+                "geo_vector": qdrant.VectorParams(
+                    size=3, distance=qdrant.Distance.COSINE
+                ),
+            }
 
-        return self.create_vector_store(name=name, vectors_config=vectors_config)
+        return self._run_sync(
+            self._create_vs_async(
+                name,
+                vector_size,
+                distance_metric,
+                config,
+                vectors_config,
+            )
+        )
+
+    def create_vector_vision_store_for_user(
+        self,
+        owner_id: str,
+        name: str,
+        *,
+        vector_size: int = 384,
+        distance_metric: str = "Cosine",
+        config: Optional[Dict[str, Any]] = None,
+        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
+    ) -> ValidationInterface.VectorStoreRead:
+        """
+        Admin-only: create a store on behalf of another user.
+        Pass `vectors_config` to define a multi-vector schema.
+        """
+        if not vectors_config:
+
+            vectors_config = {
+                # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
+                "image_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Language embeddings of your BLIP-2 captions → 1024-D
+                "caption_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
+                "region_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Geo-location unit vectors (RegioNet) → 3-D
+                "geo_vector": qdrant.VectorParams(
+                    size=3, distance=qdrant.Distance.COSINE
+                ),
+            }
+
+        return self._run_sync(
+            self._create_vs_for_user_async(
+                owner_id,
+                name,
+                vector_size,
+                distance_metric,
+                config,
+                vectors_config,
+            )
+        )
 
     def create_vector_store_for_user(
         self,
