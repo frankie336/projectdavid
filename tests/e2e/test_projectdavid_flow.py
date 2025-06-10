@@ -5,9 +5,8 @@ import time
 
 from dotenv import load_dotenv
 
-from projectdavid import (  # Assuming your library is installable as 'projectdavid'
-    Entity,
-)
+from projectdavid import \
+    Entity  # Assuming your library is installable as 'projectdavid'
 
 # Load .env file if it exists (useful for local testing)
 load_dotenv()
