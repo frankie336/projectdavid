@@ -1,3 +1,21 @@
+# [1.33.0](https://github.com/frankie336/projectdavid/compare/v1.32.21...v1.33.0) (2025-06-10)
+
+
+### Features
+
+* Add support for multi-modal image search ([58e7e27](https://github.com/frankie336/projectdavid/commit/58e7e270be849e36bcd93e6a19942fa3e8abbd25))
+* Add support for multi-modal image search-1 ([b8ebc7c](https://github.com/frankie336/projectdavid/commit/b8ebc7c4fb73cec0bff1b98ee45fa5b52e41a9b3))
+* Add support for multi-modal image search-1 ([2362069](https://github.com/frankie336/projectdavid/commit/2362069e4b5390b4eb2b1007a413a6adb1a8bc7b))
+* Add support for multi-modal image search-2 ([07f81fe](https://github.com/frankie336/projectdavid/commit/07f81fe0a475652bc6d316f3dc45e341452f43b7))
+* Add support for multi-modal image search-3 ([29bce72](https://github.com/frankie336/projectdavid/commit/29bce72b12e3b2b5d2daeafe2367908e0cc3b402))
+* Add support for multi-modal image search-3 ([3f8149e](https://github.com/frankie336/projectdavid/commit/3f8149e31371efa8727b96fa16d92fbe5474f727))
+* Add support for multi-modal image search-4 ([b434d6d](https://github.com/frankie336/projectdavid/commit/b434d6d035324f444b46bd49dd15cbed528527a5))
+* Add support for multi-modal image search-4 ([6acddf0](https://github.com/frankie336/projectdavid/commit/6acddf0c3b38ed6ca9e786ddb6d8ebf1a1328ac5))
+* Add support for multi-modal image search-5 ([1dd9dd9](https://github.com/frankie336/projectdavid/commit/1dd9dd9d91556df8a0089255efad82bfe3f9a6b6))
+* Add support for multi-modal image search-6 ([33a6069](https://github.com/frankie336/projectdavid/commit/33a6069b9f7a9e9007c156d511b3cb8abf859760))
+* Add support for multi-modal image search-7 ([01d68e5](https://github.com/frankie336/projectdavid/commit/01d68e591c8dbc52c81b6bfcd522bb95d27c9ddd))
+* Add support for multi-modal image search-8 ([8663b2a](https://github.com/frankie336/projectdavid/commit/8663b2ab7f0f035ae953281d86ba01a0db926839))
+
 ## [1.32.21](https://github.com/frankie336/projectdavid/compare/v1.32.20...v1.32.21) (2025-06-10)
 
 
