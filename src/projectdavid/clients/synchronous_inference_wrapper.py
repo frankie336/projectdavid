@@ -106,7 +106,14 @@ class SynchronousInferenceStream:
                 # Always attach run_id
                 chunk["run_id"] = self.run_id
 
-                if chunk.get("type") in ("hot_code", "hot_code_output", "status"):
+                # ------------------------------------------------------
+                # allow status chunks to bypass suppression suppression
+                # -------------------------------------------------------
+                if chunk.get("type") == "status":
+                    yield chunk
+                    continue
+
+                if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
 
