@@ -834,7 +834,6 @@ class VectorStoreClient:
             base_url=self.base_url,  # Same backend
             provider_api_key=os.getenv("HYPERBOLIC_API_KEY"),  # Hyperbolic key
         )
-
     # ────────────────────────────────────────────────────────────────
     #  End‑to‑end: retrieve → (rerank) → synthesize → envelope
     # ────────────────────────────────────────────────────────────────
