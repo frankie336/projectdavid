@@ -494,7 +494,7 @@ class VectorStoreClient:
 
     def create_vector_vision_store(
         self,
-        name: Optional[str, Any] = "vision",
+        name: str = "vision",
     ):
 
         vectors_config = {
