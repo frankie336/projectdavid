@@ -30,11 +30,15 @@ class Entity:
         self,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
+        file_processor_kwargs: Optional[dict] = None,
     ):
         """
         Initialize the main client with configuration.
         Optionally, a configuration object can be injected to decouple from environment variables.
         """
+
+        self.file_processor_kwargs = file_processor_kwargs
+
         self.base_url = base_url or os.getenv(
             "ENTITIES_BASE_URL", "http://localhost:9000/"
         )
@@ -145,7 +149,9 @@ class Entity:
     def vectors(self) -> VectorStoreClient:
         if self._vectors_client is None:
             self._vectors_client = VectorStoreClient(
-                base_url=self.base_url, api_key=self.api_key
+                base_url=self.base_url,
+                api_key=self.api_key,
+                file_processor_kwargs=self.file_processor_kwargs,
             )
 
         return self._vectors_client

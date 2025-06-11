@@ -72,8 +72,9 @@ class VectorStoreClient:
         api_key: Optional[str] = None,
         *,
         vector_store_host: str = "localhost",
-        file_processor_kwargs: Optional[dict] = None,  # 🔶 add arg
+        file_processor_kwargs: Optional[dict] = None,
     ):
+
         self.base_url = (base_url or os.getenv("BASE_URL", "")).rstrip("/")
         self.api_key = api_key or os.getenv("API_KEY")
         if not self.base_url:
@@ -94,7 +95,18 @@ class VectorStoreClient:
         self.identifier_service = UtilsInterface.IdentifierService()
 
         # 🔶 forward kwargs into the upgraded FileProcessor
-        self.file_processor = FileProcessor(**(file_processor_kwargs or {}))
+
+        self.file_processor = FileProcessor(
+            **(
+                file_processor_kwargs
+                or {
+                    "use_gpu": False,
+                    "use_detection": True,
+                    "use_geo": True,
+                    "use_ocr": True,
+                }
+            )
+        )
 
         log.info("VectorStoreClient → %s", self.base_url)
 

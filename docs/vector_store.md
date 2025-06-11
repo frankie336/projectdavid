@@ -78,6 +78,14 @@ save_file_to_store = client.vectors.add_file_to_vector_store(
 
 At this point, your file has been vectorized to your store.
 
+
+---
+
+
+## Supporting image vectors
+
+Entities now ingests and vectorizes a wide range of image formats for semantic search. You can leverage these image embeddings to extend text-only models into powerful multi-modal workflows; enriching chatbots, document search, recommendation engines, and more.
+
 ---
 
 ### Making Searches Against Files in a Store
