@@ -1,3 +1,10 @@
+## [1.33.2](https://github.com/frankie336/projectdavid/compare/v1.33.1...v1.33.2) (2025-06-11)
+
+
+### Bug Fixes
+
+* pass file_processor_kwargs from public interface  and add default fallbacks. ([597b274](https://github.com/frankie336/projectdavid/commit/597b274e0f54fc87ac5449ac8259c8ad244b0214))
+
 ## [1.33.1](https://github.com/frankie336/projectdavid/compare/v1.33.0...v1.33.1) (2025-06-10)
 
 
