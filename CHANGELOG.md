@@ -1,3 +1,10 @@
+## [1.33.1](https://github.com/frankie336/projectdavid/compare/v1.33.0...v1.33.1) (2025-06-10)
+
+
+### Bug Fixes
+
+* Add create_vector_vision_store_for_user ([392813b](https://github.com/frankie336/projectdavid/commit/392813bef20e12c2aca456e349b6d937e686f78c))
+
 # [1.33.0](https://github.com/frankie336/projectdavid/compare/v1.32.21...v1.33.0) (2025-06-10)
 
 
