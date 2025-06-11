@@ -20,6 +20,7 @@ from qdrant_client.http import models as qdrant
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
+from projectdavid.decorators import experimental
 from projectdavid.synthesis import reranker, retriever
 from projectdavid.synthesis.llm_synthesizer import synthesize_envelope
 from projectdavid.utils.vector_search_formatter import make_envelope
@@ -504,6 +505,7 @@ class VectorStoreClient:
             )
         )
 
+    @experimental
     def create_vector_vision_store(
         self,
         name: str,
@@ -544,6 +546,7 @@ class VectorStoreClient:
             )
         )
 
+    @experimental
     def create_vector_vision_store_for_user(
         self,
         owner_id: str,
@@ -964,6 +967,7 @@ class VectorStoreClient:
 
         return hits
 
+    @experimental
     def image_similarity_search(
         self,
         vector_store_id: str,
@@ -981,6 +985,7 @@ class VectorStoreClient:
             vector_field="image_vector",
         )
 
+    @experimental
     def search_images(
         self,
         vector_store_id: str,
