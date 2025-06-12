@@ -113,32 +113,16 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
-                if chunk.get("type") == "code_interpreter_stream":
-                    yield chunk
-                    continue
-
-                if chunk.get("type") == "code_execution":
-                    yield chunk
-                    continue
-
-                if chunk.get("type") == "hot_code_output":
-                    yield chunk
-                    continue
-
                 if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
 
-                if chunk.get("type") in ("hot_code", "hot_code_output"):
+                if (
+                    chunk.get("stream_type") == "code_execution"
+                    and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
+                ):
                     yield chunk
                     continue
-
-                # if (
-                #    chunk.get("stream_type") == "code_execution"
-                #    and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
-                # ):
-                #    yield chunk
-                #    continue
 
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
