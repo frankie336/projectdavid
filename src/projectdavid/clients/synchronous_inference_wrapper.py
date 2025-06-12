@@ -117,6 +117,18 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                if chunk.get("type") == "code_execution":
+                    yield chunk
+                    continue
+
+                if chunk.get("type") == "hot_code_output":
+                    yield chunk
+                    continue
+
+                if chunk.get("type") in ("hot_code", "hot_code_output"):
+                    yield chunk
+                    continue
+
                 if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
