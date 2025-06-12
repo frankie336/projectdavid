@@ -109,10 +109,6 @@ class SynchronousInferenceStream:
                 # ------------------------------------------------------
                 # allow status chunks to bypass suppression suppression
                 # -------------------------------------------------------
-                if chunk.get("type") == "content":
-                    yield chunk
-                    continue
-
                 if chunk.get("type") == "status":
                     yield chunk
                     continue
