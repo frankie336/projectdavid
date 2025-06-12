@@ -1,3 +1,10 @@
+## [1.33.3](https://github.com/frankie336/projectdavid/compare/v1.33.2...v1.33.3) (2025-06-11)
+
+
+### Bug Fixes
+
+* Place vision features in dormant experimental mode with [@experimental](https://github.com/experimental) decorators.py ([1c41702](https://github.com/frankie336/projectdavid/commit/1c41702a55ec9c6c7ad89de559cfa309ace88174))
+
 ## [1.33.2](https://github.com/frankie336/projectdavid/compare/v1.33.1...v1.33.2) (2025-06-11)
 
 
