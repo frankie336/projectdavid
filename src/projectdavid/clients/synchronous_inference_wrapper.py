@@ -11,9 +11,15 @@ LOG = UtilsInterface.LoggingUtility()
 
 
 class SynchronousInferenceStream:
+    # ------------------------------------------------------------ #
+    #   GLOBAL EVENT LOOP  (single hidden thread for sync wrapper)
+    # ------------------------------------------------------------ #
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
+    # ------------------------------------------------------------ #
+    #   Init / setup
+    # ------------------------------------------------------------ #
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -32,6 +38,7 @@ class SynchronousInferenceStream:
         run_id: str,
         api_key: str,
     ) -> None:
+        """Populate IDs once, so callers only provide provider/model."""
         self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id
@@ -39,7 +46,10 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
-    def stream_chunks(
+    # ------------------------------------------------------------ #
+    #   Core sync-to-async streaming wrapper
+    # ------------------------------------------------------------ #
+    def stream_chunks(  # noqa: PLR0915
         self,
         provider: str,
         model: str,
@@ -48,9 +58,15 @@ class SynchronousInferenceStream:
         timeout_per_chunk: float = 280.0,
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
+        """
+        Sync generator that mirrors async `inference_client.stream_inference_response`
+        but (optionally) removes raw <fc> … </fc> output *and* JSON
+        `{"type": "function_call" …}` objects from the stream.
+        """
 
         resolved_api_key = api_key or self.api_key
 
+        # ---------- async inner generator -------------------------------- #
         async def _stream_chunks_async():
             async for chk in self.inference_client.stream_inference_response(
                 provider=provider,
@@ -65,6 +81,7 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
+        # ---------- FC-suppressor plumbing -------------------------------- #
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
@@ -72,11 +89,15 @@ class SynchronousInferenceStream:
             def _filter_text(txt: str) -> str:
                 return _peek_gate.feed(txt)
 
+            LOG.debug("[SyncStream] Function-call suppression ACTIVE")
         else:
 
             def _filter_text(txt: str) -> str:
                 return txt
 
+            LOG.debug("[SyncStream] Function-call suppression DISABLED")
+
+        # ---------- helper to flush residual buffered text ---------------- #
         def _drain_filters() -> Optional[dict]:
             if not suppress_fc:
                 return None
@@ -97,18 +118,17 @@ class SynchronousInferenceStream:
                 }
             return None
 
+        # ---------- main sync loop ---------------------------------------- #
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # Always attach run_id
+                # Always attach run_id for front-end helpers
                 chunk["run_id"] = self.run_id
 
-                # ------------------------------------------------------
-                # allow status chunks to bypass suppression suppression
-                # -------------------------------------------------------
+                # ----- bypass filters for status / code-exec related -------- #
                 if chunk.get("type") == "status":
                     yield chunk
                     continue
@@ -124,9 +144,19 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # ----- NEW: swallow raw JSON function_call objects ---------- #
+                if suppress_fc and chunk.get("type") == "function_call":
+                    LOG.debug(
+                        "[SyncStream] Swallowing JSON function_call chunk: %s",
+                        chunk.get("name") or "<unnamed>",
+                    )
+                    continue
+
+                # ----- text-level suppression ------------------------------- #
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
+                        # Entire segment was inside <fc> … </fc>
                         continue
 
                 yield chunk
@@ -134,21 +164,26 @@ class SynchronousInferenceStream:
             except StopAsyncIteration:
                 if tail := _drain_filters():
                     yield tail
-                LOG.info("Stream completed normally.")
+                LOG.info("[SyncStream] Stream completed normally.")
                 break
 
             except asyncio.TimeoutError:
                 if tail := _drain_filters():
                     yield tail
-                LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
+                LOG.error("[SyncStream] Timeout waiting for next chunk.")
                 break
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 if tail := _drain_filters():
                     yield tail
-                LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
+                LOG.error(
+                    "[SyncStream] Unexpected streaming error: %s", exc, exc_info=True
+                )
                 break
 
+    # ------------------------------------------------------------ #
+    #   House-keeping
+    # ------------------------------------------------------------ #
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
