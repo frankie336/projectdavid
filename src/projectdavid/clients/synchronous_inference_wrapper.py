@@ -14,7 +14,9 @@ class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
-    # ────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------
+    # ctor / setup
+    # --------------------------------------------------------------
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -24,7 +26,6 @@ class SynchronousInferenceStream:
         self.run_id: Optional[str] = None
         self.api_key: Optional[str] = None
 
-    # ────────────────────────────────────────────────────────────
     def setup(
         self,
         user_id: str,
@@ -41,7 +42,9 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
-    # ────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------
+    # main streaming entry-point
+    # --------------------------------------------------------------
     def stream_chunks(
         self,
         provider: str,
@@ -68,86 +71,61 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ── build the <fc> suppressor chain ─────────────────────────
+        # ---------- suppression chain ----------
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
 
-            def _filter_text(txt: str) -> str:  # noqa: D401
+            def _filter_text(txt: str) -> str:
                 return _peek_gate.feed(txt)
 
         else:
 
-            def _filter_text(txt: str) -> str:  # noqa: D401
+            def _filter_text(txt: str) -> str:  # no-op
                 return txt
 
-        # helper – drain **all** residual bytes from the chain
-        def _drain_filters() -> Optional[dict]:
-            if not suppress_fc:
-                return None
-            parts: list[str] = []
-            while True:
-                out = _filter_text("")  # empty feed ⇒ “give me whatever’s left”
-                if not out:
-                    break
-                parts.append(out)
-            if parts:
-                return {"type": "content", "content": "".join(parts)}
-            return None
+        # ---------------------------------------
 
-        # ── main loop ─────────────────────────────────────────────
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # ① drop provider-labelled function_call objects
+                # provider-labelled function_call
                 if suppress_fc and chunk.get("type") == "function_call":
-                    LOG.debug("[SUPPRESS] provider function_call dropped")
+                    LOG.debug("[SUPPRESSOR] blocked provider-labelled function_call")
                     continue
 
-                # ② hot-code & file-preview payloads always pass
-                if chunk.get("type") in ("hot_code", "hot_code_output"):
-                    yield chunk
-                    continue
-
-                if (
-                    chunk.get("stream_type") == "code_execution"
-                    and chunk.get("chunk", {}).get("type") == "code_interpreter_stream"
-                ):
-                    yield chunk
-                    continue
-
-                # ③ ordinary TEXT content — run through the <fc> filter
+                # inline content
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        continue  # fully suppressed / still buffering
+                        continue  # fully suppressed (or still peeking)
 
-                # ④ everything else streams unchanged
+                    # additional raw inline suppression for partial JSON
+                    if (
+                        '"name": "code_interpreter"' in chunk["content"]
+                        and '"arguments": {"code"' in chunk["content"]
+                    ):
+                        LOG.debug("[SUPPRESSOR] inline code_interpreter match blocked")
+                        continue
+
                 yield chunk
 
-            # ─────────── graceful endings ───────────
             except StopAsyncIteration:
-                if tail := _drain_filters():
-                    yield tail
                 LOG.info("Stream completed normally.")
                 break
-
             except asyncio.TimeoutError:
-                if tail := _drain_filters():
-                    yield tail
-                LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
+                LOG.error("[TimeoutError] Timeout occurred, stopping stream.")
+                break
+            except Exception as e:
+                LOG.error("Unexpected error during streaming completions: %s", e)
                 break
 
-            except Exception as exc:  # noqa: BLE001
-                if tail := _drain_filters():
-                    yield tail
-                LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
-                break
-
-    # ────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------
+    # housekeeping
+    # --------------------------------------------------------------
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
