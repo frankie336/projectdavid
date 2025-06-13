@@ -1,3 +1,10 @@
+## [1.33.10](https://github.com/frankie336/projectdavid/compare/v1.33.9...v1.33.10) (2025-06-13)
+
+
+### Bug Fixes
+
+* restore code_interpreter_stream passthrough.10 ([54c084e](https://github.com/frankie336/projectdavid/commit/54c084ea6ef03d677b8e544db9afe9eff88266b5))
+
 ## [1.33.9](https://github.com/frankie336/projectdavid/compare/v1.33.8...v1.33.9) (2025-06-13)
 
 
