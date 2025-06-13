@@ -14,6 +14,7 @@ class SynchronousInferenceStream:
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
 
+    # ────────────────────────────────────────────────────────────
     def __init__(self, inference) -> None:
         self.inference_client = inference
         self.user_id: Optional[str] = None
@@ -23,6 +24,7 @@ class SynchronousInferenceStream:
         self.run_id: Optional[str] = None
         self.api_key: Optional[str] = None
 
+    # ────────────────────────────────────────────────────────────
     def setup(
         self,
         user_id: str,
@@ -39,6 +41,7 @@ class SynchronousInferenceStream:
         self.run_id = run_id
         self.api_key = api_key
 
+    # ────────────────────────────────────────────────────────────
     def stream_chunks(
         self,
         provider: str,
@@ -65,54 +68,46 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
+        # ── build the <fc> suppressor chain ─────────────────────────
         if suppress_fc:
             _suppressor = FunctionCallSuppressor()
             _peek_gate = PeekGate(_suppressor)
 
-            def _filter_text(txt: str) -> str:
+            def _filter_text(txt: str) -> str:  # noqa: D401
                 return _peek_gate.feed(txt)
 
         else:
 
-            def _filter_text(txt: str) -> str:
+            def _filter_text(txt: str) -> str:  # noqa: D401
                 return txt
 
+        # helper – drain **all** residual bytes from the chain
         def _drain_filters() -> Optional[dict]:
             if not suppress_fc:
                 return None
             parts: list[str] = []
             while True:
-                out = _filter_text("")
+                out = _filter_text("")  # empty feed ⇒ “give me whatever’s left”
                 if not out:
                     break
                 parts.append(out)
-            if not _peek_gate.suppressing and _peek_gate.buf:
-                parts.append(_peek_gate.buf)
-                _peek_gate.buf = ""
             if parts:
-                return {
-                    "type": "content",
-                    "content": "".join(parts),
-                    "run_id": self.run_id,
-                }
+                return {"type": "content", "content": "".join(parts)}
             return None
 
+        # ── main loop ─────────────────────────────────────────────
         while True:
             try:
                 chunk = self._GLOBAL_LOOP.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
-                # Always attach run_id
-                chunk["run_id"] = self.run_id
-
-                # ------------------------------------------------------
-                # allow status chunks to bypass suppression suppression
-                # -------------------------------------------------------
-                if chunk.get("type") == "status":
-                    yield chunk
+                # ① drop provider-labelled function_call objects
+                if suppress_fc and chunk.get("type") == "function_call":
+                    LOG.debug("[SUPPRESS] provider function_call dropped")
                     continue
 
+                # ② hot-code & file-preview payloads always pass
                 if chunk.get("type") in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
@@ -124,13 +119,16 @@ class SynchronousInferenceStream:
                     yield chunk
                     continue
 
+                # ③ ordinary TEXT content — run through the <fc> filter
                 if isinstance(chunk.get("content"), str):
                     chunk["content"] = _filter_text(chunk["content"])
                     if chunk["content"] == "":
-                        continue
+                        continue  # fully suppressed / still buffering
 
+                # ④ everything else streams unchanged
                 yield chunk
 
+            # ─────────── graceful endings ───────────
             except StopAsyncIteration:
                 if tail := _drain_filters():
                     yield tail
@@ -143,12 +141,13 @@ class SynchronousInferenceStream:
                 LOG.error("[TimeoutError] Chunk wait expired – aborting stream.")
                 break
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 if tail := _drain_filters():
                     yield tail
                 LOG.error("Unexpected streaming error: %s", exc, exc_info=True)
                 break
 
+    # ────────────────────────────────────────────────────────────
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
