@@ -1,6 +1,8 @@
 import asyncio
 import csv
+import hashlib
 import json
+import math
 import re
 import textwrap
 from concurrent.futures import ThreadPoolExecutor
@@ -13,34 +15,96 @@ except ImportError:  # 3.9–3.10
     from typing_extensions import LiteralString
 
 import numpy as np
+import open_clip
 import pdfplumber
+import torch
 from docx import Document
+from PIL import Image
 from pptx import Presentation
 from projectdavid_common import UtilsInterface
 from sentence_transformers import SentenceTransformer
 
+# from transformers import Blip2ForConditionalGeneration, Blip2Processor
+
+# from ultralytics import YOLO
+
+# OCR fallback – optional
+# try:
+#    import pytesseract  # noqa: F401  # pylint: disable=unused-import
+# except ImportError:
+#    pytesseract = None
+
+
 log = UtilsInterface.LoggingUtility()
 
 
+def latlon_to_unit_vec(lat: float, lon: float) -> List[float]:
+    """Convert geographic lat/lon (deg) to a 3-D unit vector for Qdrant."""
+    lat_r = math.radians(lat)
+    lon_r = math.radians(lon)
+    return [
+        math.cos(lat_r) * math.cos(lon_r),
+        math.cos(lat_r) * math.sin(lon_r),
+        math.sin(lat_r),
+    ]
+
+
 class FileProcessor:
+    """Unified processor for text, tabular, office, JSON, **and image** files.
+
+    Each modality is embedded with its optimal model:
+        • Text   → paraphrase‑MiniLM‑L6‑v2 (384‑D)
+        • Image  → OpenCLIP ViT‑H/14         (1024‑D)
+        • Caption→ OpenCLIP text head        (1024‑D)
+
+    Rich captions are generated via BLIP‑2 Flan‑T5‑XL.
+    GPU usage is optional; pass `use_gpu=False` to stay on CPU.
+    """
+
     # ------------------------------------------------------------------ #
     #  Construction
     # ------------------------------------------------------------------ #
-    def __init__(self, max_workers: int = 4, chunk_size: int = 512):
-        self.embedding_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
-        self.embedding_model_name = "paraphrase-MiniLM-L6-v2"
-        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+    def __init__(
+        self,
+        *,
+        max_workers: int = 4,
+        chunk_size: int = 512,
+        use_gpu: bool = True,
+        use_ocr: bool = True,
+        use_detection: bool = False,
+        image_model_name: str = "ViT-H-14",
+        caption_model_name: str = "Salesforce/blip2-flan-t5-xl",
+    ):
+        # Device selection
+        if use_gpu and torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            self.torch_dtype = torch.float16
+        else:
+            self.device = torch.device("cpu")
+            self.torch_dtype = torch.float32
 
-        # token limits
+        # Text embedder
+        self.embedding_model_name = "paraphrase-MiniLM-L6-v2"
+        self.embedding_model = SentenceTransformer(self.embedding_model_name)
+        self.embedding_model.to(str(self.device))
+
+        # Chunking parameters
         self.max_seq_length = self.embedding_model.get_max_seq_length()
         self.special_tokens_count = 2
         self.effective_max_length = self.max_seq_length - self.special_tokens_count
         self.chunk_size = min(chunk_size, self.effective_max_length * 4)
 
-        log.info("Initialized optimized FileProcessor")
+        # Executor & logging
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        log.info(
+            "FileProcessor ready (device=%s, OCR=%s, detection=%s)",
+            self.device,
+            # self.use_ocr,
+            # self.use_detection,
+        )
 
     # ------------------------------------------------------------------ #
-    #  Generic validators
+    #  Generic validators                                           *
     # ------------------------------------------------------------------ #
     def validate_file(self, file_path: Path):
         """Ensure file exists and is under 100 MB."""
@@ -52,20 +116,10 @@ class FileProcessor:
             raise ValueError(f"{file_path.name} > {mb} MB limit")
 
     # ------------------------------------------------------------------ #
-    #  File-type detection  (simple extension map – NO libmagic)
+    #  File‑type detection (extension‑based – no libmagic)
     # ------------------------------------------------------------------ #
     def _detect_file_type(self, file_path: Path) -> str:
-        """
-        Return one of:
-
-            • 'pdf'   • 'csv'   • 'json'
-            • 'office' (.doc/.docx/.pptx)
-            • 'text'  (code / markup / plain text)
-
-        Raises *ValueError* if the extension is not recognised.
-        """
         suffix = file_path.suffix.lower()
-
         if suffix == ".pdf":
             return "pdf"
         if suffix == ".csv":
@@ -74,7 +128,8 @@ class FileProcessor:
             return "json"
         if suffix in {".doc", ".docx", ".pptx"}:
             return "office"
-
+        if suffix in {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".tiff"}:
+            return "image"
         text_exts = {
             ".txt",
             ".md",
@@ -96,29 +151,16 @@ class FileProcessor:
         }
         if suffix in text_exts:
             return "text"
-
         raise ValueError(f"Unsupported file type: {file_path.name} (ext={suffix})")
 
     # ------------------------------------------------------------------ #
-    #  Public entry-point
+    # Dispatcher
     # ------------------------------------------------------------------ #
     async def process_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
-        """Validate → detect → dispatch to the appropriate processor."""
-        file_path = Path(file_path)
-        self.validate_file(file_path)
-        ftype = self._detect_file_type(file_path)
-
-        dispatch_map = {
-            "pdf": self._process_pdf,
-            "text": self._process_text,
-            "csv": self._process_csv,
-            "office": self._process_office,
-            "json": self._process_json,
-        }
-        if ftype not in dispatch_map:
-            raise ValueError(f"Unsupported file type: {file_path.suffix}")
-
-        return await dispatch_map[ftype](file_path)
+        path = Path(file_path)
+        self.validate_file(path)
+        ftype = self._detect_file_type(path)
+        return await getattr(self, f"_process_{ftype}")(path)
 
     # ------------------------------------------------------------------ #
     #  PDF
@@ -126,7 +168,6 @@ class FileProcessor:
     async def _process_pdf(self, file_path: Path) -> Dict[str, Any]:
         page_chunks, doc_meta = await self._extract_text(file_path)
         all_chunks, line_data = [], []
-
         for page_text, page_num, line_nums in page_chunks:
             lines = page_text.split("\n")
             buf, buf_lines, length = [], [], 0
@@ -165,7 +206,7 @@ class FileProcessor:
         }
 
     # ------------------------------------------------------------------ #
-    #  Plain-text / code / markup
+    #  Plain‑text / code / markup
     # ------------------------------------------------------------------ #
     async def _process_text(self, file_path: Path) -> Dict[str, Any]:
         text, extra_meta, _ = await self._extract_text(file_path)
@@ -198,7 +239,6 @@ class FileProcessor:
                     continue
                 texts.append(txt)
                 metas.append({k: v for k, v in row.items() if k != text_field and v})
-
         vectors = await asyncio.gather(*[self._encode_chunk_async(t) for t in texts])
         return {
             "content": None,
@@ -209,7 +249,7 @@ class FileProcessor:
         }
 
     # ------------------------------------------------------------------ #
-    #  Office docs (.doc/.docx/.pptx)
+    #  Office docs
     # ------------------------------------------------------------------ #
     async def _process_office(self, file_path: Path) -> Dict[str, Any]:
         loop = asyncio.get_event_loop()
@@ -217,11 +257,10 @@ class FileProcessor:
             text = await loop.run_in_executor(
                 self._executor, self._read_docx, file_path
             )
-        else:  # .pptx
+        else:
             text = await loop.run_in_executor(
                 self._executor, self._read_pptx, file_path
             )
-
         chunks = self._chunk_text(text)
         vectors = await asyncio.gather(*[self._encode_chunk_async(c) for c in chunks])
         return {
@@ -267,11 +306,25 @@ class FileProcessor:
             return await loop.run_in_executor(
                 self._executor, self._extract_pdf_text, file_path
             )
-        else:
-            text = await loop.run_in_executor(
-                self._executor, self._read_text_file, file_path
+        text = await loop.run_in_executor(
+            self._executor, self._read_text_file, file_path
+        )
+        return text, {}, []
+
+    # ------------------------------------------------------------------ #
+    # util: clip‑text encoder (public)
+    # ------------------------------------------------------------------ #
+    def encode_clip_text(self, text: Union[str, List[str]]) -> np.ndarray:
+        with torch.no_grad():
+            toks = (
+                self.clip_tokenizer(text)
+                if isinstance(text, str)
+                else self.clip_tokenizer(text, truncate=True)
             )
-            return text, {}, []
+            tensor = toks.unsqueeze(0).to(self.device)
+            feat = self.clip_model.encode_text(tensor).squeeze()
+            feat = feat / feat.norm()
+            return feat.float().cpu().numpy()
 
     def _extract_pdf_text(self, file_path: Path):
         page_chunks, meta = [], {}
@@ -287,8 +340,8 @@ class FileProcessor:
                 lines = page.extract_text_lines()
                 sorted_lines = sorted(lines, key=lambda x: x["top"])
                 txts, nums = [], []
-                for ln_idx, L in enumerate(sorted_lines, start=1):
-                    t = L.get("text", "").strip()
+                for ln_idx, line in enumerate(sorted_lines, start=1):
+                    t = line.get("text", "").strip()
                     if t:
                         txts.append(t)
                         nums.append(ln_idx)
@@ -362,3 +415,24 @@ class FileProcessor:
             seg = tokens[i : i + self.effective_max_length]
             out.append(self.embedding_model.tokenizer.convert_tokens_to_string(seg))
         return out
+
+    # ------------------------------------------------------------------ #
+    #  Retrieval helpers (optional use)
+    # ------------------------------------------------------------------ #
+    def encode_text(self, text: Union[str, List[str]]) -> np.ndarray:
+        """Embed raw text with the SentenceTransformer model."""
+        single = isinstance(text, str)
+        out = self.embedding_model.encode(
+            text,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
+        return out if not single else out[0]
+
+    def encode_image(self, img: Image.Image) -> np.ndarray:
+        with torch.no_grad():
+            tensor = self.clip_preprocess(img).unsqueeze(0).to(self.device)
+            feat = self.clip_model.encode_image(tensor).squeeze()
+            feat = feat / feat.norm()
+            return feat.float().cpu().numpy()

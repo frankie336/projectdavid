@@ -24,9 +24,8 @@ print(test_user)
 
 # create a vector store
 store = client.vectors.create_vector_store(
-    name='Test Vector Store1',
-    user_id=test_user.id,
-)
+    name='Test Vector Store1')
+
 print(store)
 ```
 
@@ -81,14 +80,16 @@ At this point, your file has been vectorized to your store.
 
 ---
 
+### Searches
 
-## Supporting image vectors
 
-Entities now ingests and vectorizes a wide range of image formats for semantic search. You can leverage these image embeddings to extend text-only models into powerful multi-modal workflows; enriching chatbots, document search, recommendation engines, and more.
 
 ---
 
-### Making Searches Against Files in a Store
+
+
+
+
 
 - The assistant will self-select appropriate vector store 
 searches using its latent logic when responding to a prompt.
