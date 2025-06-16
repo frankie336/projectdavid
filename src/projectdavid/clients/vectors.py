@@ -13,10 +13,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from dotenv import load_dotenv
-from PIL import Image
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import BaseModel, Field
-from qdrant_client.http import models as qdrant
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
@@ -187,15 +185,12 @@ class VectorStoreClient:
         vector_size: int,
         distance_metric: str,
         config: Optional[Dict[str, Any]],
-        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
     ) -> ValidationInterface.VectorStoreRead:
         shared_id = self.identifier_service.generate_vector_id()
-        # forward multi-vector schema if given
         self.vector_manager.create_store(
             collection_name=shared_id,
             vector_size=vector_size,
             distance=distance_metric.upper(),
-            vectors_config=vectors_config,
         )
 
         payload = {
@@ -208,6 +203,10 @@ class VectorStoreClient:
         resp = await self._request("POST", "/v1/vector-stores", json=payload)
         return ValidationInterface.VectorStoreRead.model_validate(resp)
 
+    async def _list_my_vs_async(self) -> List[ValidationInterface.VectorStoreRead]:
+        resp = await self._request("GET", "/v1/vector-stores")
+        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
+
     # ------------------------------------------------------------------ #
     # NEW  admin‑aware creation helper
     # ------------------------------------------------------------------ #
@@ -218,17 +217,13 @@ class VectorStoreClient:
         vector_size: int,
         distance_metric: str,
         config: Optional[Dict[str, Any]],
-        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
     ) -> ValidationInterface.VectorStoreRead:
         shared_id = self.identifier_service.generate_vector_id()
-        # forward multi-vector schema if given
         self.vector_manager.create_store(
             collection_name=shared_id,
             vector_size=vector_size,
             distance=distance_metric.upper(),
-            vectors_config=vectors_config,
         )
-
         payload = {
             "shared_id": shared_id,
             "name": name,
@@ -236,6 +231,7 @@ class VectorStoreClient:
             "distance_metric": distance_metric.upper(),
             "config": config or {},
         }
+        # pass owner_id as query‑param (backend enforces admin‑only)
         resp = await self._request(
             "POST",
             "/v1/vector-stores",
@@ -291,20 +287,12 @@ class VectorStoreClient:
     async def _search_vs_async(
         self,
         vector_store_id: str,
-        query_text: Union[str, List[float]],
+        query_text: str,
         top_k: int,
         filters: Optional[Dict] = None,
         vector_store_host: Optional[str] = None,
-        vector_field: Optional[str] = None,  # allow caller override
     ) -> List[Dict[str, Any]]:
-        """
-        Internal: run ANN search against the specified vector field or auto-detect by store size.
 
-        If `vector_field` is provided, it will be used directly. Otherwise:
-          • 1024-D → caption_vector
-          • 3-D    → geo_vector
-          • others → default vector (text)
-        """
         # pick local vs. override host
         vector_manager = (
             VectorStoreManager(vector_store_host=vector_store_host)
@@ -312,36 +300,16 @@ class VectorStoreClient:
             else self.vector_manager
         )
 
-        # fetch store info to inspect schema
         store = self.retrieve_vector_store_sync(vector_store_id)
 
-        # determine the query vector and target field
-        if vector_field is not None:
-            # if caller passed a raw vector list, use it; otherwise treat as caption search
-            if isinstance(query_text, list):
-                vec = query_text
-            else:
-                vec = self.file_processor.encode_clip_text(query_text).tolist()
-        else:
-            # auto-detect based on stored vector dimensionality
-            if store.vector_size == 1024:
-                # image/caption space
-                vec = self.file_processor.encode_clip_text(query_text).tolist()
-                vector_field = "caption_vector"
-            elif store.vector_size == 3:
-                # geo space; query_text must be a raw 3-D list
-                if not isinstance(query_text, list):
-                    raise VectorStoreClientError(
-                        "Geo search requires a 3-element vector; pass raw unit-sphere list"
-                    )
-                vec = query_text
-                vector_field = "geo_vector"
-            else:
-                # fallback to text embedding
-                vec = self.file_processor.encode_text(query_text).tolist()
-                vector_field = None  # use default
+        # 🔶 choose encoder by vector_size
+        if store.vector_size == 1024:  # images collection
+            vec = self.file_processor.encode_clip_text(query_text).tolist()
+            vector_field = "caption_vector"  # field name in Qdrant
+        else:  # 384-D text collection
+            vec = self.file_processor.encode_text(query_text).tolist()
+            vector_field = None  # default field
 
-        # perform the search on the selected vector column
         return vector_manager.query_store(
             store_name=store.collection_name,
             query_vector=vec,
@@ -474,92 +442,10 @@ class VectorStoreClient:
         vector_size: int = 384,
         distance_metric: str = "Cosine",
         config: Optional[Dict[str, Any]] = None,
-        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
     ) -> ValidationInterface.VectorStoreRead:
-        """
-        Create a new store owned by this API key.
-
-        If `vectors_config` is provided, it should map each vector
-        field name to its Qdrant VectorParams (size + distance).
-        """
+        """Create a new store owned by *this* API key."""
         return self._run_sync(
-            self._create_vs_async(
-                name,
-                vector_size,
-                distance_metric,
-                config,
-                vectors_config,
-            )
-        )
-
-    def create_vector_vision_store(
-        self,
-        name: str = "vision",
-    ):
-
-        vectors_config = {
-            # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
-            "image_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Language embeddings of your BLIP-2 captions → 1024-D
-            "caption_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
-            "region_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Geo-location unit vectors (RegioNet) → 3-D
-            "geo_vector": qdrant.VectorParams(size=3, distance=qdrant.Distance.COSINE),
-        }
-
-        return self.create_vector_store(name=name, vectors_config=vectors_config)
-
-    def create_vector_vision_store_for_user(
-        self,
-        owner_id: str,
-        name: str,
-        *,
-        vector_size: int = 384,
-        distance_metric: str = "Cosine",
-        config: Optional[Dict[str, Any]] = None,
-        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
-    ) -> ValidationInterface.VectorStoreRead:
-        """
-        Admin-only: create a store on behalf of another user.
-        Pass `vectors_config` to define a multi-vector schema.
-        """
-        if not vectors_config:
-
-            vectors_config = {
-                # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
-                "image_vector": qdrant.VectorParams(
-                    size=1024, distance=qdrant.Distance.COSINE
-                ),
-                # Language embeddings of your BLIP-2 captions → 1024-D
-                "caption_vector": qdrant.VectorParams(
-                    size=1024, distance=qdrant.Distance.COSINE
-                ),
-                # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
-                "region_vector": qdrant.VectorParams(
-                    size=1024, distance=qdrant.Distance.COSINE
-                ),
-                # Geo-location unit vectors (RegioNet) → 3-D
-                "geo_vector": qdrant.VectorParams(
-                    size=3, distance=qdrant.Distance.COSINE
-                ),
-            }
-
-        return self._run_sync(
-            self._create_vs_for_user_async(
-                owner_id,
-                name,
-                vector_size,
-                distance_metric,
-                config,
-                vectors_config,
-            )
+            self._create_vs_async(name, vector_size, distance_metric, config)
         )
 
     def create_vector_store_for_user(
@@ -570,20 +456,16 @@ class VectorStoreClient:
         vector_size: int = 384,
         distance_metric: str = "Cosine",
         config: Optional[Dict[str, Any]] = None,
-        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
     ) -> ValidationInterface.VectorStoreRead:
         """
-        Admin-only: create a store on behalf of another user.
-        Pass `vectors_config` to define a multi-vector schema.
+        **Admin‑only** helper → create a store on behalf of *owner_id*.
+
+        The caller’s API‑key must belong to an admin; otherwise the
+        request will be rejected by the server with HTTP 403.
         """
         return self._run_sync(
             self._create_vs_for_user_async(
-                owner_id,
-                name,
-                vector_size,
-                distance_metric,
-                config,
-                vectors_config,
+                owner_id, name, vector_size, distance_metric, config
             )
         )
 
@@ -762,16 +644,10 @@ class VectorStoreClient:
         top_k: int = 5,
         filters: Optional[Dict] = None,
         vector_store_host: Optional[str] = None,
-        vector_field: Optional[str] = None,  # ← NEW
     ) -> List[Dict[str, Any]]:
         return self._run_sync(
             self._search_vs_async(
-                vector_store_id,
-                query_text,
-                top_k,
-                filters,
-                vector_store_host,
-                vector_field,
+                vector_store_id, query_text, top_k, filters, vector_store_host
             )
         )
 
@@ -935,91 +811,3 @@ class VectorStoreClient:
         hits = self._normalise_hits(hits)
 
         return hits
-
-    def image_similarity_search(
-        self,
-        vector_store_id: str,
-        img: Image.Image,
-        k: int = 10,
-        vector_store_host: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        vec = self.file_processor.encode_image(img).tolist()
-        return self.vector_file_search_raw(
-            vector_store_id=vector_store_id,
-            query_text=vec,
-            top_k=k,
-            filters=None,
-            vector_store_host=vector_store_host,
-            vector_field="image_vector",
-        )
-
-    def search_images(
-        self,
-        vector_store_id: str,
-        query: Union[str, Image.Image, List[float]],
-        *,
-        modality: Optional[str] = None,
-        k: int = 10,
-        vector_store_host: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Unified image search across multiple modalities, with appropriate reranking:
-
-        - If `query` is a str → caption search (reranked)
-        - If `query` is a PIL.Image.Image → visual search (no rerank)
-        - If `query` is a list[float] → raw vector search
-        - `modality` override: one of 'caption', 'image', 'region', 'geo'
-        """
-        # Map modality to (vector_field, encoder)
-        field_map = {
-            "caption": (
-                "caption_vector",
-                lambda q: self.file_processor.encode_clip_text(q).tolist(),
-            ),
-            "image": (
-                "image_vector",
-                lambda q: self.file_processor.encode_image(q).tolist(),
-            ),
-            "region": (
-                "region_vector",
-                lambda q: self.file_processor.encode_text(q).tolist(),
-            ),
-            "geo": ("geo_vector", lambda q: q),  # assume q is raw 3-D vector
-        }
-
-        # Auto-detect if not provided
-        if modality is None:
-            if isinstance(query, str):
-                modality = "caption"
-            elif isinstance(query, Image.Image):
-                modality = "image"
-            elif isinstance(query, list):
-                modality = "image"
-            else:
-                raise VectorStoreClientError(f"Unsupported query type: {type(query)}")
-
-        modality = modality.lower()
-        if modality not in field_map:
-            raise VectorStoreClientError(f"Unknown modality '{modality}'")
-
-        vector_field, encoder = field_map[modality]
-        vec = encoder(query)
-
-        # 1️⃣ ANN search
-        hits = self.vector_file_search_raw(
-            vector_store_id=vector_store_id,
-            query_text=vec,
-            top_k=k,
-            filters=None,
-            vector_store_host=vector_store_host,
-            vector_field=vector_field,
-        )
-
-        # 2️⃣ Rerank for text-based modalities
-        if modality in ("caption", "region"):
-            hits = reranker.rerank(
-                query if isinstance(query, str) else "", hits, top_k=min(len(hits), k)
-            )
-
-        # 3️⃣ Normalize and return
-        return self._normalise_hits(hits)
