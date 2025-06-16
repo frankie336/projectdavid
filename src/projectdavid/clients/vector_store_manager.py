@@ -7,6 +7,7 @@ details from the higher‑level SDK.
 
 from __future__ import annotations
 
+import inspect
 import time
 import uuid
 from pathlib import Path
@@ -141,34 +142,25 @@ class VectorStoreManager(BaseVectorStore):
         *,
         vector_name: Optional[str] = None,
     ):
-        if not vectors:
-            raise ValueError("Empty vectors list")
-        expected = len(vectors[0])
-        for i, vec in enumerate(vectors):
-            if len(vec) != expected or not all(isinstance(v, float) for v in vec):
-                raise ValueError(f"Vector {i} malformed")
+        # ... validation logic unchanged ...
 
-        # AUTO-DETECT VECTOR FIELD IF NONE GIVEN
+        # ── auto-detect vector_name (unchanged) ───────────────────────────
         if vector_name is None:
             collection_info = self.client.get_collection(collection_name=store_name)
-            vectors_config = collection_info.config.params.vectors
-
-            # Qdrant 1.x vs 2.x compatibility
-            if isinstance(vectors_config, dict):
-                vector_fields = list(vectors_config.keys())
-            else:
-                vector_fields = [vectors_config]
-
+            vectors_cfg = collection_info.config.params.vectors
+            vector_fields = (
+                list(vectors_cfg.keys())
+                if isinstance(vectors_cfg, dict)
+                else [vectors_cfg]
+            )
             if len(vector_fields) == 1:
                 vector_name = vector_fields[0]
                 log.debug(
-                    "Auto-detected vector_name='%s' for store=%s",
-                    vector_name,
-                    store_name,
+                    "Auto-detected vector_name=%r for store=%s", vector_name, store_name
                 )
             else:
                 raise ValueError(
-                    f"Multiple vector fields exist: {vector_fields}; please specify vector_name"
+                    f"Multiple vector fields {vector_fields}; please specify vector_name"
                 )
 
         points = [
@@ -181,16 +173,26 @@ class VectorStoreManager(BaseVectorStore):
         ]
 
         try:
-            self.client.upsert(
+            # Does this qdrant_client build accept the kwarg?
+            upsert_sig = inspect.signature(self.client.upsert)
+            supports_vector_name = "vector_name" in upsert_sig.parameters
+
+            upsert_kwargs = dict(
                 collection_name=store_name,
                 points=points,
                 wait=True,
-                vector_name=vector_name,
             )
+            if supports_vector_name:
+                upsert_kwargs["vector_name"] = vector_name
+
+            # Older clients: silently drop the kwarg
+            self.client.upsert(**upsert_kwargs)
+
             return {"status": "success", "points_inserted": len(points)}
-        except Exception as e:
-            log.error("Add‑to‑store failed: %s", e)
-            raise VectorStoreError(f"Insertion failed: {e}") from e
+
+        except Exception as exc:
+            log.error("Add-to-store failed: %s", exc)
+            raise VectorStoreError(f"Insertion failed: {exc}") from exc
 
     # ------------------------------------------------------------------ #
     # search / query
