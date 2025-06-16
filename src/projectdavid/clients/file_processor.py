@@ -39,6 +39,15 @@ class FileProcessor:
 
         log.info("Initialized optimized FileProcessor")
 
+    # in FileProcessor.__init__  (or monkey-patch after instantiation)
+    def encode_text(self, text: str):
+        return self.embedding_model.encode(
+            [text],
+            convert_to_numpy=True,
+            truncate="model_max_length",
+            normalize_embeddings=True,
+        )[0]
+
     # ------------------------------------------------------------------ #
     #  Generic validators
     # ------------------------------------------------------------------ #
