@@ -138,8 +138,8 @@ class VectorStoreManager(BaseVectorStore):
         texts: List[str],
         vectors: List[List[float]],
         metadata: List[dict],
-        *,
-        vector_name: Optional[str] = None,  # NEW
+        # *,
+        # vector_name: Optional[str] = None,  # NEW
     ):
         if not vectors:
             raise ValueError("Empty vectors list")
@@ -162,7 +162,7 @@ class VectorStoreManager(BaseVectorStore):
                 collection_name=store_name,
                 points=points,
                 wait=True,
-                vector_name=vector_name,  # ignored if None
+                # vector_name=vector_name,  # ignored if None
             )
             return {"status": "success", "points_inserted": len(points)}
         except Exception as e:
@@ -244,8 +244,9 @@ class VectorStoreManager(BaseVectorStore):
             with_payload=True,
             with_vectors=False,
         )
-        if vector_field:  # ← inject when requested
-            common["vector_name"] = vector_field
+
+        # if vector_field:  # ← inject when requested
+        #    common["vector_name"] = vector_field
 
         # ── call search (new client first, fallback to old) ------------------
         try:
