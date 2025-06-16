@@ -130,39 +130,45 @@ class VectorStoreManager(BaseVectorStore):
             log.error("Store info failed: %s", e)
             raise VectorStoreError(f"Info retrieval failed: {e}") from e
 
-    # ------------------------------------------------------------------ #
-    # ingestion helpers
-    # ------------------------------------------------------------------ #
     def add_to_store(
         self,
+        *,
         store_name: str,
         texts: List[str],
         vectors: List[List[float]],
         metadata: List[dict],
-        *,
         vector_name: Optional[str] = None,
-    ):
-        # ... validation logic unchanged ...
+    ) -> Dict[str, Any]:
+        """Upsert vectors + payloads into *store_name*.
 
-        # ── auto-detect vector_name (unchanged) ───────────────────────────
+        If *vector_name* is omitted, the manager auto‑detects the sole vector
+        field. If multiple fields exist it raises a clear error.
+        """
+
+        # ---- validate input ------------------------------------------------
+        if not vectors:
+            raise ValueError("Empty vectors list")
+        expected = len(vectors[0])
+        for i, vec in enumerate(vectors):
+            if len(vec) != expected or not all(isinstance(v, float) for v in vec):
+                raise ValueError(f"Vector {i} malformed: expected {expected} floats")
+
+        # ---- auto‑detect vector field --------------------------------------
         if vector_name is None:
-            collection_info = self.client.get_collection(collection_name=store_name)
-            vectors_cfg = collection_info.config.params.vectors
-            vector_fields = (
-                list(vectors_cfg.keys())
-                if isinstance(vectors_cfg, dict)
-                else [vectors_cfg]
-            )
+            coll_info = self.client.get_collection(collection_name=store_name)
+            v_cfg = coll_info.config.params.vectors
+            vector_fields = list(v_cfg.keys()) if isinstance(v_cfg, dict) else [v_cfg]
             if len(vector_fields) == 1:
                 vector_name = vector_fields[0]
                 log.debug(
-                    "Auto-detected vector_name=%r for store=%s", vector_name, store_name
+                    "Auto‑detected vector_name=%r for store=%s", vector_name, store_name
                 )
             else:
                 raise ValueError(
                     f"Multiple vector fields {vector_fields}; please specify vector_name"
                 )
 
+        # ---- build points ---------------------------------------------------
         points = [
             qdrant.PointStruct(
                 id=self._generate_vector_id(),
@@ -172,26 +178,23 @@ class VectorStoreManager(BaseVectorStore):
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
 
+        # ---- upsert with backward‑compat for old clients --------------------
+        upsert_sig = inspect.signature(self.client.upsert)
+        supports_vector_name = "vector_name" in upsert_sig.parameters
+
+        upsert_kwargs: Dict[str, Any] = {
+            "collection_name": store_name,
+            "points": points,
+            "wait": True,
+        }
+        if supports_vector_name:
+            upsert_kwargs["vector_name"] = vector_name
+
         try:
-            # Does this qdrant_client build accept the kwarg?
-            upsert_sig = inspect.signature(self.client.upsert)
-            supports_vector_name = "vector_name" in upsert_sig.parameters
-
-            upsert_kwargs = dict(
-                collection_name=store_name,
-                points=points,
-                wait=True,
-            )
-            if supports_vector_name:
-                upsert_kwargs["vector_name"] = vector_name
-
-            # Older clients: silently drop the kwarg
             self.client.upsert(**upsert_kwargs)
-
             return {"status": "success", "points_inserted": len(points)}
-
-        except Exception as exc:
-            log.error("Add-to-store failed: %s", exc)
+        except Exception as exc:  # noqa: BLE001
+            log.error("Add‑to‑store failed: %s", exc, exc_info=True)
             raise VectorStoreError(f"Insertion failed: {exc}") from exc
 
     # ------------------------------------------------------------------ #
