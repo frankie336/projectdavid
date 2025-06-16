@@ -7,10 +7,8 @@ details from the higher‑level SDK.
 
 from __future__ import annotations
 
-import inspect
 import time
 import uuid
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -57,12 +55,14 @@ class VectorStoreManager(BaseVectorStore):
         vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,
     ) -> dict:
         """
-        Create or recreate a Qdrant collection.  By default creates a single-vector
-        collection with `vector_size`.  To define multi-vector schema, pass
-        `vectors_config` mapping field names to VectorParams.
+        Create or recreate a Qdrant collection.
+
+        • If *vectors_config* is provided → use it verbatim (multi-vector schema).
+        • Otherwise create a classic single-vector collection *without* naming the
+          vector field – so upserts can omit ``vector_name``.
         """
         try:
-            # existence check
+            # ── pre-existence check ────────────────────────────────────────────
             if any(
                 col.name == collection_name
                 for col in self.client.get_collections().collections
@@ -73,27 +73,32 @@ class VectorStoreManager(BaseVectorStore):
             if dist not in qdrant.Distance.__members__:
                 raise ValueError(f"Invalid distance metric '{distance}'")
 
-            # choose schema
-            if vectors_config:
-                config = vectors_config
-            else:
-                config = {
-                    "_default": qdrant.VectorParams(
-                        size=vector_size, distance=qdrant.Distance[dist]
-                    )
-                }
+            # ── choose schema ──────────────────────────────────────────────────
+            if vectors_config:  # caller supplied full mapping
+                config = vectors_config  # e.g. {"text_vec": ..., "img_vec": ...}
+            else:  # default = single unnamed vector
+                config = qdrant.VectorParams(
+                    size=vector_size,
+                    distance=qdrant.Distance[dist],
+                )
 
-            # recreate with full schema
+            # ── (re)create collection ─────────────────────────────────────────
             self.client.recreate_collection(
                 collection_name=collection_name,
                 vectors_config=config,
             )
-            # record metadata for each field
+
+            # ── bookkeeping ───────────────────────────────────────────────────
+            if isinstance(config, dict):
+                fields = list(config.keys())
+            else:  # unnamed field
+                fields = [None]
+
             self.active_stores[collection_name] = {
                 "created_at": int(time.time()),
                 "vector_size": vector_size,
                 "distance": dist,
-                "fields": list(config.keys()),
+                "fields": fields,
             }
             log.info("Created Qdrant collection %s", collection_name)
             return {"collection_name": collection_name, "status": "created"}
