@@ -138,8 +138,8 @@ class VectorStoreManager(BaseVectorStore):
         texts: List[str],
         vectors: List[List[float]],
         metadata: List[dict],
-        # *,
-        # vector_name: Optional[str] = None,  # NEW
+        *,
+        vector_name: Optional[str] = None,
     ):
         if not vectors:
             raise ValueError("Empty vectors list")
@@ -147,6 +147,29 @@ class VectorStoreManager(BaseVectorStore):
         for i, vec in enumerate(vectors):
             if len(vec) != expected or not all(isinstance(v, float) for v in vec):
                 raise ValueError(f"Vector {i} malformed")
+
+        # AUTO-DETECT VECTOR FIELD IF NONE GIVEN
+        if vector_name is None:
+            collection_info = self.client.get_collection(collection_name=store_name)
+            vectors_config = collection_info.config.params.vectors
+
+            # Qdrant 1.x vs 2.x compatibility
+            if isinstance(vectors_config, dict):
+                vector_fields = list(vectors_config.keys())
+            else:
+                vector_fields = [vectors_config]
+
+            if len(vector_fields) == 1:
+                vector_name = vector_fields[0]
+                log.debug(
+                    "Auto-detected vector_name='%s' for store=%s",
+                    vector_name,
+                    store_name,
+                )
+            else:
+                raise ValueError(
+                    f"Multiple vector fields exist: {vector_fields}; please specify vector_name"
+                )
 
         points = [
             qdrant.PointStruct(
@@ -156,13 +179,13 @@ class VectorStoreManager(BaseVectorStore):
             )
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
+
         try:
-            # pass vector_name if multi-column
             self.client.upsert(
                 collection_name=store_name,
                 points=points,
                 wait=True,
-                # vector_name=vector_name,  # ignored if None
+                vector_name=vector_name,
             )
             return {"status": "success", "points_inserted": len(points)}
         except Exception as e:
