@@ -20,6 +20,7 @@ from qdrant_client.http import models as qdrant
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
+from projectdavid.decorators import experimental
 from projectdavid.synthesis import reranker, retriever
 from projectdavid.synthesis.llm_synthesizer import synthesize_envelope
 from projectdavid.utils.vector_search_formatter import make_envelope
@@ -72,8 +73,9 @@ class VectorStoreClient:
         api_key: Optional[str] = None,
         *,
         vector_store_host: str = "localhost",
-        file_processor_kwargs: Optional[dict] = None,  # 🔶 add arg
+        file_processor_kwargs: Optional[dict] = None,
     ):
+
         self.base_url = (base_url or os.getenv("BASE_URL", "")).rstrip("/")
         self.api_key = api_key or os.getenv("API_KEY")
         if not self.base_url:
@@ -94,7 +96,18 @@ class VectorStoreClient:
         self.identifier_service = UtilsInterface.IdentifierService()
 
         # 🔶 forward kwargs into the upgraded FileProcessor
-        self.file_processor = FileProcessor(**(file_processor_kwargs or {}))
+
+        self.file_processor = FileProcessor(
+            **(
+                file_processor_kwargs
+                or {
+                    "use_gpu": False,
+                    "use_detection": True,
+                    "use_geo": True,
+                    "use_ocr": True,
+                }
+            )
+        )
 
         log.info("VectorStoreClient → %s", self.base_url)
 
@@ -492,30 +505,48 @@ class VectorStoreClient:
             )
         )
 
+    @experimental
     def create_vector_vision_store(
         self,
-        name: str = "vision",
-    ):
+        name: str,
+        *,
+        vector_size: int = 384,
+        distance_metric: str = "Cosine",
+        config: Optional[Dict[str, Any]] = None,
+        vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,  # ← NEW
+    ) -> ValidationInterface.VectorStoreRead:
 
-        vectors_config = {
-            # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
-            "image_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Language embeddings of your BLIP-2 captions → 1024-D
-            "caption_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
-            "region_vector": qdrant.VectorParams(
-                size=1024, distance=qdrant.Distance.COSINE
-            ),
-            # Geo-location unit vectors (RegioNet) → 3-D
-            "geo_vector": qdrant.VectorParams(size=3, distance=qdrant.Distance.COSINE),
-        }
+        if not vectors_config:
+            vectors_config = {
+                # Raw visual embeddings (OpenCLIP ViT-H/14 → 1024-D)
+                "image_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Language embeddings of your BLIP-2 captions → 1024-D
+                "caption_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Object-region embeddings (YOLO crop + Sentence-BERT) → 1024-D
+                "region_vector": qdrant.VectorParams(
+                    size=1024, distance=qdrant.Distance.COSINE
+                ),
+                # Geo-location unit vectors (RegioNet) → 3-D
+                "geo_vector": qdrant.VectorParams(
+                    size=3, distance=qdrant.Distance.COSINE
+                ),
+            }
 
-        return self.create_vector_store(name=name, vectors_config=vectors_config)
+        return self._run_sync(
+            self._create_vs_async(
+                name,
+                vector_size,
+                distance_metric,
+                config,
+                vectors_config,
+            )
+        )
 
+    @experimental
     def create_vector_vision_store_for_user(
         self,
         owner_id: str,
@@ -936,6 +967,7 @@ class VectorStoreClient:
 
         return hits
 
+    @experimental
     def image_similarity_search(
         self,
         vector_store_id: str,
@@ -953,6 +985,7 @@ class VectorStoreClient:
             vector_field="image_vector",
         )
 
+    @experimental
     def search_images(
         self,
         vector_store_id: str,
