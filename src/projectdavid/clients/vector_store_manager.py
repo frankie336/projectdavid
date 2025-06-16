@@ -139,13 +139,17 @@ class VectorStoreManager(BaseVectorStore):
         metadata: List[dict],
         vector_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Upsert vectors + payloads into *store_name*.
+        """
+        Upsert vectors + payloads into *store_name*.
 
-        If *vector_name* is omitted, the manager auto‑detects the sole vector
-        field. If multiple fields exist it raises a clear error.
+        If *vector_name* is omitted the manager:
+
+        • auto-detects the single vector field for classic (unnamed) collections
+        • auto-detects the sole key for named-vector collections with exactly one field
+        • raises if multiple named fields exist.
         """
 
-        # ---- validate input ------------------------------------------------
+        # ─── input validation ───────────────────────────────────────────────
         if not vectors:
             raise ValueError("Empty vectors list")
         expected = len(vectors[0])
@@ -153,22 +157,33 @@ class VectorStoreManager(BaseVectorStore):
             if len(vec) != expected or not all(isinstance(v, float) for v in vec):
                 raise ValueError(f"Vector {i} malformed: expected {expected} floats")
 
-        # ---- auto‑detect vector field --------------------------------------
+        # ─── auto-detect vector field ───────────────────────────────────────
         if vector_name is None:
             coll_info = self.client.get_collection(collection_name=store_name)
             v_cfg = coll_info.config.params.vectors
-            vector_fields = list(v_cfg.keys()) if isinstance(v_cfg, dict) else [v_cfg]
-            if len(vector_fields) == 1:
-                vector_name = vector_fields[0]
-                log.debug(
-                    "Auto‑detected vector_name=%r for store=%s", vector_name, store_name
-                )
+
+            if isinstance(v_cfg, dict):  # modern named-vector schema
+                vector_fields = list(v_cfg.keys())
+                if len(vector_fields) == 1:  # exactly one → safe default
+                    vector_name = vector_fields[0]
+                    log.debug(
+                        "Auto-detected vector_name=%r for store=%s",
+                        vector_name,
+                        store_name,
+                    )
+                else:  # >1 named fields → ambiguous
+                    raise ValueError(
+                        f"Multiple vector fields {vector_fields}; please specify vector_name"
+                    )
             else:
-                raise ValueError(
-                    f"Multiple vector fields {vector_fields}; please specify vector_name"
+                # legacy single-vector schema → leave vector_name as None
+                log.debug(
+                    "Collection %s uses legacy single-vector schema; "
+                    "upserting without vector_name",
+                    store_name,
                 )
 
-        # ---- build points ---------------------------------------------------
+        # ─── build points payload ───────────────────────────────────────────
         points = [
             qdrant.PointStruct(
                 id=self._generate_vector_id(),
@@ -178,7 +193,9 @@ class VectorStoreManager(BaseVectorStore):
             for txt, vec, meta in zip(texts, vectors, metadata)
         ]
 
-        # ---- upsert with backward‑compat for old clients --------------------
+        # ─── upsert with backward-compat for old qdrant-client builds ───────
+        import inspect  # keep local to avoid top-level dependency if absent elsewhere
+
         upsert_sig = inspect.signature(self.client.upsert)
         supports_vector_name = "vector_name" in upsert_sig.parameters
 
@@ -187,14 +204,14 @@ class VectorStoreManager(BaseVectorStore):
             "points": points,
             "wait": True,
         }
-        if supports_vector_name:
+        if supports_vector_name and vector_name is not None:
             upsert_kwargs["vector_name"] = vector_name
 
         try:
             self.client.upsert(**upsert_kwargs)
             return {"status": "success", "points_inserted": len(points)}
         except Exception as exc:  # noqa: BLE001
-            log.error("Add‑to‑store failed: %s", exc, exc_info=True)
+            log.error("Add-to-store failed: %s", exc, exc_info=True)
             raise VectorStoreError(f"Insertion failed: {exc}") from exc
 
     # ------------------------------------------------------------------ #
