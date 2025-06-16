@@ -1,3 +1,10 @@
+## [1.33.22](https://github.com/frankie336/projectdavid/compare/v1.33.21...v1.33.22) (2025-06-16)
+
+
+### Bug Fixes
+
+* Back out from vision support - resource issue. Revisit in grand plan-16 ([bc3c298](https://github.com/frankie336/projectdavid/commit/bc3c298034ee40580ec4e92223782a9f2aee279f))
+
 ## [1.33.21](https://github.com/frankie336/projectdavid/compare/v1.33.20...v1.33.21) (2025-06-16)
 
 
