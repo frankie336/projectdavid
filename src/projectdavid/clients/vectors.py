@@ -245,32 +245,31 @@ class VectorStoreClient:
     ) -> ValidationInterface.VectorStoreFileRead:
         processed = await self.file_processor.process_file(p)
         texts, vectors = processed["chunks"], processed["vectors"]
-        line_data = processed.get("line_data") or []  # ← NEW
+        line_data = processed.get("line_data") or []
 
-        base_md = meta or {}
-        base_md.update({"source": str(p), "file_name": p.name})
-
+        base_md = (meta or {}) | {"source": str(p), "file_name": p.name}
         file_record_id = f"vsf_{uuid.uuid4()}"
 
-        # Build per‑chunk payload, now including page/lines if present
         chunk_md = []
-        for i in range(len(texts)):
-            payload = {
-                **base_md,
-                "chunk_index": i,
-                "file_id": file_record_id,
-            }
-            if i < len(line_data):  # ← NEW
-                payload.update(line_data[i])  # {'page': …, 'lines': …}
+        for i, txt in enumerate(texts):
+            payload = {**base_md, "chunk_index": i, "file_id": file_record_id}
+            if i < len(line_data):
+                payload.update(line_data[i])  # {'page':…, 'lines':…}
             chunk_md.append(payload)
 
+        # 🔑 1. look up the backend store to get its *collection* name
+        store = self.retrieve_vector_store_sync(vector_store_id)
+        collection_name = store.collection_name
+
+        # 🔑 2. upsert via VectorStoreManager (auto-detects vector field)
         self.vector_manager.add_to_store(
-            store_name=vector_store_id,
+            store_name=collection_name,
             texts=texts,
             vectors=vectors,
             metadata=chunk_md,
         )
 
+        # 3. register the file with the API
         resp = await self._request(
             "POST",
             f"/v1/vector-stores/{vector_store_id}/files",
@@ -318,10 +317,10 @@ class VectorStoreClient:
             vector_field=vector_field,
         )
 
-    async def _delete_vs_async(
-        self, vector_store_id: str, permanent: bool
-    ) -> Dict[str, Any]:
-        qres = self.vector_manager.delete_store(vector_store_id)
+    async def _delete_vs_async(self, vector_store_id: str, permanent: bool):
+        # collection deletion must use the *collection* name
+        store = self.retrieve_vector_store_sync(vector_store_id)
+        qres = self.vector_manager.delete_store(store.collection_name)
         await self._request(
             "DELETE",
             f"/v1/vector-stores/{vector_store_id}",
@@ -334,10 +333,11 @@ class VectorStoreClient:
             "qdrant_result": qres,
         }
 
-    async def _delete_file_async(
-        self, vector_store_id: str, file_path: str
-    ) -> Dict[str, Any]:
-        fres = self.vector_manager.delete_file_from_store(vector_store_id, file_path)
+    async def _delete_file_async(self, vector_store_id: str, file_path: str):
+        store = self.retrieve_vector_store_sync(vector_store_id)
+        fres = self.vector_manager.delete_file_from_store(
+            store.collection_name, file_path
+        )
         await self._request(
             "DELETE",
             f"/v1/vector-stores/{vector_store_id}/files",
