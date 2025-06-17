@@ -1,6 +1,30 @@
+> **PLEASE NOTE:**
+>
+>  As of V1.33.23 Thread creation no longer requires participant_ids to be passed in:
+>   
+
+```python
+thread = client.threads.create_thread(participant_ids=user.id)
+
+# Can be shortened to: 
+
+thread = client.threads.create_thread() 
+
+```
+
+
+## Functnction call error surfacing 
+
+Function call error trace stack messages are now surfaced to the message dialogue. If the assistant 
+does not proactively say so, you can force this with a followup prompt like:
+```python
+"What happened?"
+```
+
+Sometimes it receives the error but does not proactively reveal.  Please be aware that your consumers 
+will have access to stack trace messages. OpenAI do this, the risk is minimal.
+
 # Data Ingestion and Search Methods
-
-
 
 ## Vector Store Standard Data Ingestion Pipeline
 
@@ -18,8 +42,8 @@ sync_stream.stream_chunks(
 ...        
 ```
 
-Please see here for  detailed [example](https://github.com/frankie336/projectdavid/blob/master/docs/inference.md)
-
+Please see [here](https://github.com/frankie336/projectdavid/blob/master/docs/inference.md) 
+for  detailed use example.  
 
 
 ## Vector Store Standard Data Ingestion Pipeline
@@ -70,7 +94,9 @@ As of **projectdavid v1.33.23** ([PyPI Link](https://pypi.org/project/projectdav
 
 #### Fuzzy Search App Example:
 
-[URL here]
+[Fuzzy Search App](https://github.com/frankie336/entities_cook_book/blob/master/recipes/reccomender/search_movielens-v2.py)
+
+
 
 ### `VectorStoreClient.simple_vector_file_search`
 

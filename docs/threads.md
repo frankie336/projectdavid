@@ -17,7 +17,7 @@ client = Entity()
 
 user = client.users.create_user(name='My test user')
 
-thread = client.threads.create_thread(participant_ids=user.id)
+thread = client.threads.create_thread()
 
 print(thread.id)
 
