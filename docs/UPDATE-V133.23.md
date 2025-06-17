@@ -13,7 +13,7 @@ thread = client.threads.create_thread()
 ```
 
 
-## Functnction call error surfacing 
+## Function call error surfacing 
 
 Function call error trace stack messages are now surfaced to the message dialogue. If the assistant 
 does not proactively say so, you can force this with a followup prompt like:
