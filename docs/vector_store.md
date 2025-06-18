@@ -14,13 +14,15 @@ Associated methods can be used to extend the memory and contextual recall of AI 
 ## Basic Vector Store Operations
 
 ```python
+import os 
 from projectdavid import Entity
 
-client = Entity()
 
-# create a user
-test_user = client.users.create_user(name='test_user')
-print(test_user)
+client = Entity(
+    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+    api_key=os.getenv("ENTITIES_API_KEY"), #This is the entities user API Key
+)
+
 
 # create a vector store
 store = client.vectors.create_vector_store(
@@ -71,25 +73,89 @@ client = Entity()
 
 save_file_to_store = client.vectors.add_file_to_vector_store(
     vector_store_id='vect_WsdjjLHoQqyMLmCdrvShc6',
-    file_path='test_file.txt'
+    file_path='Donoghue_v_Stevenson__1932__UKHL_100__26_May_1932_.pdf'
 )
 ```
-
-At this point, your file has been vectorized to your store.
-
-
----
-
-### Searches
-
-
-
+Text is split, embedded into  a vector space, enriched with metadata, and pushed into a vector database.
+This allows for semantic search over its contents. 
 ---
 
 
+## Search Methods
+The Entities Vector Store supports four distinct search methods, each tailored to a specific use case:
+
+
+```VectorStoreClient.vector_file_search_raw```
+  Returns raw similarity-ranked vectors with full metadata. Best for low-level access or post-processing.
+
+````python
+client = Entity(
+    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+    api_key=os.getenv("ENTITIES_API_KEY"), #This is the entities user API Key
+)
+
+
+client.vectors.vector_file_search_raw(
+    vector_store_id = store.id 
+    query_text = 'Explain the neighbour principle'
+
+)
+
+````
+
+```VectorStoreClient.simple_vector_file_search``` Returns a structured response optimized for LLM consumption — useful in function calls with citation-ready output.
+
+````python
+client = Entity(
+    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+    api_key=os.getenv("ENTITIES_API_KEY"), #This is the entities user API Key
+)
+
+
+client.vectors.simple_vector_file_search(
+    vector_store_id = store.id 
+    query_text = 'Explain the neighbour principle'
+
+)
+````
+
+
+```VectorStoreClient.attended_file_search```Performs search, ranking, and synthesis using an internal agent. Ideal for push-button demos or standalone assistants.
+
+````python
+client = Entity(
+    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+    api_key=os.getenv("ENTITIES_API_KEY"), #This is the entities user API Key
+)
+
+
+client.vectors.attended_file_search(
+    vector_store_id = store.id 
+    query_text = 'Explain the neighbour principle'
+
+)
+````
+
+```VectorStoreClient.unattended_file_search```Performs high-precision search with post-ranking, but without synthesis. Use this in toolchains or function-calling workflows.
 
 
 
+````python
+client = Entity(
+    base_url=os.getenv("BASE_URL", "http://localhost:9000"),
+    api_key=os.getenv("ENTITIES_API_KEY"), #This is the entities user API Key
+)
+
+
+client.vectors.unattended_file_search(
+    vector_store_id = store.id 
+    query_text = 'Explain the neighbour principle'
+
+)
+````
+
+
+---
 
 - The assistant will self-select appropriate vector store 
 searches using its latent logic when responding to a prompt.
@@ -134,11 +200,6 @@ list_store_files(vector_store_id) → List[VectorStoreFileRead]
 update_vector_store_file_status(vector_store_id, file_id, status, error_message=None) → VectorStoreFileRead
 ```
 
-### Search
-
-```python
-search_vector_store(vector_store_id, query_text, top_k=5, filters=None) → List[dict]
-```
 
 ### Assistant Integration
 
