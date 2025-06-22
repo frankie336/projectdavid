@@ -92,7 +92,9 @@ class VectorStoreClient:
         self.identifier_service = UtilsInterface.IdentifierService()
 
         # 🔶 forward kwargs into the upgraded FileProcessor
-        self.file_processor = FileProcessor(**(file_processor_kwargs or {}))
+        # self.file_processor = FileProcessor(**(file_processor_kwargs or {}))
+        # Using Stripped down version for now until we move forward with multi-modal stores
+        self.file_processor = FileProcessor()
 
         log.info("VectorStoreClient → %s", self.base_url)
 
