@@ -18,11 +18,12 @@ from .clients.users_client import UsersClient
 from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
 
-# Load environment variables from .env file.
-load_dotenv()
-
 # Initialize logging utility.
 logging_utility = UtilsInterface.LoggingUtility()
+
+
+class MissingAPIKeyError(ValueError):
+    """Raised when no API key is provided via arg or ENTITIES_API_KEY env var."""
 
 
 class Entity:
@@ -39,10 +40,22 @@ class Entity:
 
         self.file_processor_kwargs = file_processor_kwargs
 
+        # -------- 1. Resolve key  -------------------------------------------------
+        self.api_key = (
+            api_key
+            or os.getenv("ENTITIES_API_KEY")  # new variable name
+            or os.getenv("API_KEY")  # legacy support, if you like
+        )
+
+        if not self.api_key:
+            raise MissingAPIKeyError(
+                "No API key supplied. Set ENTITIES_API_KEY in your environment "
+                "or pass api_key='sk-...' when creating the client."
+            )
+
         self.base_url = base_url or os.getenv(
             "ENTITIES_BASE_URL", "http://localhost:9000/"
         )
-        self.api_key = api_key or os.getenv("API_KEY", "your_api_key")
 
         logging_utility.info("Entity initialized with base_url: %s", self.base_url)
 
