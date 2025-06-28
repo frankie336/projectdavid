@@ -1,3 +1,10 @@
+## [1.33.25](https://github.com/frankie336/projectdavid/compare/v1.33.24...v1.33.25) (2025-06-28)
+
+
+### Bug Fixes
+
+* attempt to load api-key from client users .env file ([3bf2f26](https://github.com/frankie336/projectdavid/commit/3bf2f26506c8755adb510d7f6ed852e9aca47a46))
+
 ## [1.33.24](https://github.com/frankie336/projectdavid/compare/v1.33.23...v1.33.24) (2025-06-22)
 
 
