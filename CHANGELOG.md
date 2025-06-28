@@ -1,3 +1,10 @@
+## [1.33.24](https://github.com/frankie336/projectdavid/compare/v1.33.23...v1.33.24) (2025-06-22)
+
+
+### Bug Fixes
+
+* Remove Kargs from FileProcessor() ([17a19b3](https://github.com/frankie336/projectdavid/commit/17a19b36f2275bc408b60333f4798b1a462fb96c))
+
 ## [1.33.23](https://github.com/frankie336/projectdavid/compare/v1.33.22...v1.33.23) (2025-06-17)
 
 
