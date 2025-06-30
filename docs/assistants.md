@@ -24,6 +24,7 @@ assistant = client.assistants.create_assistant(
 )
 print(f"Assistant created: ID: {assistant.id}")
 
+
 # Retrieve an Assistant
 
 retrieved_assistant = client.assistants.retrieve_assistant(assistant_id=assistant.id)
