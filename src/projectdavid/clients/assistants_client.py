@@ -263,14 +263,10 @@ class AssistantsClient(BaseAPIClient):
         )
         return {"message": "Assistant disassociated from user successfully"}
 
-    def list_assistants_by_user(
-        self, user_id: str
-    ) -> List[ent_validator.AssistantRead]:
-        logging_utility.info("Listing assistants for user id=%s", user_id)
-        try:
-            resp = self._request_with_retries("GET", f"/v1/users/{user_id}/assistants")
-            raw_list = self._parse_response(resp)
-            return [ent_validator.AssistantRead(**a) for a in raw_list]
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise AssistantsClientError(f"Validation error: {e}") from e
+    def list(self) -> list[ent_validator.AssistantRead]:
+        """Return every assistant owned by *this* API key."""
+        logging_utility.info("Listing assistants")
+
+        resp = self._request_with_retries("GET", "/v1/assistants")
+        raw = self._parse_response(resp)
+        return [ent_validator.AssistantRead(**a) for a in raw]
