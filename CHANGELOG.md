@@ -1,3 +1,10 @@
+## [1.33.26](https://github.com/frankie336/projectdavid/compare/v1.33.25...v1.33.26) (2025-06-30)
+
+
+### Bug Fixes
+
+* Remove platform_tools from request body ([01f79be](https://github.com/frankie336/projectdavid/commit/01f79be53bbe5b9e29c14c3757044a954c65711d))
+
 ## [1.33.25](https://github.com/frankie336/projectdavid/compare/v1.33.24...v1.33.25) (2025-06-28)
 
 
