@@ -1,3 +1,10 @@
+## [1.33.28](https://github.com/frankie336/projectdavid/compare/v1.33.27...v1.33.28) (2025-07-01)
+
+
+### Bug Fixes
+
+* remove platform_tools from assistant create method signature and payload. ([8caf3b0](https://github.com/frankie336/projectdavid/commit/8caf3b00f5d45422af9bda088ed266b9c39dddee))
+
 ## [1.33.27](https://github.com/frankie336/projectdavid/compare/v1.33.26...v1.33.27) (2025-06-30)
 
 
