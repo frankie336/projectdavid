@@ -1,3 +1,10 @@
+## [1.33.27](https://github.com/frankie336/projectdavid/compare/v1.33.26...v1.33.27) (2025-06-30)
+
+
+### Bug Fixes
+
+* correct list method! ([bf17205](https://github.com/frankie336/projectdavid/commit/bf1720583f37cf09844a06c5c95f319ba5192d41))
+
 ## [1.33.26](https://github.com/frankie336/projectdavid/compare/v1.33.25...v1.33.26) (2025-06-30)
 
 
