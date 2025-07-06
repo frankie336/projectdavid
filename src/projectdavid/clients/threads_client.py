@@ -154,17 +154,23 @@ class ThreadsClient(BaseAPIClient):
             logging_utility.error("Unexpected error listing threads: %s", str(e))
             raise
 
-    def delete_thread(self, thread_id: str) -> bool:
+    def delete_thread(self, thread_id: str) -> validator.ThreadDeleted | None:
+        """
+        Delete a thread.
+        ▶ On success:  returns ThreadDeleted(id=…, object='thread.deleted', deleted=True)
+        ▶ If not found: returns None
+        """
         logging_utility.info("Deleting thread with id: %s", thread_id)
+
         try:
-            response = self.client.delete(f"/v1/threads/{thread_id}")
-            response.raise_for_status()
-            return True
+            resp = self.client.delete(f"/v1/threads/{thread_id}")
+            resp.raise_for_status()  # 2xx → OK
+            return validator.ThreadDeleted(**resp.json())  # ← parse envelope
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                return False
-            logging_utility.error("HTTP error deleting thread: %s", str(e))
+                return None  # thread not found
+            logging_utility.error("HTTP error deleting thread: %s", e)
             raise
         except Exception as e:
-            logging_utility.error("Unexpected error deleting thread: %s", str(e))
+            logging_utility.error("Unexpected error deleting thread: %s", e)
             raise
