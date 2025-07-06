@@ -1,4 +1,4 @@
-# projectdavid/clients/threads_client.py
+#! projectdavid/clients/threads_client.py
 from typing import Any, Dict, List, Optional
 
 import httpx

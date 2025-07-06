@@ -23,6 +23,6 @@ python-pptx
 
 sseclient-py
 # Entity SDK and shared models (from Test PyPI)
-projectdavid_common>=0.17.5
+projectdavid_common>=0.17.6
 projectdavid
 
