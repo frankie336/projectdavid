@@ -1,3 +1,13 @@
+## [1.33.30](https://github.com/frankie336/projectdavid/compare/v1.33.29...v1.33.30) (2025-07-06)
+
+
+### Bug Fixes
+
+* Add DeleteThread schema2. ([de9fd17](https://github.com/frankie336/projectdavid/commit/de9fd17d81116c503ebda23d90d7cb031938b952))
+* Add DeleteThread schema2. ([c43cdd6](https://github.com/frankie336/projectdavid/commit/c43cdd6c950847cb1a79e686848ca42d958126b9))
+* Add DeleteThread schema2. ([0c4c548](https://github.com/frankie336/projectdavid/commit/0c4c54878d10d5535c4427481ebd32d7910b15f8))
+* Add DeleteThread schema3. ([540c445](https://github.com/frankie336/projectdavid/commit/540c445829809e785dcab0b0dcd1600b0913ffcf))
+
 ## [1.33.29](https://github.com/frankie336/projectdavid/compare/v1.33.28...v1.33.29) (2025-07-06)
 
 
