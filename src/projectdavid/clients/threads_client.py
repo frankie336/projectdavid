@@ -104,16 +104,30 @@ class ThreadsClient(BaseAPIClient):
             logging_utility.error("Unexpected error retrieving thread: %s", str(e))
             raise
 
-    def update_thread(self, thread_id: str, **updates) -> validator.ThreadReadDetailed:
+    def update_thread(
+        self,
+        thread_id: str,
+        *,
+        participant_ids: Optional[List[str]] = None,
+        meta_data: Optional[Dict[str, Any]] = None,
+        tool_resources: Optional[Dict[str, Any]] = None,
+    ) -> validator.ThreadReadDetailed:
         logging_utility.info("Updating thread with id: %s", thread_id)
         try:
-            validated_updates = validator.ThreadUpdate(**updates)
-            response = self.client.post(
-                f"/v1/threads/{thread_id}", json=validated_updates.model_dump()
+            validated_updates = validator.ThreadUpdate(
+                participant_ids=participant_ids,
+                meta_data=meta_data,
+                tool_resources=tool_resources,
+            )
+
+            response = self.client.put(
+                f"/v1/threads/{thread_id}",
+                json=validated_updates.model_dump(),
             )
             response.raise_for_status()
             updated_thread = response.json()
             return validator.ThreadReadDetailed(**updated_thread)
+
         except httpx.HTTPStatusError as e:
             logging_utility.error("HTTP error updating thread: %s", str(e))
             raise
