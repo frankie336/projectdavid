@@ -153,18 +153,21 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def list_messages(
-        self, thread_id: str, limit: int = 20, order: str = "asc"
-    ) -> List[Dict[str, Any]]:
+        self,
+        thread_id: str,
+        limit: int = 20,
+        order: str = "asc",
+    ) -> ent_validator.MessagesList:
         """
-        List messages for a given thread.
+        Fetch messages for a thread and return an OpenAI-style envelope.
 
         Args:
-            thread_id (str): The thread ID.
-            limit (int): Maximum number of messages to retrieve.
-            order (str): Order of messages ('asc' or 'desc').
+            thread_id (str): Target thread ID.
+            limit (int): Max messages to fetch.
+            order (str): 'asc' or 'desc'.
 
         Returns:
-            List[Dict[str, Any]]: A list of messages as dictionaries.
+            MessagesList: Wrapper containing .data[], .first_id, .last_id, .has_more …
         """
         logging_utility.info(
             "Listing messages for thread_id: %s, limit: %d, order: %s",
@@ -178,24 +181,19 @@ class MessagesClient(BaseAPIClient):
                 f"/v1/threads/{thread_id}/messages", params=params
             )
             response.raise_for_status()
-            messages = response.json()
-            validated_messages = [
-                ent_validator.MessageRead(**message) for message in messages
-            ]
-            logging_utility.info("Retrieved %d messages", len(validated_messages))
-            return [message.dict() for message in validated_messages]
+
+            envelope = ent_validator.MessagesList(**response.json())
+            logging_utility.info("Retrieved %d messages", len(envelope.data))
+            return envelope
+
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
+            raise ValueError(f"Validation error: {e}") from e
         except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while listing messages: %s", str(e)
-            )
+            logging_utility.error("HTTP error while listing messages: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error(
-                "An error occurred while listing messages: %s", str(e)
-            )
+            logging_utility.error("Unexpected error while listing messages: %s", str(e))
             raise
 
     def get_formatted_messages(
