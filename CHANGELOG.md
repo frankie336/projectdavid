@@ -1,3 +1,10 @@
+## [1.33.31](https://github.com/frankie336/projectdavid/compare/v1.33.30...v1.33.31) (2025-07-08)
+
+
+### Bug Fixes
+
+* update_thread ([2041347](https://github.com/frankie336/projectdavid/commit/2041347839922e2745d14e4ad9136f1aa797b254))
+
 ## [1.33.30](https://github.com/frankie336/projectdavid/compare/v1.33.29...v1.33.30) (2025-07-06)
 
 
