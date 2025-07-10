@@ -1,3 +1,12 @@
+## [1.33.32](https://github.com/frankie336/projectdavid/compare/v1.33.31...v1.33.32) (2025-07-09)
+
+
+### Bug Fixes
+
+* use project_david_common 0.17.9 and refactor list_messages to use new envelope ([3fc565c](https://github.com/frankie336/projectdavid/commit/3fc565ce1f69af47fc102d5abd55f90a1fce2288))
+* use project_david_common 0.17.9 and refactor list_messages to use new envelope ([3d802ef](https://github.com/frankie336/projectdavid/commit/3d802efc8cd0ec7425d0d1a1ead944c4d23d0838))
+* use project_david_common 0.17.9 and refactor list_messages to use new envelope ([0549842](https://github.com/frankie336/projectdavid/commit/054984252097c9e843a12fed9a87eacea95aee33))
+
 ## [1.33.31](https://github.com/frankie336/projectdavid/compare/v1.33.30...v1.33.31) (2025-07-08)
 
 
