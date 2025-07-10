@@ -292,32 +292,19 @@ class MessagesClient(BaseAPIClient):
             logging_utility.error("An error occurred: %s", str(e))
             raise RuntimeError(f"An error occurred: {str(e)}")
 
-    def delete_message(self, message_id: str) -> Dict[str, Any]:
-        """
-        Delete a message by its ID.
-
-        Args:
-            message_id (str): The ID of the message.
-
-        Returns:
-            Dict[str, Any]: The deletion result.
-        """
+    def delete_message(self, message_id: str) -> ent_validator.MessageDeleted:
+        """Delete a message and return deletion envelope."""
         logging_utility.info("Deleting message with id: %s", message_id)
         try:
             response = self.client.delete(f"/v1/messages/{message_id}")
             response.raise_for_status()
-            result = response.json()
-            logging_utility.info("Message deleted successfully")
-            return result
+            return ent_validator.MessageDeleted(**response.json())
+
         except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while deleting message: %s", str(e)
-            )
+            logging_utility.error("HTTP error while deleting message: %s", str(e))
             raise
         except Exception as e:
-            logging_utility.error(
-                "An error occurred while deleting message: %s", str(e)
-            )
+            logging_utility.error("Unexpected error while deleting message: %s", str(e))
             raise
 
     def save_assistant_message_chunk(
@@ -453,3 +440,6 @@ class MessagesClient(BaseAPIClient):
                 "An error occurred while creating tool message: %s", str(e)
             )
             raise
+
+
+

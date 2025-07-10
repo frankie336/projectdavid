@@ -20,7 +20,7 @@ dependencies = [
     "python-dotenv>=1.0.1,<2.0",
     "aiofiles>=23.2.1,<25.0",
     "ollama>=0.4.4,<0.5.0",
-    "projectdavid_common==0.17.10",
+    "projectdavid_common==0.17.11",
     "qdrant-client>=1.0.0,<2.0.0",
     "pdfplumber>=0.11.0,<0.12.0",
     "validators>=0.29.0,<0.35.0",
@@ -67,6 +67,7 @@ vision = [
     "torchaudio>=2.2.1",
 
     # OpenCLIP + captioning stack
+
     "open_clip_torch>=2.24",
     "pillow>=10.2",
     "transformers>=4.41",
@@ -77,6 +78,7 @@ vision = [
 
     # Geolocation package pending release (uncomment when available)
     # "geoloc-regio-net>=0.2.0 ; extra == 'vision'",
+
 ]
 
 [tool.isort]
