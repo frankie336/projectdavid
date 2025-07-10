@@ -1,3 +1,11 @@
+## [1.33.33](https://github.com/frankie336/projectdavid/compare/v1.33.32...v1.33.33) (2025-07-10)
+
+
+### Bug Fixes
+
+* wrap delete_message in a return envelope ([7ed1815](https://github.com/frankie336/projectdavid/commit/7ed18155b85d39cbecf0354c16b2a8a20131b9e2))
+* wrap delete_message in a return envelope ([3e9e6fb](https://github.com/frankie336/projectdavid/commit/3e9e6fbb93ec0670c0e9a39b7eb446bcb1e7df40))
+
 ## [1.33.32](https://github.com/frankie336/projectdavid/compare/v1.33.31...v1.33.32) (2025-07-09)
 
 
