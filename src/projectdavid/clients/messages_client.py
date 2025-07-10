@@ -440,6 +440,3 @@ class MessagesClient(BaseAPIClient):
                 "An error occurred while creating tool message: %s", str(e)
             )
             raise
-
-
-
