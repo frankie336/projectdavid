@@ -36,14 +36,18 @@ run = client.run_service.create_run(thread_id='some_thread_id',
                                     assistant_id='some_assistant_id')
 
 
+
+
 ```
 ---
 
 **Retrieve a Run**
 ```python
 print(get_run.dict())
+
 id='run_t16pOsi0Y2a3PXuPjcrjko' assistant_id='user_2uMMGBpU4H7dcZieeOahNv' cancelled_at=None completed_at=None created_at=1726617356 expires_at=1726620956 failed_at=None incomplete_details=None instructions='' last_error=None max_completion_tokens=1000 max_prompt_tokens=500 meta_data={} model='gpt-4' object='run' parallel_tool_calls=False required_action=None response_format='text' started_at=None status='queued' thread_id='thread_Ww3UGvvKkrxFfHD1hNFQVX' tool_choice='none' tools=[] truncation_strategy={} usage=None temperature=1.0 top_p=1.0 tool_resources={} actions=[]
 {'id': 'run_xsDpDica9weXH4eSfsRcPd', 'assistant_id': 'user_0D1D7j6UkZUsa9Gm7GdkU1', 'cancelled_at': None, 'completed_at': None, 'created_at': 1726620075, 'expires_at': 1726623675, 'failed_at': None, 'incomplete_details': None, 'instructions': '', 'last_error': None, 'max_completion_tokens': 1000, 'max_prompt_tokens': 500, 'meta_data': {}, 'model': 'gpt-4', 'object': 'run', 'parallel_tool_calls': False, 'required_action': None, 'response_format': 'text', 'started_at': None, 'status': 'queued', 'thread_id': 'thread_VaTTuMUa8EHtkr60hZGkju', 'tool_choice': 'none', 'tools': [], 'truncation_strategy': {}, 'usage': None, 'temperature': 1.0, 'top_p': 1.0, 'tool_resources': {}, 'actions': []}
+
 ```
 ---
 

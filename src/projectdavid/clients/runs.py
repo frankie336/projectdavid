@@ -2,7 +2,7 @@ import json
 import threading
 import time
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import httpx
 import requests
@@ -188,36 +188,6 @@ class RunsClient(BaseAPIClient):
             logging_utility.error(
                 "An error occurred while updating run status: %s", str(e)
             )
-            raise
-
-    def list_runs(self, limit: int = 20, order: str = "asc") -> List[ent_validator.Run]:
-        """
-        List runs with the given limit and order.
-
-        Args:
-            limit (int): Maximum number of runs to retrieve.
-            order (str): 'asc' or 'desc' for ordering.
-
-        Returns:
-            List[Run]: A list of runs.
-        """
-        logging_utility.info("Listing runs with limit: %d, order: %s", limit, order)
-        params = {"limit": limit, "order": order}
-        try:
-            response = self.client.get("/v1/runs", params=params)
-            response.raise_for_status()
-            runs = response.json()
-            validated_runs = [ent_validator.Run(**run) for run in runs]
-            logging_utility.info("Retrieved %d runs", len(validated_runs))
-            return validated_runs
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while listing runs: %s", str(e))
-            raise
-        except Exception as e:
-            logging_utility.error("An error occurred while listing runs: %s", str(e))
             raise
 
     def delete_run(self, run_id: str) -> Dict[str, Any]:
@@ -637,3 +607,138 @@ class RunsClient(BaseAPIClient):
         t = threading.Thread(target=_listen_and_handle, daemon=True)
         t.start()
         t.join()
+
+    def list_runs(self, limit: int = 20, order: str = "asc") -> List[ent_validator.Run]:
+
+        logging_utility.info("Listing runs with limit: %d, order: %s", limit, order)
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        try:
+            resp = self.client.get("/v1/runs", params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+
+            # Preferred: envelope
+            if isinstance(payload, dict) and "data" in payload:
+                env = ent_validator.RunListResponse(**payload)
+                logging_utility.info("Retrieved %d runs", len(env.data))
+                return list(env.data)
+
+            # Legacy: raw list of dicts
+            runs = [ent_validator.Run(**item) for item in payload]
+            logging_utility.info("Retrieved %d runs (legacy)", len(runs))
+            return runs
+
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}")
+        except httpx.HTTPStatusError as e:
+            logging_utility.error("HTTP error occurred while listing runs: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("An error occurred while listing runs: %s", str(e))
+            raise
+
+    def list_runs_with_meta(
+        self, limit: int = 20, order: str = "asc"
+    ) -> Tuple[List[ent_validator.Run], Optional[str], Optional[str], bool]:
+        """
+        Returns (runs, first_id, last_id, has_more).
+        """
+        logging_utility.info("Listing runs (with meta) limit=%d order=%s", limit, order)
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        try:
+            resp = self.client.get("/v1/runs", params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+
+            if isinstance(payload, dict) and "data" in payload:
+                env = ent_validator.RunListResponse(**payload)
+                return list(env.data), env.first_id, env.last_id, env.has_more
+
+            # Legacy fallback: compute minimal meta
+            runs = [ent_validator.Run(**item) for item in payload]
+            first_id = runs[0].id if runs else None
+            last_id = runs[-1].id if runs else None
+            return runs, first_id, last_id, False
+
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}")
+        except httpx.HTTPStatusError as e:
+            logging_utility.error("HTTP error occurred while listing runs: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("An error occurred while listing runs: %s", str(e))
+            raise
+
+    def list_runs_for_thread(
+        self, thread_id: str, limit: int = 20, order: str = "asc"
+    ) -> List[ent_validator.Run]:
+        logging_utility.info(
+            "Listing runs for thread_id=%s (limit=%d, order=%s)",
+            thread_id,
+            limit,
+            order,
+        )
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        try:
+            resp = self.client.get(f"/v1/threads/{thread_id}/runs", params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+
+            if isinstance(payload, dict) and "data" in payload:
+                env = ent_validator.RunListResponse(**payload)
+                logging_utility.info(
+                    "Retrieved %d runs for thread %s", len(env.data), thread_id
+                )
+                return list(env.data)
+
+            runs = [ent_validator.Run(**item) for item in payload]
+            logging_utility.info(
+                "Retrieved %d runs (legacy) for thread %s", len(runs), thread_id
+            )
+            return runs
+
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}")
+        except httpx.HTTPStatusError as e:
+            logging_utility.error("HTTP error listing runs for thread: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("Error listing runs for thread: %s", str(e))
+            raise
+
+    def list_runs_for_thread_with_meta(
+        self, thread_id: str, limit: int = 20, order: str = "asc"
+    ) -> Tuple[List[ent_validator.Run], Optional[str], Optional[str], bool]:
+        logging_utility.info(
+            "Listing runs for thread_id=%s (with meta) limit=%d order=%s",
+            thread_id,
+            limit,
+            order,
+        )
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        try:
+            resp = self.client.get(f"/v1/threads/{thread_id}/runs", params=params)
+            resp.raise_for_status()
+            payload = resp.json()
+
+            if isinstance(payload, dict) and "data" in payload:
+                env = ent_validator.RunListResponse(**payload)
+                return list(env.data), env.first_id, env.last_id, env.has_more
+
+            runs = [ent_validator.Run(**item) for item in payload]
+            first_id = runs[0].id if runs else None
+            last_id = runs[-1].id if runs else None
+            return runs, first_id, last_id, False
+
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}")
+        except httpx.HTTPStatusError as e:
+            logging_utility.error("HTTP error listing runs for thread: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("Error listing runs for thread: %s", str(e))
+            raise
