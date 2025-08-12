@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/frankie336/projectdavid/compare/v1.33.33...v1.34.0) (2025-08-12)
+
+
+### Features
+
+* Adding runs list methods. ([61975b2](https://github.com/frankie336/projectdavid/commit/61975b2c8fa44de254b979160566bd8e89b6799b))
+
 ## [1.33.33](https://github.com/frankie336/projectdavid/compare/v1.33.32...v1.33.33) (2025-07-10)
 
 
