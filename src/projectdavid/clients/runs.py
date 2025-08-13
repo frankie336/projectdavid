@@ -608,7 +608,62 @@ class RunsClient(BaseAPIClient):
         t.start()
         t.join()
 
+    # ------------------------------------------------------------
+    # These are helpers that build the run lists
+    # ------------------------------------------------------------
+    def list_runs_enveloped(
+        self, limit: int = 20, order: str = "asc"
+    ) -> ent_validator.RunListResponse:
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        resp = self.client.get("/v1/runs", params=params)
+        resp.raise_for_status()
+        payload = resp.json()
+        if isinstance(payload, dict) and "data" in payload:
+            return ent_validator.RunListResponse(**payload)
+        # legacy fallback: wrap raw list
+        runs = [ent_validator.Run(**item) for item in payload]
+        return ent_validator.RunListResponse(
+            object="list",
+            data=runs,
+            first_id=runs[0].id if runs else None,
+            last_id=runs[-1].id if runs else None,
+            has_more=False,
+        )
+
+    def list_runs_for_thread_enveloped(
+        self, thread_id: str, limit: int = 20, order: str = "asc"
+    ) -> ent_validator.RunListResponse:
+        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        resp = self.client.get(f"/v1/threads/{thread_id}/runs", params=params)
+        resp.raise_for_status()
+        payload = resp.json()
+        if isinstance(payload, dict) and "data" in payload:
+            return ent_validator.RunListResponse(**payload)
+        runs = [ent_validator.Run(**item) for item in payload]
+        return ent_validator.RunListResponse(
+            object="list",
+            data=runs,
+            first_id=runs[0].id if runs else None,
+            last_id=runs[-1].id if runs else None,
+            has_more=False,
+        )
+
     def list_runs(self, limit: int = 20, order: str = "asc") -> List[ent_validator.Run]:
+        # soft-deprecate in logs if you want
+        env = self.list_runs_enveloped(limit=limit, order=order)
+        return list(env.data)
+
+    def list_runs_for_thread(
+        self, thread_id: str, limit: int = 20, order: str = "asc"
+    ) -> List[ent_validator.Run]:
+        env = self.list_runs_for_thread_enveloped(
+            thread_id=thread_id, limit=limit, order=order
+        )
+        return list(env.data)
+
+    def list_runsX(
+        self, limit: int = 20, order: str = "asc"
+    ) -> List[ent_validator.Run]:
 
         logging_utility.info("Listing runs with limit: %d, order: %s", limit, order)
         params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
@@ -638,7 +693,7 @@ class RunsClient(BaseAPIClient):
             logging_utility.error("An error occurred while listing runs: %s", str(e))
             raise
 
-    def list_runs_with_meta(
+    def list_runs_with_metaX(
         self, limit: int = 20, order: str = "asc"
     ) -> Tuple[List[ent_validator.Run], Optional[str], Optional[str], bool]:
         """
@@ -671,7 +726,7 @@ class RunsClient(BaseAPIClient):
             logging_utility.error("An error occurred while listing runs: %s", str(e))
             raise
 
-    def list_runs_for_thread(
+    def list_runs_for_threadX(
         self, thread_id: str, limit: int = 20, order: str = "asc"
     ) -> List[ent_validator.Run]:
         logging_utility.info(
@@ -709,7 +764,7 @@ class RunsClient(BaseAPIClient):
             logging_utility.error("Error listing runs for thread: %s", str(e))
             raise
 
-    def list_runs_for_thread_with_meta(
+    def list_runs_for_thread_with_metaX(
         self, thread_id: str, limit: int = 20, order: str = "asc"
     ) -> Tuple[List[ent_validator.Run], Optional[str], Optional[str], bool]:
         logging_utility.info(
