@@ -1,3 +1,10 @@
+## [1.34.1](https://github.com/frankie336/projectdavid/compare/v1.34.0...v1.34.1) (2025-08-13)
+
+
+### Bug Fixes
+
+* correctly import RunListResponse ([7f923cc](https://github.com/frankie336/projectdavid/commit/7f923ccfcaac890f1eaf0b94406f5ee003b2cf4e))
+
 # [1.34.0](https://github.com/frankie336/projectdavid/compare/v1.33.33...v1.34.0) (2025-08-12)
 
 
