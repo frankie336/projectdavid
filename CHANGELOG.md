@@ -1,3 +1,10 @@
+## [1.34.2](https://github.com/frankie336/projectdavid/compare/v1.34.1...v1.34.2) (2025-08-13)
+
+
+### Bug Fixes
+
+* standard model ([8c8785b](https://github.com/frankie336/projectdavid/commit/8c8785babe81420ee211499a4d8972e8a42d5d2e))
+
 ## [1.34.1](https://github.com/frankie336/projectdavid/compare/v1.34.0...v1.34.1) (2025-08-13)
 
 
