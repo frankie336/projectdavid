@@ -1,3 +1,10 @@
+## [1.34.3](https://github.com/frankie336/projectdavid/compare/v1.34.2...v1.34.3) (2025-08-13)
+
+
+### Bug Fixes
+
+* rename list_all_runs and list_runs ([7efb822](https://github.com/frankie336/projectdavid/commit/7efb8220c82184df941fc897132ca3caa96d07a0))
+
 ## [1.34.2](https://github.com/frankie336/projectdavid/compare/v1.34.1...v1.34.2) (2025-08-13)
 
 
