@@ -148,6 +148,25 @@ class RunsClient(BaseAPIClient):
             )
             raise
 
+    def update_run(self, run_id: str, metadata: Dict[str, Any]) -> ent_validator.Run:
+        """
+        Shallow-merge metadata into a run. Returns the updated Run.
+        """
+        logging_utility.info("Updating metadata for run_id: %s", run_id)
+        try:
+            resp = self.client.put(f"/v1/runs/{run_id}/metadata", json=metadata)
+            resp.raise_for_status()
+            return ent_validator.Run(**resp.json())
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}")
+        except httpx.HTTPStatusError as e:
+            logging_utility.error("HTTP error updating run metadata: %s", str(e))
+            raise
+        except Exception as e:
+            logging_utility.error("Unexpected error updating run metadata: %s", str(e))
+            raise
+
     def update_run_status(self, run_id: str, new_status: str) -> ent_validator.Run:
         """
         Update the status of a run.
