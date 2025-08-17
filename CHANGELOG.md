@@ -1,3 +1,10 @@
+## [1.34.5](https://github.com/frankie336/projectdavid/compare/v1.34.4...v1.34.5) (2025-08-17)
+
+
+### Bug Fixes
+
+* Adding update_run ([10b1c6f](https://github.com/frankie336/projectdavid/commit/10b1c6f1b7da9f77d3bd7c9478edf8f1dc41fc82))
+
 ## [1.34.4](https://github.com/frankie336/projectdavid/compare/v1.34.3...v1.34.4) (2025-08-15)
 
 
