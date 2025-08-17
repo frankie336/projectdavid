@@ -151,12 +151,35 @@ class RunsClient(BaseAPIClient):
     def update_run(self, run_id: str, metadata: Dict[str, Any]) -> ent_validator.Run:
         """
         Shallow-merge metadata into a run. Returns the updated Run.
+
+        Server route expects body shaped as:
+            {"metadata": {...}}
+
+        Args:
+            run_id: The run ID (e.g., "run_abc123").
+            metadata: Dict to merge into run.meta_data.
+
+        Raises:
+            ValueError: if metadata is not a dict or validation fails.
+            httpx.HTTPStatusError: on non-2xx response.
+            Exception: on unexpected errors.
         """
         logging_utility.info("Updating metadata for run_id: %s", run_id)
+
+        # Basic input validation (fail fast with clear error)
+        if not isinstance(metadata, dict):
+            raise ValueError("`metadata` must be a dict")
+
         try:
-            resp = self.client.put(f"/v1/runs/{run_id}/metadata", json=metadata)
+            resp = self.client.put(
+                f"/v1/runs/{run_id}/metadata",
+                json={"metadata": metadata},  # <-- wrap to match router param
+            )
             resp.raise_for_status()
+
+            # Validate server response to the shared model
             return ent_validator.Run(**resp.json())
+
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
