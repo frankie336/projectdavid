@@ -45,15 +45,30 @@ class RunsClient(BaseAPIClient):
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.Run:
         """
-        Create a run. The server expects user_id to be injected explicitly,
-        which is passed in from the authenticated API key.
-
-        Returns a fully‑populated Run model (read schema).
+        Create a run. The server injects user_id from the API key.
+        We normalize all timestamp fields to epoch ints (or None).
         """
+
+        def _epoch(v):
+            # Accept None, int, datetime, or stringified int
+            if v is None:
+                return None
+            if isinstance(v, int):
+                return v
+            if isinstance(v, float):
+                return int(v)
+            if hasattr(v, "timestamp"):  # datetime / date
+                return int(v.timestamp())
+            try:
+                return int(str(v))
+            except Exception:
+                return None
+
+        now = int(time.time())
         if meta_data is None:
             meta_data = {}
 
-        # Construct the RunCreate payload, including user_id
+        # Build the Pydantic payload with epoch-normalized timestamps
         run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
             user_id=None,
@@ -61,11 +76,11 @@ class RunsClient(BaseAPIClient):
             thread_id=thread_id,
             instructions=instructions,
             meta_data=meta_data,
-            cancelled_at=None,
-            completed_at=None,
-            created_at=int(time.time()),
-            expires_at=int(time.time()) + 3600,
-            failed_at=None,
+            cancelled_at=_epoch(None),
+            completed_at=_epoch(None),
+            created_at=_epoch(now),
+            expires_at=_epoch(now + 3600),
+            failed_at=_epoch(None),
             incomplete_details=None,
             last_error=None,
             max_completion_tokens=1000,
@@ -75,14 +90,15 @@ class RunsClient(BaseAPIClient):
             parallel_tool_calls=False,
             required_action=None,
             response_format="text",
-            started_at=None,
+            started_at=_epoch(None),
             status=StatusEnum.queued,
             tool_choice="none",
             tools=[],
             truncation_strategy={},
             usage=None,
-            temperature=0.7,
-            top_p=0.9,
+            # NOTE: your DB columns are Integer; avoid floats here to prevent truncation
+            temperature=1,  # or None if you prefer to omit
+            top_p=1,  # or None if you prefer to omit
             tool_resources={},
         )
 
@@ -91,14 +107,15 @@ class RunsClient(BaseAPIClient):
             assistant_id,
             thread_id,
         )
-
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            resp = self.client.post("/v1/runs", json=run_payload.model_dump())
+            # Exclude None so we don't send unset fields
+            resp = self.client.post(
+                "/v1/runs", json=run_payload.model_dump(exclude_none=True)
+            )
             resp.raise_for_status()
 
-            # Validate response with the *read* schema
             run_out = ent_validator.Run(**resp.json())
             logging_utility.info("Run created successfully: %s", run_out.id)
             return run_out
@@ -146,48 +163,6 @@ class RunsClient(BaseAPIClient):
             logging_utility.error(
                 "An unexpected error occurred while retrieving run: %s", str(e)
             )
-            raise
-
-    def update_run(self, run_id: str, metadata: Dict[str, Any]) -> ent_validator.Run:
-        """
-        Shallow-merge metadata into a run. Returns the updated Run.
-
-        Server route expects body shaped as:
-            {"metadata": {...}}
-
-        Args:
-            run_id: The run ID (e.g., "run_abc123").
-            metadata: Dict to merge into run.meta_data.
-
-        Raises:
-            ValueError: if metadata is not a dict or validation fails.
-            httpx.HTTPStatusError: on non-2xx response.
-            Exception: on unexpected errors.
-        """
-        logging_utility.info("Updating metadata for run_id: %s", run_id)
-
-        # Basic input validation (fail fast with clear error)
-        if not isinstance(metadata, dict):
-            raise ValueError("`metadata` must be a dict")
-
-        try:
-            resp = self.client.put(
-                f"/v1/runs/{run_id}/metadata",
-                json={"metadata": metadata},  # <-- wrap to match router param
-            )
-            resp.raise_for_status()
-
-            # Validate server response to the shared model
-            return ent_validator.Run(**resp.json())
-
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error updating run metadata: %s", str(e))
-            raise
-        except Exception as e:
-            logging_utility.error("Unexpected error updating run metadata: %s", str(e))
             raise
 
     def update_run_status(self, run_id: str, new_status: str) -> ent_validator.Run:
