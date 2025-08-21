@@ -1,3 +1,10 @@
+## [1.34.6](https://github.com/frankie336/projectdavid/compare/v1.34.5...v1.34.6) (2025-08-20)
+
+
+### Bug Fixes
+
+* epoch time on .create_run ([be013d4](https://github.com/frankie336/projectdavid/commit/be013d4e98724a2c252a7daa5b31bfda61253d15))
+
 ## [1.34.5](https://github.com/frankie336/projectdavid/compare/v1.34.4...v1.34.5) (2025-08-17)
 
 
