@@ -1,3 +1,10 @@
+## [1.34.8](https://github.com/frankie336/projectdavid/compare/v1.34.7...v1.34.8) (2025-08-22)
+
+
+### Bug Fixes
+
+* set incomplete_details type to string ([2af2d16](https://github.com/frankie336/projectdavid/commit/2af2d16843139884b9878edcd0c5b452a0e28e30))
+
 ## [1.34.7](https://github.com/frankie336/projectdavid/compare/v1.34.6...v1.34.7) (2025-08-21)
 
 
