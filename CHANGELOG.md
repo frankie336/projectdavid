@@ -1,3 +1,10 @@
+## [1.34.7](https://github.com/frankie336/projectdavid/compare/v1.34.6...v1.34.7) (2025-08-21)
+
+
+### Bug Fixes
+
+* Normalize time stamps to epoch integer format instead of datetime. ([43af583](https://github.com/frankie336/projectdavid/commit/43af5830f80d9eafde694449d7119a2da8a8d127))
+
 ## [1.34.6](https://github.com/frankie336/projectdavid/compare/v1.34.5...v1.34.6) (2025-08-20)
 
 
