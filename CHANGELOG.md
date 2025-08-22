@@ -1,3 +1,10 @@
+## [1.34.9](https://github.com/frankie336/projectdavid/compare/v1.34.8...v1.34.9) (2025-08-22)
+
+
+### Bug Fixes
+
+* remove redundant epoch helper ([4d2171a](https://github.com/frankie336/projectdavid/commit/4d2171a5cff841edd33b36027d5648c1d132ffbf))
+
 ## [1.34.8](https://github.com/frankie336/projectdavid/compare/v1.34.7...v1.34.8) (2025-08-22)
 
 
