@@ -48,26 +48,6 @@ class RunsClient(BaseAPIClient):
         Create a run. The server injects user_id from the API key.
         We normalize all timestamp fields to epoch ints (or None).
         """
-
-        def _epoch(v):
-            # Accept None, int, datetime, or stringified int
-            if v is None:
-                return None
-            if isinstance(v, int):
-                return v
-            if isinstance(v, float):
-                return int(v)
-            if hasattr(v, "timestamp"):  # datetime / date
-                return int(v.timestamp())
-            try:
-                return int(str(v))
-            except Exception:
-                return None
-
-        now = int(time.time())
-        if meta_data is None:
-            meta_data = {}
-
         # Build the Pydantic payload with epoch-normalized timestamps
         run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
@@ -76,11 +56,11 @@ class RunsClient(BaseAPIClient):
             thread_id=thread_id,
             instructions=instructions,
             meta_data=meta_data,
-            cancelled_at=_epoch(None),
-            completed_at=_epoch(None),
-            created_at=_epoch(now),
-            expires_at=_epoch(now + 3600),
-            failed_at=_epoch(None),
+            cancelled_at=None,
+            completed_at=None,
+            created_at=int(time.time()),
+            expires_at=int(time.time() + 3600),
+            failed_at=None,
             incomplete_details=None,
             last_error=None,
             max_completion_tokens=1000,
@@ -90,15 +70,14 @@ class RunsClient(BaseAPIClient):
             parallel_tool_calls=False,
             required_action=None,
             response_format="text",
-            started_at=_epoch(None),
+            started_at=None,
             status=StatusEnum.queued,
             tool_choice="none",
             tools=[],
             truncation_strategy={},
             usage=None,
-            # NOTE: your DB columns are Integer; avoid floats here to prevent truncation
-            temperature=1,  # or None if you prefer to omit
-            top_p=1,  # or None if you prefer to omit
+            temperature=1,
+            top_p=1,
             tool_resources={},
         )
 
