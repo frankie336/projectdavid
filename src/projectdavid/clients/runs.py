@@ -72,7 +72,7 @@ class RunsClient(BaseAPIClient):
             response_format="text",
             started_at=None,
             status=StatusEnum.queued,
-            tool_choice="none",
+            tool_choice=None,
             tools=[],
             truncation_strategy={},
             usage=None,
