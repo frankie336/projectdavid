@@ -1,3 +1,11 @@
+## [1.34.11](https://github.com/frankie336/projectdavid/compare/v1.34.10...v1.34.11) (2025-08-25)
+
+
+### Bug Fixes
+
+* set tool choice default from 'None' --> None ([0288eb3](https://github.com/frankie336/projectdavid/commit/0288eb30ac173b2fc7323158454a726da7883c81))
+* set tool choice default from 'None' --> None ([dd172b5](https://github.com/frankie336/projectdavid/commit/dd172b5a0d1f08a2aa7ccb1714141f80e2954130))
+
 ## [1.34.10](https://github.com/frankie336/projectdavid/compare/v1.34.9...v1.34.10) (2025-08-22)
 
 
