@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import httpx
 import requests
 from projectdavid_common import UtilsInterface, ValidationInterface
-from projectdavid_common.validation import StatusEnum
+from projectdavid_common.validation import StatusEnum, TruncationStrategy
 from pydantic import ValidationError
 from sseclient import SSEClient
 
@@ -74,7 +74,7 @@ class RunsClient(BaseAPIClient):
             status=StatusEnum.queued,
             tool_choice=None,
             tools=[],
-            truncation_strategy={},
+            truncation_strategy=TruncationStrategy.auto,
             usage=None,
             temperature=1,
             top_p=1,
