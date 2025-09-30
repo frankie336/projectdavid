@@ -1,3 +1,12 @@
+## [1.34.12](https://github.com/frankie336/projectdavid/compare/v1.34.11...v1.34.12) (2025-09-30)
+
+
+### Bug Fixes
+
+* correct projectdavid_common==0.17.19 ([d636c31](https://github.com/frankie336/projectdavid/commit/d636c31066e33bce0332df2538093040ae36f40f))
+* set truncation strategy to auto ([3d00a38](https://github.com/frankie336/projectdavid/commit/3d00a383eb688a51f9d8bbfc66b0a47e52e86b2a))
+* set truncation strategy to auto ([357ec09](https://github.com/frankie336/projectdavid/commit/357ec09bc34ca36d837cae4e279e740074d9756d))
+
 ## [1.34.11](https://github.com/frankie336/projectdavid/compare/v1.34.10...v1.34.11) (2025-08-25)
 
 
