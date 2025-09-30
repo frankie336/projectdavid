@@ -43,58 +43,68 @@ class RunsClient(BaseAPIClient):
         thread_id: str,
         instructions: str = "",
         meta_data: Optional[Dict[str, Any]] = None,
+        *,
+        # new optional knobs; keep backwards compatible
+        model: Optional[str] = None,
+        response_format: str = "text",
+        tool_choice: Optional[str] = None,  # allow None in signature, fix below
+        temperature: float = 1.0,
+        top_p: float = 1.0,
     ) -> ent_validator.Run:
         """
         Create a run. The server injects user_id from the API key.
         We normalize all timestamp fields to epoch ints (or None).
         """
-        # Build the Pydantic payload with epoch-normalized timestamps
+        # ── Coerce client-friendly Nones into schema-acceptable values ─────────
+        meta_data = meta_data or {}  # schema expects Dict
+        tool_choice = tool_choice or "none"  # schema expects str
+        model = model or "gpt-4"  # defer to schema default or override at callsite
+
+        now = int(time.time())
+
         run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
-            user_id=None,
+            user_id=None,  # server fills this
             assistant_id=assistant_id,
             thread_id=thread_id,
             instructions=instructions,
             meta_data=meta_data,
             cancelled_at=None,
             completed_at=None,
-            created_at=int(time.time()),
-            expires_at=int(time.time() + 3600),
+            created_at=now,
+            expires_at=now + 3600,
             failed_at=None,
             incomplete_details=None,
             last_error=None,
             max_completion_tokens=1000,
             max_prompt_tokens=500,
-            model="llama3.1",
+            model=model,  # ← no more hard-coded llama3.1
             object="run",
             parallel_tool_calls=False,
             required_action=None,
-            response_format="text",
+            response_format=response_format,
             started_at=None,
-            status=StatusEnum.queued,
-            tool_choice=None,
+            status=ent_validator.RunStatus.pending,
+            # use schema enum; queued is also valid if you prefer
+            tool_choice=tool_choice,
             tools=[],
-            truncation_strategy=TruncationStrategy.auto,
+            truncation_strategy=ent_validator.TruncationStrategy.auto,
             usage=None,
-            temperature=1,
-            top_p=1,
+            temperature=temperature,
+            top_p=top_p,
             tool_resources={},
         )
 
         logging_utility.info(
-            "Creating run for assistant_id=%s, thread_id=%s",
-            assistant_id,
-            thread_id,
+            "Creating run for assistant_id=%s, thread_id=%s", assistant_id, thread_id
         )
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            # Exclude None so we don't send unset fields
             resp = self.client.post(
                 "/v1/runs", json=run_payload.model_dump(exclude_none=True)
             )
             resp.raise_for_status()
-
             run_out = ent_validator.Run(**resp.json())
             logging_utility.info("Run created successfully: %s", run_out.id)
             return run_out
