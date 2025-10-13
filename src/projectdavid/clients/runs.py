@@ -50,6 +50,8 @@ class RunsClient(BaseAPIClient):
         tool_choice: Optional[str] = None,  # allow None in signature, fix below
         temperature: float = 1.0,
         top_p: float = 1.0,
+        # ↓ NEW: optional; only sent if provided
+        truncation_strategy: Optional[ent_validator.TruncationStrategy] = None,
     ) -> ent_validator.Run:
         """
         Create a run. The server injects user_id from the API key.
@@ -88,12 +90,16 @@ class RunsClient(BaseAPIClient):
             # use schema enum; queued is also valid if you prefer
             tool_choice=tool_choice,
             tools=[],
-            truncation_strategy=ent_validator.TruncationStrategy.auto,
+            # NOTE: do NOT set truncation_strategy here; only if provided below
             usage=None,
             temperature=temperature,
             top_p=top_p,
             tool_resources={},
         )
+
+        # If caller explicitly provided truncation_strategy, set it; else omit so DB default fires
+        if truncation_strategy is not None:
+            run_payload.truncation_strategy = truncation_strategy
 
         logging_utility.info(
             "Creating run for assistant_id=%s, thread_id=%s", assistant_id, thread_id
@@ -101,9 +107,12 @@ class RunsClient(BaseAPIClient):
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            resp = self.client.post(
-                "/v1/runs", json=run_payload.model_dump(exclude_none=True)
-            )
+            # Build dict; if truncation_strategy wasn't provided, drop it so DB default applies
+            payload_dict = run_payload.model_dump(exclude_none=True)
+            if truncation_strategy is None:
+                payload_dict.pop("truncation_strategy", None)
+
+            resp = self.client.post("/v1/runs", json=payload_dict)
             resp.raise_for_status()
             run_out = ent_validator.Run(**resp.json())
             logging_utility.info("Run created successfully: %s", run_out.id)
