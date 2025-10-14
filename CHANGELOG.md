@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/frankie336/projectdavid/compare/v1.34.13...v1.35.0) (2025-10-13)
+
+
+### Features
+
+* **deps:** bump projectdavid_common; align Runs schema + client ([23d525e](https://github.com/frankie336/projectdavid/commit/23d525e10a8dd3a4ee39fb3c0e7c0be42832e1a7))
+
 ## [1.34.13](https://github.com/frankie336/projectdavid/compare/v1.34.12...v1.34.13) (2025-09-30)
 
 
