@@ -80,26 +80,22 @@ class RunsClient(BaseAPIClient):
             last_error=None,
             max_completion_tokens=1000,
             max_prompt_tokens=500,
-            model=model,  # ← no more hard-coded llama3.1
+            model=model,
             object="run",
             parallel_tool_calls=False,
             required_action=None,
             response_format=response_format,
             started_at=None,
             status=ent_validator.RunStatus.pending,
-            # use schema enum; queued is also valid if you prefer
             tool_choice=tool_choice,
             tools=[],
-            # NOTE: do NOT set truncation_strategy here; only if provided below
             usage=None,
             temperature=temperature,
             top_p=top_p,
             tool_resources={},
+            # Directly pass the truncation_strategy. It will be None if not provided.
+            truncation_strategy=truncation_strategy,
         )
-
-        # If caller explicitly provided truncation_strategy, set it; else omit so DB default fires
-        if truncation_strategy is not None:
-            run_payload.truncation_strategy = truncation_strategy
 
         logging_utility.info(
             "Creating run for assistant_id=%s, thread_id=%s", assistant_id, thread_id
@@ -107,10 +103,10 @@ class RunsClient(BaseAPIClient):
         logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            # Build dict; if truncation_strategy wasn't provided, drop it so DB default applies
+            # Build dict from the Pydantic model. `exclude_none=True` will
+            # automatically omit `truncation_strategy` if it is None, allowing
+            # the server-side database default to apply.
             payload_dict = run_payload.model_dump(exclude_none=True)
-            if truncation_strategy is None:
-                payload_dict.pop("truncation_strategy", None)
 
             resp = self.client.post("/v1/runs", json=payload_dict)
             resp.raise_for_status()
