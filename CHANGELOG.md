@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/frankie336/projectdavid/compare/v1.36.0...v1.36.1) (2025-10-15)
+
+
+### Bug Fixes
+
+* Correctly handle optional truncation_strategy in run creation ([ef10d2e](https://github.com/frankie336/projectdavid/commit/ef10d2e67ca13f04feb3b87edf3c956cf0a91e0c))
+
 # [1.36.0](https://github.com/frankie336/projectdavid/compare/v1.35.0...v1.36.0) (2025-10-14)
 
 
