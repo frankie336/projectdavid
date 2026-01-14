@@ -136,7 +136,11 @@ class SynchronousInferenceStream:
             except StopAsyncIteration:
                 if suppress_fc:
                     if tail := refiner.flush_remaining():
-                        yield {"type": "content", "content": tail, "run_id": self.run_id}
+                        yield {
+                            "type": "content",
+                            "content": tail,
+                            "run_id": self.run_id,
+                        }
                 LOG.info("[SyncStream] Stream completed normally.")
                 break
 
