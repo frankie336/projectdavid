@@ -4,8 +4,7 @@ from typing import Generator, Optional
 
 from projectdavid_common import UtilsInterface
 
-from projectdavid.utils.function_call_suppressor import FunctionCallSuppressor
-from projectdavid.utils.peek_gate import PeekGate
+from projectdavid.utils.stream_refiner import StreamRefiner
 
 LOG = UtilsInterface.LoggingUtility()
 
@@ -60,8 +59,7 @@ class SynchronousInferenceStream:
     ) -> Generator[dict, None, None]:
         """
         Sync generator that mirrors async `inference_client.stream_inference_response`
-        but (optionally) removes raw <fc> … </fc> output *and* JSON
-        `{"type": "function_call" …}` objects from the stream.
+        but removes raw <fc> … </fc> blocks using a high-performance StreamRefiner.
         """
 
         resolved_api_key = api_key or self.api_key
@@ -81,42 +79,12 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ---------- FC-suppressor plumbing -------------------------------- #
+        # ---------- Refiner plumbing ------------------------------------- #
+        refiner = StreamRefiner() if suppress_fc else None
         if suppress_fc:
-            _suppressor = FunctionCallSuppressor()
-            _peek_gate = PeekGate(_suppressor)
-
-            def _filter_text(txt: str) -> str:
-                return _peek_gate.feed(txt)
-
-            LOG.debug("[SyncStream] Function-call suppression ACTIVE")
+            LOG.debug("[SyncStream] StreamRefiner ACTIVE (High-Performance mode)")
         else:
-
-            def _filter_text(txt: str) -> str:
-                return txt
-
             LOG.debug("[SyncStream] Function-call suppression DISABLED")
-
-        # ---------- helper to flush residual buffered text ---------------- #
-        def _drain_filters() -> Optional[dict]:
-            if not suppress_fc:
-                return None
-            parts: list[str] = []
-            while True:
-                out = _filter_text("")
-                if not out:
-                    break
-                parts.append(out)
-            if not _peek_gate.suppressing and _peek_gate.buf:
-                parts.append(_peek_gate.buf)
-                _peek_gate.buf = ""
-            if parts:
-                return {
-                    "type": "content",
-                    "content": "".join(parts),
-                    "run_id": self.run_id,
-                }
-            return None
 
         # ---------- main sync loop ---------------------------------------- #
         while True:
@@ -129,11 +97,13 @@ class SynchronousInferenceStream:
                 chunk["run_id"] = self.run_id
 
                 # ----- bypass filters for status / code-exec related -------- #
-                if chunk.get("type") == "status":
+                chunk_type = chunk.get("type")
+
+                if chunk_type == "status":
                     yield chunk
                     continue
 
-                if chunk.get("type") in ("hot_code", "hot_code_output"):
+                if chunk_type in ("hot_code", "hot_code_output"):
                     yield chunk
                     continue
 
@@ -145,37 +115,36 @@ class SynchronousInferenceStream:
                     continue
 
                 # ----- NEW: swallow raw JSON function_call objects ---------- #
-                if suppress_fc and chunk.get("type") == "function_call":
+                if suppress_fc and chunk_type == "function_call":
                     LOG.debug(
                         "[SyncStream] Swallowing JSON function_call chunk: %s",
                         chunk.get("name") or "<unnamed>",
                     )
                     continue
 
-                # ----- text-level suppression ------------------------------- #
-                if isinstance(chunk.get("content"), str):
-                    chunk["content"] = _filter_text(chunk["content"])
-                    if chunk["content"] == "":
-                        # Entire segment was inside <fc> … </fc>
-                        continue
+                # ----- text-level suppression using Refiner ----------------- #
+                content = chunk.get("content")
+                if isinstance(content, str):
+                    if suppress_fc:
+                        clean_content = refiner.process_chunk(content)
+                        if not clean_content:
+                            continue  # Whole chunk was suppressed
+                        chunk["content"] = clean_content
 
-                yield chunk
+                    yield chunk
 
             except StopAsyncIteration:
-                if tail := _drain_filters():
-                    yield tail
+                if suppress_fc:
+                    if tail := refiner.flush_remaining():
+                        yield {"type": "content", "content": tail, "run_id": self.run_id}
                 LOG.info("[SyncStream] Stream completed normally.")
                 break
 
             except asyncio.TimeoutError:
-                if tail := _drain_filters():
-                    yield tail
                 LOG.error("[SyncStream] Timeout waiting for next chunk.")
                 break
 
             except Exception as exc:  # noqa: BLE001
-                if tail := _drain_filters():
-                    yield tail
                 LOG.error(
                     "[SyncStream] Unexpected streaming error: %s", exc, exc_info=True
                 )

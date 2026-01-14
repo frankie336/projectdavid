@@ -186,7 +186,7 @@ Would you like a deeper dive into any of these trends?
 
 
 
-## 📚 Documentation
+##  Documentation
 
 | Domain              | Link                                                   |
 |---------------------|--------------------------------------------------------|
@@ -211,9 +211,9 @@ Would you like a deeper dive into any of these trends?
 
 ---
 
-## 🌍 Related Repositories
+##   Related Repositories
 
-- 🔌 [Entities API](https://github.com/frankie336/entities_api) — containerized API backend
+-   [Entities API](https://github.com/frankie336/entities_api) — containerized API backend
 - 
-- 📚 [entities_common](https://github.com/frankie336/entities_common) — shared validation, schemas, utilities, and tools.
+-   [entities_common](https://github.com/frankie336/entities_common) — shared validation, schemas, utilities, and tools.
       This package is auto installed as dependency of entities SDK or entities API.
