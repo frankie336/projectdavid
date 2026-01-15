@@ -17,7 +17,6 @@ import pdfplumber
 from docx import Document
 from pptx import Presentation
 from projectdavid_common import UtilsInterface
-from sentence_transformers import SentenceTransformer
 
 log = UtilsInterface.LoggingUtility()
 
@@ -27,26 +26,85 @@ class FileProcessor:
     #  Construction
     # ------------------------------------------------------------------ #
     def __init__(self, max_workers: int = 4, chunk_size: int = 512):
-        self.embedding_model = SentenceTransformer("paraphrase-MiniLM-L6-v2")
         self.embedding_model_name = "paraphrase-MiniLM-L6-v2"
+        self._embedding_model = None
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-        # token limits
-        self.max_seq_length = self.embedding_model.get_max_seq_length()
-        self.special_tokens_count = 2
-        self.effective_max_length = self.max_seq_length - self.special_tokens_count
-        self.chunk_size = min(chunk_size, self.effective_max_length * 4)
+        # Lazy-initialized attributes
+        self._requested_chunk_size = chunk_size
+        self._max_seq_length = None
+        self._effective_max_length = None
+        self._chunk_size = None
 
-        log.info("Initialized optimized FileProcessor")
+        log.info("Initialized Lazy-Loaded FileProcessor")
 
-    # in FileProcessor.__init__  (or monkey-patch after instantiation)
+    def _ensure_model(self):
+        """
+        Internal helper to load the model and calculate limits only once.
+        This prevents heavy imports (scipy, torch) until actually needed.
+        """
+        if self._embedding_model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+
+                log.info(f"Lazy-loading model: {self.embedding_model_name}")
+
+                self._embedding_model = SentenceTransformer(self.embedding_model_name)
+
+                # Ported Limit Calculations
+                self._max_seq_length = self._embedding_model.get_max_seq_length()
+                special_tokens_count = 2
+                self._effective_max_length = self._max_seq_length - special_tokens_count
+                self._chunk_size = min(
+                    self._requested_chunk_size, self._effective_max_length * 4
+                )
+
+            except ImportError:
+                log.error(
+                    "sentence-transformers not found. Ensure 'pip install projectdavid[vision]' is installed."
+                )
+                raise ImportError(
+                    "Model-based features require 'sentence-transformers'. Install with [vision] extra."
+                )
+        return self._embedding_model
+
+    # Properties to maintain access to derived attributes
+    @property
+    def chunk_size(self):
+        if self._chunk_size is None:
+            self._ensure_model()
+        return self._chunk_size
+
+    @property
+    def effective_max_length(self):
+        if self._effective_max_length is None:
+            self._ensure_model()
+        return self._effective_max_length
+
+    # ------------------------------------------------------------------ #
+    #  Embeddings
+    # ------------------------------------------------------------------ #
     def encode_text(self, text: str):
-        return self.embedding_model.encode(
+        model = self._ensure_model()
+        return model.encode(
             [text],
             convert_to_numpy=True,
             truncate="model_max_length",
             normalize_embeddings=True,
         )[0]
+
+    async def _encode_chunk_async(self, chunk: str) -> np.ndarray:
+        model = self._ensure_model()
+        return await asyncio.get_event_loop().run_in_executor(
+            self._executor,
+            lambda: model.encode(
+                [chunk],
+                convert_to_numpy=True,
+                truncate="model_max_length",
+                normalize_embeddings=True,
+                show_progress_bar=False,
+            )[0],
+        )
 
     # ------------------------------------------------------------------ #
     #  Generic validators
@@ -61,20 +119,10 @@ class FileProcessor:
             raise ValueError(f"{file_path.name} > {mb} MB limit")
 
     # ------------------------------------------------------------------ #
-    #  File-type detection  (simple extension map – NO libmagic)
+    #  File-type detection
     # ------------------------------------------------------------------ #
     def _detect_file_type(self, file_path: Path) -> str:
-        """
-        Return one of:
-
-            • 'pdf'   • 'csv'   • 'json'
-            • 'office' (.doc/.docx/.pptx)
-            • 'text'  (code / markup / plain text)
-
-        Raises *ValueError* if the extension is not recognised.
-        """
         suffix = file_path.suffix.lower()
-
         if suffix == ".pdf":
             return "pdf"
         if suffix == ".csv":
@@ -105,7 +153,6 @@ class FileProcessor:
         }
         if suffix in text_exts:
             return "text"
-
         raise ValueError(f"Unsupported file type: {file_path.name} (ext={suffix})")
 
     # ------------------------------------------------------------------ #
@@ -198,7 +245,7 @@ class FileProcessor:
     async def _process_csv(
         self, file_path: Path, text_field: str = "description"
     ) -> Dict[str, Any]:
-        rows, texts, metas = [], [], []
+        texts, metas = [], []
         with file_path.open(newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -328,18 +375,6 @@ class FileProcessor:
         pretty = json.dumps(obj, indent=2, ensure_ascii=False)
         return "\n".join(textwrap.wrap(pretty, width=120))
 
-    async def _encode_chunk_async(self, chunk: str) -> np.ndarray:
-        return await asyncio.get_event_loop().run_in_executor(
-            self._executor,
-            lambda: self.embedding_model.encode(
-                [chunk],
-                convert_to_numpy=True,
-                truncate="model_max_length",
-                normalize_embeddings=True,
-                show_progress_bar=False,
-            )[0],
-        )
-
     # ------------------------------------------------------------------ #
     #  Text chunking helpers
     # ------------------------------------------------------------------ #
@@ -364,10 +399,11 @@ class FileProcessor:
         return chunks
 
     def _split_oversized_chunk(self, chunk: str, tokens: List[str] = None) -> List[str]:
+        model = self._ensure_model()  # Ensure model is loaded to access tokenizer
         if tokens is None:
-            tokens = self.embedding_model.tokenizer.tokenize(chunk)
+            tokens = model.tokenizer.tokenize(chunk)
         out = []
         for i in range(0, len(tokens), self.effective_max_length):
             seg = tokens[i : i + self.effective_max_length]
-            out.append(self.embedding_model.tokenizer.convert_tokens_to_string(seg))
+            out.append(model.tokenizer.convert_tokens_to_string(seg))
         return out

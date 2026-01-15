@@ -14,6 +14,10 @@ license = { text = "PolyForm Noncommercial License 1.0.0" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
 
+# ------------------------------------------------------------------ #
+# CORE DEPENDENCIES (Lightweight Client)
+# Used by: Sandbox, basic CLI, and lightweight integrations.
+# ------------------------------------------------------------------ #
 dependencies = [
     "httpx>=0.25.2,<0.29",
     "pydantic>=2.0,<3.0",
@@ -24,20 +28,15 @@ dependencies = [
     "qdrant-client>=1.0.0,<2.0.0",
     "pdfplumber>=0.11.0,<0.12.0",
     "validators>=0.29.0,<0.35.0",
-    "sentence-transformers>=3.4.0,<5.0",
     "sseclient-py",
     "requests",
     "python-docx",
     "python-pptx",
-
-    # Vision / multimodal dependencies
-    "open_clip_torch>=2.24",
     "pillow>=10.2",
-    "transformers>=4.41",
-    "accelerate>=0.28",
-    "sentencepiece>=0.2",
-    "ultralytics>=8.2.21",
-    "pytesseract>=0.3",
+    # Safety pins: Prevents the '_spropack' binary crash
+    # by ensuring a stable environment for any sub-dependencies.
+    "numpy<2.0.0",
+    "scipy<=1.11.4",
 ]
 
 classifiers = [
@@ -46,11 +45,29 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent"
 ]
 
 [project.optional-dependencies]
+# ------------------------------------------------------------------ #
+# VECTOR DEPENDENCIES (Heavy ML / Vision / Local Embedding)
+# Used by: Entities API, Inference Workers.
+# Install via: pip install projectdavid[vector]
+# ------------------------------------------------------------------ #
+vector = [
+    "torch>=2.2.1",
+    "torchvision>=0.17.1",
+    "torchaudio>=2.2.1",
+    "sentence-transformers>=3.4.0,<5.0",
+    "open_clip_torch>=2.24",
+    "transformers>=4.41",
+    "accelerate>=0.28",
+    "sentencepiece>=0.2",
+    "ultralytics>=8.2.21",
+    "pytesseract>=0.3",
+]
+
 dev = [
     "black>=23.3",
     "isort>=5.12",
@@ -58,27 +75,6 @@ dev = [
     "mypy>=1.0",
     "build",
     "twine"
-]
-
-vision = [
-    # Users must supply the correct torch wheel (cpu / cu121 / cu118) at install time
-    "torch>=2.2.1",
-    "torchvision>=0.17.1",
-    "torchaudio>=2.2.1",
-
-    # OpenCLIP + captioning stack
-
-    "open_clip_torch>=2.24",
-    "pillow>=10.2",
-    "transformers>=4.41",
-    "accelerate>=0.28",
-    "sentencepiece>=0.2",
-    "ultralytics>=8.2.21",
-    "pytesseract>=0.3",
-
-    # Geolocation package pending release (uncomment when available)
-    # "geoloc-regio-net>=0.2.0 ; extra == 'vision'",
-
 ]
 
 [tool.isort]
