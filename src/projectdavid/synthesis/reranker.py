@@ -1,10 +1,11 @@
 from typing import Any, Dict, List
 
-from sentence_transformers import CrossEncoder
-
 
 def rerank(query: str, hits: List[Dict[str, Any]], top_k: int = 10) -> List[Dict]:
     try:
+
+        from sentence_transformers import CrossEncoder
+
         cross_encoder = CrossEncoder(
             "cross-encoder/ms-marco-MiniLM-L-6-v2",
             max_length=512,
