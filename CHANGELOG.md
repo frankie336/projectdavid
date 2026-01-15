@@ -1,3 +1,11 @@
+# [1.37.0](https://github.com/frankie336/projectdavid/compare/v1.36.1...v1.37.0) (2026-01-14)
+
+
+### Features
+
+* **sdk:** refactor streaming logic into a single-pass state machine ([8088dba](https://github.com/frankie336/projectdavid/commit/8088dba46865330ae66a6098dc9eaa1bb85d2282))
+* **sdk:** refactor streaming logic into a single-pass state machine ([afd24b7](https://github.com/frankie336/projectdavid/commit/afd24b7918bc9487db0fdb9ffa34855a23a3a87e))
+
 ## [1.36.1](https://github.com/frankie336/projectdavid/compare/v1.36.0...v1.36.1) (2025-10-15)
 
 
