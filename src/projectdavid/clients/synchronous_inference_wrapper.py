@@ -1,3 +1,4 @@
+# src/projectdavid/clients/synchronous_inference_wrapper.py
 import asyncio
 from contextlib import suppress
 from typing import Generator, Optional
