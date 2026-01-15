@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/frankie336/projectdavid/compare/v1.37.1...v1.38.0) (2026-01-15)
+
+
+### Features
+
+* cutting back to full fat version. ([9473363](https://github.com/frankie336/projectdavid/commit/9473363167c476501be59958184f5a9b983e566f))
+
 ## [1.37.1](https://github.com/frankie336/projectdavid/compare/v1.37.0...v1.37.1) (2026-01-15)
 
 
