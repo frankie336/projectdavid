@@ -1,3 +1,11 @@
+## [1.37.1](https://github.com/frankie336/projectdavid/compare/v1.37.0...v1.37.1) (2026-01-15)
+
+
+### Bug Fixes
+
+* Implementing light weight projectdavid ([134459d](https://github.com/frankie336/projectdavid/commit/134459d21bd0969175595d1bf565d988882724a3))
+* Implementing light weight projectdavid ([6f5548b](https://github.com/frankie336/projectdavid/commit/6f5548b965c764f7f48fd4bd436eb3da114d5b20))
+
 # [1.37.0](https://github.com/frankie336/projectdavid/compare/v1.36.1...v1.37.0) (2026-01-14)
 
 
