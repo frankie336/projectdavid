@@ -1,3 +1,10 @@
+## [1.38.1](https://github.com/frankie336/projectdavid/compare/v1.38.0...v1.38.1) (2026-01-17)
+
+
+### Bug Fixes
+
+* implement explicit action lifecycle management and tool error reporting ([d84a59b](https://github.com/frankie336/projectdavid/commit/d84a59bd5c172f95248f529345e2c2ea7651d1b4))
+
 # [1.38.0](https://github.com/frankie336/projectdavid/compare/v1.37.1...v1.38.0) (2026-01-15)
 
 
