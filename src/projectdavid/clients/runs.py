@@ -2,8 +2,7 @@
 import json
 import threading
 import time
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 import requests
