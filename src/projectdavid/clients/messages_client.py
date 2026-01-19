@@ -381,6 +381,7 @@ class MessagesClient(BaseAPIClient):
         content: str,
         assistant_id: str,
         tool_id: str,
+        tool_call_id: Optional[str] = None,  # <--- NEW PARAMETER
         role: str = "tool",
         sender_id: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
@@ -390,9 +391,10 @@ class MessagesClient(BaseAPIClient):
 
         Args:
             thread_id (str): The thread ID.
-            content (str): The message content.
+            content (str): The message content (JSON stringified result).
             assistant_id (str): The assistant's ID.
-            tool_id (str): The tool's ID.
+            tool_id (str): The internal Action/Tool DB ID (e.g., 'act_...').
+            tool_call_id (Optional[str]): The specific LLM generation ID (e.g., 'call_...') for dialogue binding.
             role (str): The role, default 'tool'.
             sender_id (Optional[str]): Optional sender ID.
             meta_data (Optional[Dict[str, Any]]): Additional metadata.
@@ -409,24 +411,37 @@ class MessagesClient(BaseAPIClient):
             "tool_id": tool_id,
             "meta_data": meta_data,
         }
+
+        # Inject the Dialogue Binding ID if provided
+        if tool_call_id:
+            message_data["tool_call_id"] = tool_call_id
+
         if sender_id is not None:
             message_data["sender_id"] = sender_id
 
         logging_utility.info(
-            "Creating tool message for thread_id: %s, role: %s", thread_id, role
+            "Creating tool message for thread_id: %s, role: %s, call_id: %s",
+            thread_id,
+            role,
+            tool_call_id,
         )
+
         try:
+            # Ensure your ent_validator.MessageCreate schema also has tool_call_id added!
             validated_data = ent_validator.MessageCreate(**message_data)
+
             response = self.client.post(
                 "/v1/messages/tools", json=validated_data.dict()
             )
             response.raise_for_status()
             created_message = response.json()
+
             logging_utility.info(
                 "Tool message created successfully with id: %s",
                 created_message.get("id"),
             )
             return created_message
+
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")

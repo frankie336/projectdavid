@@ -413,6 +413,7 @@ class RunsClient(BaseAPIClient):
             if action_to_handle:
                 action_id = action_to_handle.get("action_id")
                 tool_name = action_to_handle.get("tool_name")
+                tool_call_id = action_to_handle.get("tool_call_id")
                 arguments = action_to_handle.get("function_arguments")
 
                 logging_utility.info(
