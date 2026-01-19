@@ -1,3 +1,11 @@
+# [1.39.0](https://github.com/frankie336/projectdavid/compare/v1.38.1...v1.39.0) (2026-01-17)
+
+
+### Features
+
+* Implement 0.20.0 projectdavid_common==0.20.0 ([589939b](https://github.com/frankie336/projectdavid/commit/589939b926768faa1617a80c30069a51ddedcdac))
+* removed unused imports ([743e5c2](https://github.com/frankie336/projectdavid/commit/743e5c21f8b25ef8d9d76f90497ed889bae5e3a0))
+
 ## [1.38.1](https://github.com/frankie336/projectdavid/compare/v1.38.0...v1.38.1) (2026-01-17)
 
 
