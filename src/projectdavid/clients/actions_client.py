@@ -57,9 +57,14 @@ class ActionsClient(BaseAPIClient):
         tool_name: str,
         run_id: str,
         function_args: Optional[Dict[str, Any]] = None,
+        tool_call_id: Optional[str] = None,  # <-- Added optional parameter
         expires_at: Optional[datetime] = None,
     ) -> validation.ActionRead:
-        """Create a new action using the provided tool_name, run_id, and function_args."""
+        """
+        Create a new action using the provided tool_name, run_id, and function_args.
+
+        :param tool_call_id: Optional ID from the LLM generation step (Dialogue Binding).
+        """
         try:
             action_id = UtilsInterface.IdentifierService.generate_action_id()
             expires_at_iso = expires_at.isoformat() if expires_at else None
@@ -69,35 +74,39 @@ class ActionsClient(BaseAPIClient):
                 tool_name=tool_name,
                 run_id=run_id,
                 function_args=function_args or {},
+                tool_call_id=tool_call_id,  # <-- Passed to schema
                 expires_at=expires_at_iso,
                 status="pending",
-            ).dict()  # Assuming Pydantic v1, use .model_dump(mode="json") for v2+ if needed
+            ).dict()
 
             logging_utility.debug(
                 "[CreateAction] Payload for action %s: %s", action_id, payload
             )
 
-            response = self.client.post(
-                "/v1/actions", json=payload
-            )  # This uses the default timeout
+            response = self.client.post("/v1/actions", json=payload)
+
             logging_utility.debug(
                 "[CreateAction] Response Status Code for %s: %s",
                 action_id,
                 response.status_code,
             )
+            # Log truncated body for debug without flooding
             logging_utility.debug(
                 "[CreateAction] Response Body for %s: %s",
                 action_id,
                 response.text[:500],
-            )  # Log truncated body
+            )
+
             response.raise_for_status()
 
             response_data = response.json()
             validated_action = validation.ActionRead(**response_data)
+
             logging_utility.info(
-                "[CreateAction] Action %s created successfully for run %s.",
+                "[CreateAction] Action %s created successfully for run %s (Call ID: %s).",
                 action_id,
                 run_id,
+                tool_call_id,
             )
             return validated_action
 
@@ -109,12 +118,12 @@ class ActionsClient(BaseAPIClient):
                 e.response.text[:500],
             )
             raise ValueError(f"HTTP error during action creation: {str(e)}")
-        except httpx.TimeoutException as e:  # Catch potential timeout here too
+        except httpx.TimeoutException as e:
             logging_utility.error(
                 "[CreateAction] Timeout creating action for run %s: %s", run_id, str(e)
             )
             raise TimeoutError(f"Timeout during action creation: {str(e)}") from e
-        except httpx.RequestError as e:  # Catch other request errors
+        except httpx.RequestError as e:
             logging_utility.error(
                 "[CreateAction] Request error creating action for run %s: %s",
                 run_id,
