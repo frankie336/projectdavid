@@ -1,3 +1,10 @@
+## [1.39.3](https://github.com/frankie336/projectdavid/compare/v1.39.2...v1.39.3) (2026-01-20)
+
+
+### Bug Fixes
+
+* Add tool_call_id param to poll_and_execute_action ([b7ac9c4](https://github.com/frankie336/projectdavid/commit/b7ac9c45b38762021380eecb09abf903085fd6e1))
+
 ## [1.39.2](https://github.com/frankie336/projectdavid/compare/v1.39.1...v1.39.2) (2026-01-20)
 
 
