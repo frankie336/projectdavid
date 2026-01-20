@@ -438,6 +438,7 @@ class RunsClient(BaseAPIClient):
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action_id,
+                        tool_call_id=tool_call_id,
                         content=result_content,
                         role="tool",
                         assistant_id=assistant_id,
@@ -466,6 +467,7 @@ class RunsClient(BaseAPIClient):
                         messages_client.submit_tool_output(
                             thread_id=thread_id,
                             tool_id=action_id,
+                            tool_call_id=tool_call_id,
                             content=error_payload,
                             role="tool",
                             assistant_id=assistant_id,
@@ -488,6 +490,7 @@ class RunsClient(BaseAPIClient):
 
         return action_handled_successfully
 
+    # TODO: I think we need to decommission this, not used.
     def watch_run_events(
         self,
         run_id: str,
