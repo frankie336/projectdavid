@@ -1,3 +1,11 @@
+## [1.39.1](https://github.com/frankie336/projectdavid/compare/v1.39.0...v1.39.1) (2026-01-19)
+
+
+### Bug Fixes
+
+* Add tool_call_id to actions_client.py ([1f7dffd](https://github.com/frankie336/projectdavid/commit/1f7dffd411be5d1a6cbb15d76117ba586796cf10))
+* Add tool_call_id to actions_client.py ([c4d5821](https://github.com/frankie336/projectdavid/commit/c4d58217149bd1fbd53207c746f8f75bb6dbe654))
+
 # [1.39.0](https://github.com/frankie336/projectdavid/compare/v1.38.1...v1.39.0) (2026-01-17)
 
 
