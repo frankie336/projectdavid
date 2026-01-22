@@ -1,4 +1,4 @@
-## ✅ How to Use Function Calling with a Movie Database using Entities V1
+## How to Use Function Calling with a Movie Database using Entities V1
 
 Hello Martin — thanks for the kind words, they mean a lot.
 

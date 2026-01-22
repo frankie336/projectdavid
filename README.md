@@ -115,7 +115,7 @@ sync_stream.setup(
     assistant_id=assistant.id,
     message_id=message.id,
     run_id=run.id,
-    api_key=os.getenv("HYPERBOLIC_API_KEY"),
+    api_key=os.getenv("YOUR_API_KEY"),
 )
 print("Stream setup complete. Starting streaming...")
 
@@ -135,6 +135,21 @@ except Exception as e:
 
 print("Script finished.")
 ```
+
+### Model Routes
+
+The script above maps each model to a route suffix that you use when calling the API.
+For example, to invoke the DeepSeek V3 model hosted on Hyperbolic you would use the suffix:
+
+`hyperbolic/deepseek-ai/DeepSeek-V3-0324`
+
+Below is a table that lists the route suffix for every supported model.
+
+
+
+Below is a table that lists the route suffix for every supported model.
+
+[View Model Routes Table](./docs/model_routes.md)
 
 **The assisants  response**:
 
