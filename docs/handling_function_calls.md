@@ -65,13 +65,13 @@ def get_flight_times(tool_name, arguments):
 # - the default assistant is used here because it is
 #   already optimized for function calling behavior
 #------------------------------------------------------
-user_id = "user_oKwebKcvx95018NPtzTaGB"
-assistant_id = "default"
+
+assistant_id = "plt_ast_9fnJT01VGrK4a9fcNr8z2O"
 
 #----------------------------------------------------
 # Create a thread
 #----------------------------------------------------
-thread = client.threads.create_thread(participant_ids=[user_id])
+thread = client.threads.create_thread()
 
 #----------------------------------------------------
 # Create a user message that may trigger a function call
