@@ -1,3 +1,10 @@
+## [1.39.5](https://github.com/frankie336/projectdavid/compare/v1.39.4...v1.39.5) (2026-01-25)
+
+
+### Bug Fixes
+
+* upgrade to projectdavid_common==0.21.3 ([00985ab](https://github.com/frankie336/projectdavid/commit/00985ab81ba71f945675fd8f91a281272ab2b1f0))
+
 ## [1.39.4](https://github.com/frankie336/projectdavid/compare/v1.39.3...v1.39.4) (2026-01-24)
 
 
