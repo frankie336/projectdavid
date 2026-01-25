@@ -1,3 +1,10 @@
+## [1.39.7](https://github.com/frankie336/projectdavid/compare/v1.39.6...v1.39.7) (2026-01-25)
+
+
+### Bug Fixes
+
+* upgrade to projectdavid_common==0.21.5 / Remove tools_client.py ([cb1ba35](https://github.com/frankie336/projectdavid/commit/cb1ba355c94d5769fbb3671effcf48ad9488ca56))
+
 ## [1.39.6](https://github.com/frankie336/projectdavid/compare/v1.39.5...v1.39.6) (2026-01-25)
 
 
