@@ -13,7 +13,6 @@ from .clients.messages_client import MessagesClient
 from .clients.runs import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
-from .clients.tools_client import ToolsClient
 from .clients.users_client import UsersClient
 from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
@@ -62,7 +61,6 @@ class Entity:
         # Lazy initialization caches for service instances.
         self._users_client: Optional[UsersClient] = None
         self._assistants_client: Optional[AssistantsClient] = None
-        self._tool_service: Optional[ToolsClient] = None
         self._thread_service: Optional[ThreadsClient] = None
         self._messages_client: Optional[MessagesClient] = None
 
@@ -93,14 +91,6 @@ class Entity:
                 base_url=self.base_url, api_key=self.api_key
             )
         return self._assistants_client
-
-    @property
-    def tools(self) -> ToolsClient:
-        if self._tool_service is None:
-            self._tool_service = ToolsClient(
-                base_url=self.base_url, api_key=self.api_key
-            )
-        return self._tool_service
 
     @property
     def threads(self) -> ThreadsClient:

@@ -9,7 +9,6 @@ from projectdavid_common.constants.timeouts import DEFAULT_TIMEOUT  # noqa: F401
 from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
-from projectdavid.clients.tools_client import ToolsClient
 from projectdavid.clients.vectors import VectorStoreClient
 
 ent_validator = ValidationInterface()
@@ -152,31 +151,7 @@ class AssistantsClient(BaseAPIClient):
             assistant_id = validated_resp.id
             logging_utility.info("Assistant created with id=%s", assistant_id)
 
-            # ── 2. (optional) associate legacy DB tools ─────────────────
-            if tools:
-                tools_client = ToolsClient(base_url=self.base_url, api_key=self.api_key)
-                for cfg in tools:
-                    tool_type = cfg.get("type")
-                    mapped = TOOLS_ID_MAP.get(tool_type)
-                    if not mapped:
-                        logging_utility.warning(
-                            "No mapping for tool '%s' – skipped.", tool_type
-                        )
-                        continue
-                    try:
-                        tools_client.associate_tool_with_assistant(
-                            assistant_id=assistant_id, tool_id=mapped
-                        )
-                        logging_utility.info("→ linked %s (%s)", tool_type, mapped)
-                    except Exception as err:
-                        logging_utility.warning(
-                            "Tool link failed for %s → %s: %s",
-                            tool_type,
-                            assistant_id,
-                            err,
-                        )
-
-            # ── 3. attach any referenced vector stores ─────────────────
+            # ── 2. attach any referenced vector stores ─────────────────
             vs_ids = self._collect_vector_store_ids(tools, tool_resources)
             if vs_ids:
                 vectors_client = VectorStoreClient(
