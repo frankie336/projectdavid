@@ -1,25 +1,33 @@
-# Function Calling
+# Function Calling and Tool Execution
 
 ## Overview
 
-Most examples online only show a partial picture of function calling.
-They walk through the basics—but skip over what really matters: how to handle, stream, and scale function calls inside a sophisticated state machine like Entities V1.
+Most examples online only show a partial picture of **function calling**.
+They cover schema definition and happy-path demos, but skip what actually matters in production:
+how to **detect**, **handle**, **execute**, **stream**, and **scale** model-proposed actions inside a
+stateful system such as *Entities V1*.
 
-The script below has been battle-tested in live systems. It's ready for production.
-Feel free to adapt it to suit your own assistant workflows.
+In LLM engineering:
 
+- **Function calling** is a *model-level capability*  
+  (the model emits a structured proposal)
+- **Tool execution** is a *runtime responsibility*  
+  (the host system validates and executes side effects)
 
+The script below demonstrates a **production-grade action handling loop**.
+It has been battle-tested in live systems and is safe to adapt for your own assistant workflows.
 
-**Prerequisite** 
+---
 
-Please read here on function call definition:
+## Prerequisite
 
-[function_call_definition.md](/docs/function_call_definition.md)
+Please read the definition of tool schemas and function calling here:
 
+[tools_definition.md](/docs/tools_definition.md)
 
+---
 
 ```python
-
 import os
 import json
 import time
@@ -31,10 +39,13 @@ load_dotenv()
 client = Entity()
 
 #-----------------------------------------
-# This is a basis mock handler returning 
-# static test data. Handling is a consumer 
-# side concern. 
-#----------------------------------------
+# Tool executor (runtime-owned)
+#
+# This is a mock tool executor that returns
+# static test data. Tool execution is a
+# consumer-side concern and is never
+# performed by the model itself.
+#-----------------------------------------
 def get_flight_times(tool_name, arguments):
     if tool_name == "get_flight_times":
         return json.dumps({
@@ -48,25 +59,22 @@ def get_flight_times(tool_name, arguments):
         "message": f"Executed tool '{tool_name}' successfully."
     })
 
-
 #------------------------------------------------------
-# Please be aware: 
-# - user id needs to be a user id you have generated
-# - We are using the default assistant since it is 
-# - already highly optimized for function calling.
-#-------------------------------------------------------
+# Notes:
+# - user_id must reference an existing user
+# - the default assistant is used here because it is
+#   already optimized for function calling behavior
+#------------------------------------------------------
 user_id = "user_oKwebKcvx95018NPtzTaGB"
 assistant_id = "default"
 
-
 #----------------------------------------------------
-# Create a thread 
+# Create a thread
 #----------------------------------------------------
-
 thread = client.threads.create_thread(participant_ids=[user_id])
 
 #----------------------------------------------------
-# Create a message that should trigger the function call 
+# Create a user message that may trigger a function call
 #----------------------------------------------------
 message = client.messages.create_message(
     thread_id=thread.id,
@@ -76,22 +84,17 @@ message = client.messages.create_message(
 )
 
 #----------------------------------------------------
-# Create a Run 
+# Create a run
 #----------------------------------------------------
-
 run = client.runs.create_run(
     assistant_id=assistant_id,
     thread_id=thread.id
 )
 
-
 #----------------------------------------------------
-# Set up inference.
-# - Note: that I am fetching the hyperbolic 
-# API key from .env 
+# Set up inference
+# - API key is sourced from environment variables
 #----------------------------------------------------
-
-
 sync_stream = client.synchronous_inference_stream
 sync_stream.setup(
     user_id=user_id,
@@ -102,7 +105,9 @@ sync_stream.setup(
     api_key=os.getenv("HYPERBOLIC_API_KEY"),
 )
 
-# --- Stream initial LLM response ---
+#----------------------------------------------------
+# Stream the initial model response
+#----------------------------------------------------
 for chunk in sync_stream.stream_chunks(
     provider="Hyperbolic",
     model="hyperbolic/deepseek-ai/DeepSeek-V3",
@@ -113,27 +118,21 @@ for chunk in sync_stream.stream_chunks(
     if content:
         print(content, end="", flush=True)
 
-# --- Function call execution ---
+#----------------------------------------------------
+# Handle model-proposed function calls and execute tools
+#----------------------------------------------------
 try:
-    
     #----------------------------------------------------
-    # This is the function call event handler 
-    # - Note: that you can tweak timeout & interval 
-    # - Alwauys place it here in the order of procedure 
-    # ----------------------------------------------------
-    
-    
+    # Action handling loop
+    #
+    # This block:
+    # - polls for function call outputs from the model
+    # - validates them
+    # - executes the corresponding tools
+    #
+    # Tool execution is deterministic and controlled
+    # entirely by the runtime.
     #----------------------------------------------------
-    #  This is a special case block. 
-    #  Some of the models need a follow-up message before  
-    #  they provide you with their synthesis on function call
-    #  output. hyperbolic/deepseek-ai/DeepSeek-V3 is an
-    #  example of a model we were able to make stable by 
-    #  using this method where there is no official 
-    #  work around from @DeepSeek
-    # ----------------------------------------------------
-    
-    
     action_was_handled = client.runs.poll_and_execute_action(
         run_id=run.id,
         thread_id=thread.id,
@@ -145,8 +144,16 @@ try:
         interval=1.5,
     )
 
+    #----------------------------------------------------
+    # Some models require a follow-up inference pass
+    # after tool execution to synthesize a final response.
+    #
+    # This pattern stabilizes models such as:
+    # hyperbolic/deepseek-ai/DeepSeek-V3
+    #----------------------------------------------------
     if action_was_handled:
         print("\n[Tool executed. Generating final response...]\n")
+
         sync_stream.setup(
             user_id=user_id,
             thread_id=thread.id,
@@ -155,6 +162,7 @@ try:
             run_id=run.id,
             api_key=os.getenv("HYPERBOLIC_API_KEY"),
         )
+
         for final_chunk in sync_stream.stream_chunks(
             provider="Hyperbolic",
             model="hyperbolic/deepseek-ai/DeepSeek-V3",
@@ -164,22 +172,21 @@ try:
             content = final_chunk.get("content", "")
             if content:
                 print(content, end="", flush=True)
+
 except Exception as e:
     print(f"\n[Error during tool execution or final stream]: {str(e)}")
-
-
 ```
 
 ---
 
-**The following is real output from the execution above:**
+## Example Function Call Output (Model-Level)
 
-This is the call that the assistant makes. You don't have to deal
-with this , but it is included for illustration purposes.
-You may need some strategy to filter it out of frontend rendering. 
+The following is a **function call emitted by the model**.
+It is *not executed by the model* and is shown here for illustration purposes only.
 
-```bash
+You may wish to filter this event from frontend rendering.
 
+```json
 {
   "name": "get_flight_times",
   "arguments": {
@@ -187,14 +194,13 @@ You may need some strategy to filter it out of frontend rendering.
     "arrival": "JFK"
   }
 }
-
-
 ```
 
-**Ths is the assistants response:**
+---
 
-```bash
+## Example Final Assistant Response
 
+```text
 [Tool executed. Generating final response...]
 
 The flight from **Los Angeles (LAX)** to **New York (JFK)** has the following details:
@@ -204,12 +210,27 @@ The flight from **Los Angeles (LAX)** to **New York (JFK)** has the following de
 - **Arrival Time**: 06:30 PM EST
 
 Let me know if you'd like additional details or assistance!
-
-
 ```
 
-**Whilst initial set up appears arduous at first, Entities will now
-handle the complete life cycle of each and every instance of this call
-trigger. You can scale an unlimited number of further functions across
-an unlimited number of assistants.**
+---
 
+## Lifecycle Summary
+
+While the initial setup may appear involved, *Entities* now manages the complete lifecycle of:
+
+- function call detection
+- tool execution
+- result injection
+- response synthesis
+
+You can safely scale:
+- an unlimited number of tools
+- across an unlimited number of assistants
+- with consistent, auditable behavior
+
+The model proposes.  
+The runtime decides.  
+The system remains in control.
+
+---
+```
