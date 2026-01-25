@@ -1,3 +1,10 @@
+## [1.39.8](https://github.com/frankie336/projectdavid/compare/v1.39.7...v1.39.8) (2026-01-25)
+
+
+### Bug Fixes
+
+* Persistent Connection Pooling (The TTFT Killer) ([177c43d](https://github.com/frankie336/projectdavid/commit/177c43dde076f95f05e9f09eda128759214d6420))
+
 ## [1.39.7](https://github.com/frankie336/projectdavid/compare/v1.39.6...v1.39.7) (2026-01-25)
 
 
