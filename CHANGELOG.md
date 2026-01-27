@@ -1,3 +1,10 @@
+## [1.39.10](https://github.com/frankie336/projectdavid/compare/v1.39.9...v1.39.10) (2026-01-27)
+
+
+### Bug Fixes
+
+* Return pydentic model objects from get_runs ([95407f9](https://github.com/frankie336/projectdavid/commit/95407f960d40e3b8df3dce37d2f04538d8f352e8))
+
 ## [1.39.9](https://github.com/frankie336/projectdavid/compare/v1.39.8...v1.39.9) (2026-01-25)
 
 
