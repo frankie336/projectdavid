@@ -1,3 +1,10 @@
+## [1.39.9](https://github.com/frankie336/projectdavid/compare/v1.39.8...v1.39.9) (2026-01-25)
+
+
+### Bug Fixes
+
+* reverting streaming changes ([7573d70](https://github.com/frankie336/projectdavid/commit/7573d70169352528493f0e8ba514f90c31e0c6de))
+
 ## [1.39.8](https://github.com/frankie336/projectdavid/compare/v1.39.7...v1.39.8) (2026-01-25)
 
 
