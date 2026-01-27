@@ -411,14 +411,10 @@ class RunsClient(BaseAPIClient):
 
             # 3. Process the Action if found
             if action_to_handle:
-                # action_id = action_to_handle.get("action_id")
-                action_id = action_to_handle.id
-                # tool_name = action_to_handle.get("tool_name")
-                tool_name = action_to_handle.tool_name
-                # tool_call_id = action_to_handle.get("tool_call_id")
-                tool_call_id = action_to_handle.tool_call_id
-                # arguments = action_to_handle.get("function_arguments")
-                arguments = action_to_handle.function_args
+                action_id = action_to_handle.get("action_id")
+                tool_name = action_to_handle.get("tool_name")
+                tool_call_id = action_to_handle.get("tool_call_id")
+                arguments = action_to_handle.get("function_arguments")
 
                 logging_utility.info(
                     f"[SDK Helper] Executing Tool: '{tool_name}' (ID: {action_id})"
