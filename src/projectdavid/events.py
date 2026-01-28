@@ -1,3 +1,4 @@
+# src/projectdavid/clients/events.py
 import json
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Union
@@ -144,6 +145,7 @@ class ToolCallRequestEvent(StreamEvent):
             messages_client=self._messages_client,
             streamed_args=self.args,
             action_id=self.action_id,  # <--- NEW: Pass ID to helper
+            tool_name=self.tool_name,  # Tells the executor what function to run
         )
 
     def __repr__(self):
