@@ -1,3 +1,10 @@
+## [1.41.5](https://github.com/frankie336/projectdavid/compare/v1.41.4...v1.41.5) (2026-01-28)
+
+
+### Bug Fixes
+
+* Resolve race condition by yielding manifest_chunk which contains the action id after the action has been entered into the main db ([1b716b0](https://github.com/frankie336/projectdavid/commit/1b716b0b338306d93ee3d22156226e2b0f670111))
+
 ## [1.41.4](https://github.com/frankie336/projectdavid/compare/v1.41.3...v1.41.4) (2026-01-28)
 
 
