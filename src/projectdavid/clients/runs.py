@@ -490,6 +490,111 @@ class RunsClient(BaseAPIClient):
 
         return action_handled_successfully
 
+    def execute_pending_action(
+        self,
+        run_id: str,
+        thread_id: str,
+        assistant_id: str,
+        tool_executor: Callable[[str, Dict[str, Any]], str],
+        actions_client: Any,
+        messages_client: Any,
+        # Optional: If you captured args from stream, pass them to avoid re-parsing
+        streamed_args: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """
+        Non-polling execution helper.
+        Fetches the pending action details for a run, executes the tool,
+        and submits the output immediately.
+        """
+        if not callable(tool_executor):
+            raise TypeError("tool_executor must be a callable function.")
+
+        logging_utility.info(
+            f"[SDK Helper] Handling pending action for run {run_id}..."
+        )
+
+        try:
+            # 1. Fetch the authoritative Action Object from the API
+            # We need this to get the 'action_id' and 'tool_call_id' which aren't always in the stream
+            pending_actions = actions_client.get_pending_actions(run_id=run_id)
+
+            if not pending_actions:
+                logging_utility.warning(
+                    f"[SDK Helper] No pending actions found for run {run_id}."
+                )
+                return False
+
+            # For now, we handle the first action found (typical sequential tool use)
+            action_to_handle = pending_actions[0]
+
+            action_id = action_to_handle.get("action_id")
+            tool_name = action_to_handle.get("tool_name")
+            tool_call_id = action_to_handle.get("tool_call_id")
+
+            # Prioritize args passed from stream (faster), fallback to server args
+            arguments = (
+                streamed_args
+                if streamed_args
+                else action_to_handle.get("function_arguments")
+            )
+
+            logging_utility.info(
+                f"[SDK Helper] Executing Tool: '{tool_name}' (ID: {action_id})"
+            )
+
+            # --- Step A: Mark Processing ---
+            actions_client.update_action(action_id, status=StatusEnum.processing.value)
+
+            # --- Step B: Execute Local Function ---
+            try:
+                result_content = tool_executor(tool_name, arguments)
+
+                # Ensure string format
+                if not isinstance(result_content, str):
+                    result_content = json.dumps(result_content)
+
+                # --- Step C: Submit Success ---
+                messages_client.submit_tool_output(
+                    thread_id=thread_id,
+                    tool_id=action_id,
+                    tool_call_id=tool_call_id,
+                    content=result_content,
+                    role="tool",
+                    assistant_id=assistant_id,
+                )
+
+                # Mark completed (Explicitly, though submit_tool_output might trigger backend logic)
+                actions_client.update_action(
+                    action_id, status=StatusEnum.completed.value
+                )
+
+                logging_utility.info(
+                    f"[SDK Helper] Action {action_id} handled successfully."
+                )
+                return True
+
+            except Exception as tool_exc:
+                # --- Step D: Submit Failure ---
+                logging_utility.error(f"[SDK Helper] Tool execution failed: {tool_exc}")
+                error_payload = json.dumps({"error": str(tool_exc)})
+
+                messages_client.submit_tool_output(
+                    thread_id=thread_id,
+                    tool_id=action_id,
+                    tool_call_id=tool_call_id,
+                    content=error_payload,
+                    role="tool",
+                    assistant_id=assistant_id,
+                )
+                actions_client.update_action(action_id, status=StatusEnum.failed.value)
+                return False
+
+        except Exception as e:
+            logging_utility.error(
+                f"[SDK Helper] Critical error in execute_pending_action: {e}"
+            )
+            return False
+
     # TODO: I think we need to decommission this, not used.
     def watch_run_events(
         self,
