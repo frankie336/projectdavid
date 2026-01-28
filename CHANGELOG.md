@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/frankie336/projectdavid/compare/v1.39.11...v1.40.0) (2026-01-28)
+
+
+### Features
+
+* Implement execute_pending_action method. This eliminates the need for client side consumers to poll for pending actions before execution. Increases speed of function call handling, and cuts down on churn. ([385e977](https://github.com/frankie336/projectdavid/commit/385e977851d5b3558a03c39b47a17ebffe7e8eea))
+
 ## [1.39.11](https://github.com/frankie336/projectdavid/compare/v1.39.10...v1.39.11) (2026-01-27)
 
 
