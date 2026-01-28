@@ -1,3 +1,10 @@
+## [1.41.7](https://github.com/frankie336/projectdavid/compare/v1.41.6...v1.41.7) (2026-01-28)
+
+
+### Bug Fixes
+
+*  action_id is present, we completely ignore get_pending_actions. ([6716573](https://github.com/frankie336/projectdavid/commit/67165739ee01676e1f6eed20ee4f594773f5480d))
+
 ## [1.41.6](https://github.com/frankie336/projectdavid/compare/v1.41.5...v1.41.6) (2026-01-28)
 
 
