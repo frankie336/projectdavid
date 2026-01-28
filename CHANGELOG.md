@@ -1,3 +1,10 @@
+## [1.41.4](https://github.com/frankie336/projectdavid/compare/v1.41.3...v1.41.4) (2026-01-28)
+
+
+### Bug Fixes
+
+* Resolve race condition in function call event handler ([c829df4](https://github.com/frankie336/projectdavid/commit/c829df42698bf58c4f12a21a002b97925b7a0e0a))
+
 ## [1.41.3](https://github.com/frankie336/projectdavid/compare/v1.41.2...v1.41.3) (2026-01-28)
 
 
