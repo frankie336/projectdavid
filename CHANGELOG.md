@@ -1,3 +1,10 @@
+## [1.41.8](https://github.com/frankie336/projectdavid/compare/v1.41.7...v1.41.8) (2026-01-28)
+
+
+### Bug Fixes
+
+*  simplify: execute_pending_action ([2037f0b](https://github.com/frankie336/projectdavid/commit/2037f0b79fd8c7d2d063cf02a897b2fb83bc003f))
+
 ## [1.41.7](https://github.com/frankie336/projectdavid/compare/v1.41.6...v1.41.7) (2026-01-28)
 
 
