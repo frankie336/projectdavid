@@ -498,96 +498,66 @@ class RunsClient(BaseAPIClient):
         tool_executor: Callable[[str, Dict[str, Any]], str],
         actions_client: Any,
         messages_client: Any,
-        streamed_args: Optional[Dict[str, Any]] = None,
-        # --- NEW: Direct Access Keys ---
-        action_id: Optional[str] = None,
-        tool_name: Optional[str] = None,
+        streamed_args: Dict[str, Any],
+        action_id: str,
+        tool_name: str,
     ) -> bool:
         """
-        Executes an action.
-        If 'action_id' is provided, we BYPASS the database lookup entirely.
+        Executes a tool call action using direct identifiers.
+        This method skips database lookups and targets the specific Action ID
+        provided by the event stream.
         """
         if not callable(tool_executor):
             raise TypeError("tool_executor must be a callable function.")
 
-        logging_utility.info(f"[SDK Helper] Handling action for run {run_id}...")
-
-        # -------------------------------------------------------
-        # PATH A: FAST (Direct Access)
-        # -------------------------------------------------------
-        if action_id:
-            # WE DO NOT CALL get_pending_actions() HERE.
-            # We already know exactly which record to update.
-            logging_utility.debug(
-                f"[SDK Helper] Fast-path: Targeting Action ID {action_id}"
+        if not action_id:
+            logging_utility.error(
+                f"[SDK Helper] Missing action_id for run {run_id}. Cannot execute."
             )
+            return False
 
-            target_action_id = action_id
-            # We rely on the event to tell us the name, or default to unknown
-            target_tool_name = tool_name or "unknown_tool"
-            target_args = streamed_args or {}
-
-            # We don't need the upstream tool_call_id for the submission to work
-            # because our DB uses the 'action_id' (target_action_id) as the primary key.
-            target_tool_call_id = None
-
-            # -------------------------------------------------------
-        # PATH B: SLOW (Legacy Lookup)
-        # -------------------------------------------------------
-        else:
-            # Only query the DB if we don't have the ID
-            logging_utility.debug(
-                f"[SDK Helper] Slow-path: Querying DB for pending actions..."
-            )
-            pending_actions = actions_client.get_pending_actions(run_id=run_id)
-
-            if not pending_actions:
-                logging_utility.warning(f"[SDK Helper] DB Query returned 0 actions.")
-                return False
-
-            action_to_handle = pending_actions[0]
-            target_action_id = action_to_handle.get("action_id")
-            target_tool_name = action_to_handle.get("tool_name")
-            target_tool_call_id = action_to_handle.get("tool_call_id")
-            target_args = streamed_args or action_to_handle.get("function_arguments")
-
-        # -------------------------------------------------------
-        # EXECUTION (Shared Logic)
-        # -------------------------------------------------------
-        logging_utility.info(f"[SDK Helper] Executing '{target_tool_name}'...")
+        logging_utility.info(
+            f"[SDK Helper] Executing '{tool_name}' for Action: {action_id}"
+        )
 
         try:
-            # 1. Mark as Processing (Directly by ID)
-            actions_client.update_action(target_action_id, status="processing")
+            # 1. Mark Action as Processing
+            actions_client.update_action(action_id, status="processing")
 
-            # 2. Run Local Function
-            result_content = tool_executor(target_tool_name, target_args)
+            # 2. Execute the local function
+            # result_content must be a JSON string for the API to accept it
+            result_content = tool_executor(tool_name, streamed_args)
             if not isinstance(result_content, str):
                 result_content = json.dumps(result_content)
 
-            # 3. Submit Output (Directly by ID)
+            # 3. Submit Tool Output
+            # We use action_id as the primary tool identifier.
+            # tool_call_id (the LLM's ID) is handled internally by the API mapping.
             messages_client.submit_tool_output(
                 thread_id=thread_id,
-                tool_id=target_action_id,
-                tool_call_id=target_tool_call_id,
+                tool_id=action_id,
+                tool_call_id=None,
                 content=result_content,
                 role="tool",
                 assistant_id=assistant_id,
             )
 
-            # 4. Mark Complete (Directly by ID)
-            actions_client.update_action(target_action_id, status="completed")
-
+            # 4. Mark Action as Completed
+            actions_client.update_action(action_id, status="completed")
+            logging_utility.info(
+                f"[SDK Helper] Tool '{tool_name}' completed successfully."
+            )
             return True
 
         except Exception as e:
-            logging_utility.error(f"[SDK Helper] Execution failed: {e}")
-            if target_action_id:
-                # Attempt to mark failed
-                try:
-                    actions_client.update_action(target_action_id, status="failed")
-                except:
-                    pass
+            logging_utility.error(
+                f"[SDK Helper] Execution failed for tool '{tool_name}': {e}"
+            )
+            # Attempt to mark the action as failed in the DB
+            try:
+                actions_client.update_action(action_id, status="failed")
+            except Exception:
+                pass
             return False
 
     # TODO: I think we need to decommission this, not used.
