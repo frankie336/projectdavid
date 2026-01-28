@@ -1,3 +1,10 @@
+## [1.39.11](https://github.com/frankie336/projectdavid/compare/v1.39.10...v1.39.11) (2026-01-27)
+
+
+### Bug Fixes
+
+* cutting back to unvalidated return from poll_and_execute_action ([9e24438](https://github.com/frankie336/projectdavid/commit/9e24438b1503819ac7c89ce2e4b879a5e0db7504))
+
 ## [1.39.10](https://github.com/frankie336/projectdavid/compare/v1.39.9...v1.39.10) (2026-01-27)
 
 
