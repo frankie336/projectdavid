@@ -1,3 +1,10 @@
+## [1.41.1](https://github.com/frankie336/projectdavid/compare/v1.41.0...v1.41.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* integrate events wrapper into entities main interface ([e2f8700](https://github.com/frankie336/projectdavid/commit/e2f870040a8b0b23369023f543a5ccb7bbc9cab9))
+
 # [1.41.0](https://github.com/frankie336/projectdavid/compare/v1.40.0...v1.41.0) (2026-01-28)
 
 
