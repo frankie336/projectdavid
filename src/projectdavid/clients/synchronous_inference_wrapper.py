@@ -1,4 +1,3 @@
-# src/projectdavid/clients/synchronous_inference_wrapper.py
 import asyncio
 import json
 from contextlib import suppress
@@ -6,9 +5,17 @@ from typing import Any, Generator, Optional, Union
 
 from projectdavid_common import UtilsInterface
 
-from .events import ContentEvent, StatusEvent, ToolCallRequestEvent
+from .events import ComputerExecutionOutputEvent  # <--- NEW IMPORT
+from .events import (
+    CodeExecutionGeneratedFileEvent,
+    CodeExecutionOutputEvent,
+    ContentEvent,
+    HotCodeEvent,
+    ReasoningEvent,
+    StatusEvent,
+    ToolCallRequestEvent,
+)
 
-# StreamRefiner removed as categorization is now handled at the provider level
 LOG = UtilsInterface.LoggingUtility()
 
 
@@ -74,13 +81,12 @@ class SynchronousInferenceStream:
         *,
         api_key: Optional[str] = None,
         timeout_per_chunk: float = 280.0,
-        suppress_fc: bool = True,  # Note: Now primarily a hint for the consumer
+        suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
         """
         Sync generator that mirrors async `inference_client.stream_inference_response`.
         Yields raw dictionary chunks.
         """
-
         resolved_api_key = api_key or self.api_key
 
         async def _stream_chunks_async():
@@ -96,7 +102,6 @@ class SynchronousInferenceStream:
                 yield chk
 
         agen = _stream_chunks_async().__aiter__()
-
         LOG.debug("[SyncStream] Starting typed stream (Unified Orchestration Mode)")
 
         while True:
@@ -108,8 +113,6 @@ class SynchronousInferenceStream:
                 # Always attach run_id for front-end helpers
                 chunk["run_id"] = self.run_id
 
-                # Logic check: If for some reason we still want the SDK to enforce
-                # suppression of tool-call arguments, we can do it via the type key.
                 if suppress_fc and chunk.get("type") == "call_arguments":
                     continue
 
@@ -118,11 +121,9 @@ class SynchronousInferenceStream:
             except StopAsyncIteration:
                 LOG.info("[SyncStream] Stream completed normally.")
                 break
-
             except asyncio.TimeoutError:
                 LOG.error("[SyncStream] Timeout waiting for next chunk.")
                 break
-
             except Exception as exc:
                 LOG.error(
                     "[SyncStream] Unexpected streaming error: %s", exc, exc_info=True
@@ -138,41 +139,98 @@ class SynchronousInferenceStream:
         model: str,
         *,
         timeout_per_chunk: float = 280.0,
-    ) -> Generator[Union[ContentEvent, ToolCallRequestEvent, StatusEvent], None, None]:
+    ) -> Generator[
+        Union[
+            ContentEvent,
+            ToolCallRequestEvent,
+            StatusEvent,
+            ReasoningEvent,
+            HotCodeEvent,
+            CodeExecutionOutputEvent,
+            CodeExecutionGeneratedFileEvent,
+            ComputerExecutionOutputEvent,
+        ],
+        None,
+        None,
+    ]:
         """
         High-level iterator that yields Events instead of raw dicts.
-        Automatically handles argument buffering, JSON parsing, and Qwen-unwrapping.
+        Handles buffering, parsing, unwrapping (Code/Computer), and execution prep.
         """
         if not all([self.runs_client, self.actions_client, self.messages_client]):
             LOG.warning(
                 "[SyncStream] Clients not bound. Tool execution events may fail."
             )
 
-        # Buffers for accumulation
         tool_args_buffer = ""
         is_collecting_tool = False
 
-        # Consume the raw chunks from the existing method
-        # We set suppress_fc=False because we MUST capture the arguments here
         for chunk in self.stream_chunks(
             provider=provider,
             model=model,
             timeout_per_chunk=timeout_per_chunk,
             suppress_fc=False,
         ):
+            # ----------------------------------------------------
+            # UNWRAPPING LOGIC for Code & Computer Mixins
+            # ----------------------------------------------------
+            # Backend wraps special streams like: {"stream_type": "...", "chunk": {...}}
+            stream_type = chunk.get("stream_type")
+
+            if stream_type in ["code_execution", "computer_execution"]:
+                payload = chunk.get("chunk", {})
+                # Ensure run_id propagates from outer envelope if missing in inner
+                if "run_id" not in payload:
+                    payload["run_id"] = chunk.get("run_id")
+
+                # Treat the inner payload as the actual chunk
+                chunk = payload
+            # ----------------------------------------------------
+
             c_type = chunk.get("type")
             run_id = chunk.get("run_id")
 
-            # 1. Text Content
+            # --- 1. Standard Content ---
             if c_type == "content":
                 yield ContentEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # 2. Tool Argument Accumulation
+            # --- 2. Reasoning (DeepSeek) ---
+            elif c_type == "reasoning":
+                yield ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
+
+            # --- 3. Code Execution: "The Matrix" (Typing) ---
+            elif c_type == "hot_code":
+                yield HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
+
+            # --- 4. Code Execution: Output (Stdout/Stderr) ---
+            elif c_type == "hot_code_output":
+                yield CodeExecutionOutputEvent(
+                    run_id=run_id, content=chunk.get("content", "")
+                )
+
+            # --- 5. Computer/Shell Execution Output ---
+            elif c_type == "computer_output":
+                yield ComputerExecutionOutputEvent(
+                    run_id=run_id, content=chunk.get("content", "")
+                )
+
+            # --- 6. Code Execution: Generated Files ---
+            elif c_type == "code_interpreter_stream":
+                file_data = chunk.get("content", {})
+                yield CodeExecutionGeneratedFileEvent(
+                    run_id=run_id,
+                    filename=file_data.get("filename", "unknown"),
+                    file_id=file_data.get("file_id"),
+                    base64_data=file_data.get("base64", ""),
+                    mime_type=file_data.get("mime_type", "application/octet-stream"),
+                )
+
+            # --- 7. Tool Argument Accumulation (Standard Tools) ---
             elif c_type == "call_arguments":
                 is_collecting_tool = True
                 tool_args_buffer += chunk.get("content", "")
 
-            # 3. Status / Completion
+            # --- 8. Status / Completion ---
             elif c_type == "status":
                 status = chunk.get("status")
 
@@ -180,12 +238,9 @@ class SynchronousInferenceStream:
                 if is_collecting_tool and status == "complete":
                     if tool_args_buffer:
                         try:
-                            # A. Parse Raw JSON
                             captured_data = json.loads(tool_args_buffer)
 
-                            # B. Unwrap (Robustness for Qwen/Nested args)
-                            # Some models stream {"name": "func", "arguments": {...}}
-                            # Others stream just {...}
+                            # Qwen/Nested Unwrap
                             if "arguments" in captured_data and isinstance(
                                 captured_data["arguments"], dict
                             ):
@@ -195,7 +250,6 @@ class SynchronousInferenceStream:
                                 final_args = captured_data
                                 tool_name = "unknown_tool"
 
-                            # C. Yield the Executable Event
                             if self.runs_client:
                                 yield ToolCallRequestEvent(
                                     run_id=run_id,
@@ -207,31 +261,21 @@ class SynchronousInferenceStream:
                                     _actions_client=self.actions_client,
                                     _messages_client=self.messages_client,
                                 )
-                            else:
-                                LOG.error(
-                                    "[SyncStream] Cannot yield ToolCallRequestEvent: Clients not bound via bind_clients()"
-                                )
-
                         except json.JSONDecodeError:
                             LOG.error(
-                                f"[SyncStream] Failed to parse accumulated tool arguments: {tool_args_buffer}"
+                                f"[SyncStream] Failed to parse tool args: {tool_args_buffer}"
                             )
 
-                    # Reset buffers
                     tool_args_buffer = ""
                     is_collecting_tool = False
 
                 yield StatusEvent(run_id=run_id, status=status)
 
-            # 4. Error Forwarding (Mapped to StatusEvent or separate ErrorEvent if preferred)
+            # --- 9. Error ---
             elif c_type == "error":
                 LOG.error(f"[SyncStream] Stream Error: {chunk}")
-                # We yield a failed status event so the consumer loop knows something went wrong
                 yield StatusEvent(run_id=run_id, status="failed")
 
-    # ------------------------------------------------------------ #
-    #   House-keeping
-    # ------------------------------------------------------------ #
     @classmethod
     def shutdown_loop(cls) -> None:
         if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
