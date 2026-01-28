@@ -1,3 +1,4 @@
+# src/projectdavid/entity.py
 import os
 from typing import Optional
 
@@ -136,9 +137,23 @@ class Entity:
 
     @property
     def synchronous_inference_stream(self) -> SynchronousInferenceStream:
+        """
+        Provides the synchronous stream wrapper.
+        Automatically binds the Runs, Actions, and Messages clients so that
+        StreamEvents (like ToolCallRequestEvent) are executable.
+        """
         if self._synchronous_inference_stream is None:
+            # 1. Initialize the wrapper
             self._synchronous_inference_stream = SynchronousInferenceStream(
                 self.inference
+            )
+
+            # 2. Bind the clients required for smart events
+            # Accessing self.runs, self.actions, etc., triggers their lazy initialization if needed.
+            self._synchronous_inference_stream.bind_clients(
+                runs_client=self.runs,
+                actions_client=self.actions,
+                messages_client=self.messages,
             )
         return self._synchronous_inference_stream
 
