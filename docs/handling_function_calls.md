@@ -32,113 +32,115 @@ Please read the definition of tool schemas and function calling here:
 import os
 import json
 from projectdavid import Entity
-from projectdavid.clients.events import ContentEvent, ToolCallRequestEvent
+from projectdavid.events import ContentEvent, ToolCallRequestEvent
 from dotenv import load_dotenv
 
 load_dotenv()
 
 client = Entity()
 
-#-----------------------------------------
+
+# -----------------------------------------
 # Tool executor (runtime-owned)
 #
 # This is a mock tool executor. Tool execution
 # is a consumer-side concern and is never
 # performed by the model itself.
-#-----------------------------------------
+# -----------------------------------------
 def get_flight_times(tool_name, arguments):
-    if tool_name == "get_flight_times":
-        return json.dumps({
-            "status": "success",
-            "message": f"Flight from {arguments.get('departure')} to {arguments.get('arrival')}: 4h 30m",
-            "departure_time": "10:00 AM PST",
-            "arrival_time": "06:30 PM EST",
-        })
-    return json.dumps({"error": f"Unknown tool: {tool_name}"})
+  if tool_name == "get_flight_times":
+    return json.dumps({
+      "status": "success",
+      "message": f"Flight from {arguments.get('departure')} to {arguments.get('arrival')}: 4h 30m",
+      "departure_time": "10:00 AM PST",
+      "arrival_time": "06:30 PM EST",
+    })
+  return json.dumps({"error": f"Unknown tool: {tool_name}"})
+
 
 assistant_id = "plt_ast_9fnJT01VGrK4a9fcNr8z2O"
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # 1. Setup: Thread, Message, Run
-#----------------------------------------------------
+# ----------------------------------------------------
 thread = client.threads.create_thread()
 
 message = client.messages.create_message(
-    thread_id=thread.id,
-    role="user",
-    content="Please fetch me the flight times between LAX and NYC, JFK",
-    assistant_id=assistant_id,
+  thread_id=thread.id,
+  role="user",
+  content="Please fetch me the flight times between LAX and NYC, JFK",
+  assistant_id=assistant_id,
 )
 
 run = client.runs.create_run(assistant_id=assistant_id, thread_id=thread.id)
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # 2. Initialize the Smart Stream
-#----------------------------------------------------
+# ----------------------------------------------------
 stream = client.synchronous_inference_stream
 stream.setup(
-    user_id=os.getenv("ENTITIES_USER_ID"),
-    thread_id=thread.id,
-    assistant_id=assistant_id,
-    message_id=message.id,
-    run_id=run.id,
-    api_key=os.getenv("HYPERBOLIC_API_KEY"),
+  user_id=os.getenv("ENTITIES_USER_ID"),
+  thread_id=thread.id,
+  assistant_id=assistant_id,
+  message_id=message.id,
+  run_id=run.id,
+  api_key=os.getenv("HYPERBOLIC_API_KEY"),
 )
 
 print("Thinking...")
 
 tool_was_executed = False
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # 3. Stream Events (The Event-Driven Loop)
 #
 # Instead of raw chunks, we iterate over high-level
 # events. The SDK handles JSON buffering and parsing.
-#----------------------------------------------------
+# ----------------------------------------------------
 for event in stream.stream_events(
-    provider="Hyperbolic",
-    model="hyperbolic/deepseek-ai/DeepSeek-V3"
+        provider="Hyperbolic",
+        model="hyperbolic/deepseek-ai/DeepSeek-V3"
 ):
-    # A. Handle Text Generation
-    if isinstance(event, ContentEvent):
-        print(event.content, end="", flush=True)
+  # A. Handle Text Generation
+  if isinstance(event, ContentEvent):
+    print(event.content, end="", flush=True)
 
-    # B. Handle Tool Requests
-    elif isinstance(event, ToolCallRequestEvent):
-        print(f"\n[SDK] Tool Call Detected: {event.tool_name}")
-        
-        # The 'event' object holds the parsed arguments and 
-        # has a helper method to execute and submit the result.
-        success = event.execute(get_flight_times)
-        
-        if success:
-            print("[SDK] Tool executed & result submitted.")
-            tool_was_executed = True
+  # B. Handle Tool Requests
+  elif isinstance(event, ToolCallRequestEvent):
+    print(f"\n[SDK] Tool Call Detected: {event.tool_name}")
 
-#----------------------------------------------------
+    # The 'event' object holds the parsed arguments and 
+    # has a helper method to execute and submit the result.
+    success = event.execute(get_flight_times)
+
+    if success:
+      print("[SDK] Tool executed & result submitted.")
+      tool_was_executed = True
+
+# ----------------------------------------------------
 # 4. Final Response (If a tool was used)
 #
 # If a tool was executed, we re-stream to let the
 # model generate the final answer using the tool data.
-#----------------------------------------------------
+# ----------------------------------------------------
 if tool_was_executed:
-    print("\n[Generating Final Response...]\n")
-    
-    stream.setup(
-        user_id=os.getenv("ENTITIES_USER_ID"),
-        thread_id=thread.id,
-        assistant_id=assistant_id,
-        message_id=message.id,
-        run_id=run.id,
-        api_key=os.getenv("HYPERBOLIC_API_KEY"),
-    )
+  print("\n[Generating Final Response...]\n")
 
-    for event in stream.stream_events(
-        provider="Hyperbolic",
-        model="hyperbolic/deepseek-ai/DeepSeek-V3"
-    ):
-        if isinstance(event, ContentEvent):
-            print(event.content, end="", flush=True)
+  stream.setup(
+    user_id=os.getenv("ENTITIES_USER_ID"),
+    thread_id=thread.id,
+    assistant_id=assistant_id,
+    message_id=message.id,
+    run_id=run.id,
+    api_key=os.getenv("HYPERBOLIC_API_KEY"),
+  )
+
+  for event in stream.stream_events(
+          provider="Hyperbolic",
+          model="hyperbolic/deepseek-ai/DeepSeek-V3"
+  ):
+    if isinstance(event, ContentEvent):
+      print(event.content, end="", flush=True)
 
 print("\n\nDone.")
 ```

@@ -5,8 +5,8 @@ from typing import Any, Generator, Optional, Union
 
 from projectdavid_common import UtilsInterface
 
-from .events import ComputerExecutionOutputEvent  # <--- NEW IMPORT
-from .events import (
+from projectdavid.events import ComputerExecutionOutputEvent  # <--- NEW IMPORT
+from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
     ContentEvent,
