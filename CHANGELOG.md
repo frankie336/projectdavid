@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/frankie336/projectdavid/compare/v1.40.0...v1.41.0) (2026-01-28)
+
+
+### Features
+
+* Add events wrapper and stream generator to synchronous_inference_wrapper ([0ec1308](https://github.com/frankie336/projectdavid/commit/0ec1308d007b700d9b31616d2d1e7e5c1d4a2a5d))
+
 # [1.40.0](https://github.com/frankie336/projectdavid/compare/v1.39.11...v1.40.0) (2026-01-28)
 
 
