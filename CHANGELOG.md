@@ -1,3 +1,11 @@
+## [1.41.3](https://github.com/frankie336/projectdavid/compare/v1.41.2...v1.41.3) (2026-01-28)
+
+
+### Bug Fixes
+
+* Add an Event for shell output. ([f99a130](https://github.com/frankie336/projectdavid/commit/f99a130e10169e087aff1fdc87cd437d471374ac))
+* Add an Event for shell output. ([9bf3e21](https://github.com/frankie336/projectdavid/commit/9bf3e2177d32bcc881368666d631b7cf54c0e513))
+
 ## [1.41.2](https://github.com/frankie336/projectdavid/compare/v1.41.1...v1.41.2) (2026-01-28)
 
 
