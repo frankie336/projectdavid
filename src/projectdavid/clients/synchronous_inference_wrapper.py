@@ -5,10 +5,11 @@ from typing import Any, Generator, Optional, Union
 
 from projectdavid_common import UtilsInterface
 
-from projectdavid.events import ComputerExecutionOutputEvent  # <--- NEW IMPORT
+# Import all event types (Ensure path matches your SDK structure)
 from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
+    ComputerExecutionOutputEvent,
     ContentEvent,
     HotCodeEvent,
     ReasoningEvent,
@@ -165,6 +166,8 @@ class SynchronousInferenceStream:
         tool_args_buffer = ""
         is_collecting_tool = False
 
+        # NOTE: We set suppress_fc=False here internally so we can capture the args
+        # to build the event, even though we don't yield the raw chunks to the user.
         for chunk in self.stream_chunks(
             provider=provider,
             model=model,
@@ -174,16 +177,12 @@ class SynchronousInferenceStream:
             # ----------------------------------------------------
             # UNWRAPPING LOGIC for Code & Computer Mixins
             # ----------------------------------------------------
-            # Backend wraps special streams like: {"stream_type": "...", "chunk": {...}}
             stream_type = chunk.get("stream_type")
 
             if stream_type in ["code_execution", "computer_execution"]:
                 payload = chunk.get("chunk", {})
-                # Ensure run_id propagates from outer envelope if missing in inner
                 if "run_id" not in payload:
                     payload["run_id"] = chunk.get("run_id")
-
-                # Treat the inner payload as the actual chunk
                 chunk = payload
             # ----------------------------------------------------
 
@@ -240,7 +239,7 @@ class SynchronousInferenceStream:
                         try:
                             captured_data = json.loads(tool_args_buffer)
 
-                            # Qwen/Nested Unwrap
+                            # Handle different LLM JSON formats (nested vs flat)
                             if "arguments" in captured_data and isinstance(
                                 captured_data["arguments"], dict
                             ):
