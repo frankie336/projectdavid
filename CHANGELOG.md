@@ -1,3 +1,10 @@
+## [1.41.6](https://github.com/frankie336/projectdavid/compare/v1.41.5...v1.41.6) (2026-01-28)
+
+
+### Bug Fixes
+
+*  update RunsClient.execute_pending_action method to accept the action_id and tool_name that the event system is now passing to it. ([fc2c595](https://github.com/frankie336/projectdavid/commit/fc2c5956290170d1b86f600c8f66437b7c099c38))
+
 ## [1.41.5](https://github.com/frankie336/projectdavid/compare/v1.41.4...v1.41.5) (2026-01-28)
 
 
