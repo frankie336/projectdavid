@@ -498,56 +498,88 @@ class RunsClient(BaseAPIClient):
         tool_executor: Callable[[str, Dict[str, Any]], str],
         actions_client: Any,
         messages_client: Any,
-        # Optional: If you captured args from stream, pass them to avoid re-parsing
         streamed_args: Optional[Dict[str, Any]] = None,
+        # --- NEW ARGUMENTS ---
+        action_id: Optional[str] = None,
+        tool_name: Optional[str] = None,
     ) -> bool:
         """
-        Non-polling execution helper.
-        Fetches the pending action details for a run, executes the tool,
-        and submits the output immediately.
+        Executes a pending action.
+
+        MODES:
+        1. Fast Path (Smart Events): If 'action_id' is provided, skips DB lookup.
+        2. Slow Path (Polling): If no 'action_id', queries API for pending actions.
         """
         if not callable(tool_executor):
             raise TypeError("tool_executor must be a callable function.")
 
-        logging_utility.info(
-            f"[SDK Helper] Handling pending action for run {run_id}..."
-        )
+        logging_utility.info(f"[SDK Helper] Handling action for run {run_id}...")
+
+        # Variables to populate
+        target_action_id = None
+        target_tool_name = None
+        target_tool_call_id = None
+        target_args = None
 
         try:
-            # 1. Fetch the authoritative Action Object from the API
-            # We need this to get the 'action_id' and 'tool_call_id' which aren't always in the stream
-            pending_actions = actions_client.get_pending_actions(run_id=run_id)
-
-            if not pending_actions:
-                logging_utility.warning(
-                    f"[SDK Helper] No pending actions found for run {run_id}."
+            # -------------------------------------------------------
+            # PATH A: FAST (Event-Driven / Manifest)
+            # -------------------------------------------------------
+            if action_id:
+                logging_utility.debug(
+                    f"[SDK Helper] Fast-path: Using provided Action ID {action_id}"
                 )
-                return False
+                target_action_id = action_id
+                target_tool_name = tool_name or "unknown_tool"
+                target_args = streamed_args or {}
+                # In the manifest flow, we rely on action_id.
+                # tool_call_id is optional/internal to the backend record.
+                target_tool_call_id = None
 
-            # For now, we handle the first action found (typical sequential tool use)
-            action_to_handle = pending_actions[0]
+                # -------------------------------------------------------
+            # PATH B: SLOW (Legacy / Lookup)
+            # -------------------------------------------------------
+            else:
+                logging_utility.debug(
+                    f"[SDK Helper] Slow-path: Looking up pending actions..."
+                )
+                pending_actions = actions_client.get_pending_actions(run_id=run_id)
 
-            action_id = action_to_handle.get("action_id")
-            tool_name = action_to_handle.get("tool_name")
-            tool_call_id = action_to_handle.get("tool_call_id")
+                if not pending_actions:
+                    logging_utility.warning(
+                        f"[SDK Helper] No pending actions found for run {run_id}."
+                    )
+                    return False
 
-            # Prioritize args passed from stream (faster), fallback to server args
-            arguments = (
-                streamed_args
-                if streamed_args
-                else action_to_handle.get("function_arguments")
-            )
+                # Handle the first action found
+                action_to_handle = pending_actions[0]
 
+                target_action_id = action_to_handle.get("action_id")
+                target_tool_name = action_to_handle.get("tool_name")
+                target_tool_call_id = action_to_handle.get("tool_call_id")
+
+                # Use streamed args if available (faster), else fallback to DB args
+                target_args = (
+                    streamed_args
+                    if streamed_args
+                    else action_to_handle.get("function_arguments")
+                )
+
+            # -------------------------------------------------------
+            # EXECUTION LOGIC (Common to both paths)
+            # -------------------------------------------------------
             logging_utility.info(
-                f"[SDK Helper] Executing Tool: '{tool_name}' (ID: {action_id})"
+                f"[SDK Helper] Executing Tool: '{target_tool_name}' (ID: {target_action_id})"
             )
 
             # --- Step A: Mark Processing ---
-            actions_client.update_action(action_id, status=StatusEnum.processing.value)
+            actions_client.update_action(
+                target_action_id, status=StatusEnum.processing.value
+            )
 
             # --- Step B: Execute Local Function ---
             try:
-                result_content = tool_executor(tool_name, arguments)
+                result_content = tool_executor(target_tool_name, target_args)
 
                 # Ensure string format
                 if not isinstance(result_content, str):
@@ -556,20 +588,21 @@ class RunsClient(BaseAPIClient):
                 # --- Step C: Submit Success ---
                 messages_client.submit_tool_output(
                     thread_id=thread_id,
-                    tool_id=action_id,
-                    tool_call_id=tool_call_id,
+                    tool_id=target_action_id,  # Our DB ID
+                    tool_call_id=target_tool_call_id,
+                    # Upstream ID (optional if backend handles it)
                     content=result_content,
                     role="tool",
                     assistant_id=assistant_id,
                 )
 
-                # Mark completed (Explicitly, though submit_tool_output might trigger backend logic)
+                # Mark completed
                 actions_client.update_action(
-                    action_id, status=StatusEnum.completed.value
+                    target_action_id, status=StatusEnum.completed.value
                 )
 
                 logging_utility.info(
-                    f"[SDK Helper] Action {action_id} handled successfully."
+                    f"[SDK Helper] Action {target_action_id} handled successfully."
                 )
                 return True
 
@@ -580,18 +613,21 @@ class RunsClient(BaseAPIClient):
 
                 messages_client.submit_tool_output(
                     thread_id=thread_id,
-                    tool_id=action_id,
-                    tool_call_id=tool_call_id,
+                    tool_id=target_action_id,
+                    tool_call_id=target_tool_call_id,
                     content=error_payload,
                     role="tool",
                     assistant_id=assistant_id,
                 )
-                actions_client.update_action(action_id, status=StatusEnum.failed.value)
+                actions_client.update_action(
+                    target_action_id, status=StatusEnum.failed.value
+                )
                 return False
 
         except Exception as e:
             logging_utility.error(
-                f"[SDK Helper] Critical error in execute_pending_action: {e}"
+                f"[SDK Helper] Critical error in execute_pending_action: {e}",
+                exc_info=True,
             )
             return False
 
