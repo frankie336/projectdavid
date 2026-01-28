@@ -166,8 +166,8 @@ class SynchronousInferenceStream:
         tool_args_buffer = ""
         is_collecting_tool = False
 
-        # NOTE: We set suppress_fc=False here internally so we can capture the args
-        # to build the event, even though we don't yield the raw chunks to the user.
+        # NOTE: We set suppress_fc=False so we can still capture args if the backend
+        # supports the old way, though the new manifest way is preferred.
         for chunk in self.stream_chunks(
             provider=provider,
             model=model,
@@ -189,31 +189,55 @@ class SynchronousInferenceStream:
             c_type = chunk.get("type")
             run_id = chunk.get("run_id")
 
-            # --- 1. Standard Content ---
-            if c_type == "content":
+            # --- 1. Tool Call Manifest (NEW: Event-Driven Handover) ---
+            if c_type == "tool_call_manifest":
+                # The backend has created the action and is telling us exactly what to do.
+                # No buffering required. No race condition.
+
+                # Extract pre-parsed data
+                tool_name = chunk.get("tool", "unknown_tool")
+                final_args = chunk.get("args", {})
+                action_id = chunk.get("action_id")
+
+                if self.runs_client:
+                    yield ToolCallRequestEvent(
+                        run_id=run_id,
+                        tool_name=tool_name,
+                        args=final_args,
+                        action_id=action_id,  # <--- PASS THE ID
+                        thread_id=self.thread_id,
+                        assistant_id=self.assistant_id,
+                        _runs_client=self.runs_client,
+                        _actions_client=self.actions_client,
+                        _messages_client=self.messages_client,
+                    )
+                continue  # Skip buffering logic for this chunk
+
+            # --- 2. Standard Content ---
+            elif c_type == "content":
                 yield ContentEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 2. Reasoning (DeepSeek) ---
+            # --- 3. Reasoning (DeepSeek) ---
             elif c_type == "reasoning":
                 yield ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 3. Code Execution: "The Matrix" (Typing) ---
+            # --- 4. Code Execution: "The Matrix" (Typing) ---
             elif c_type == "hot_code":
                 yield HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 4. Code Execution: Output (Stdout/Stderr) ---
+            # --- 5. Code Execution: Output (Stdout/Stderr) ---
             elif c_type == "hot_code_output":
                 yield CodeExecutionOutputEvent(
                     run_id=run_id, content=chunk.get("content", "")
                 )
 
-            # --- 5. Computer/Shell Execution Output ---
+            # --- 6. Computer/Shell Execution Output ---
             elif c_type == "computer_output":
                 yield ComputerExecutionOutputEvent(
                     run_id=run_id, content=chunk.get("content", "")
                 )
 
-            # --- 6. Code Execution: Generated Files ---
+            # --- 7. Code Execution: Generated Files ---
             elif c_type == "code_interpreter_stream":
                 file_data = chunk.get("content", {})
                 yield CodeExecutionGeneratedFileEvent(
@@ -224,22 +248,21 @@ class SynchronousInferenceStream:
                     mime_type=file_data.get("mime_type", "application/octet-stream"),
                 )
 
-            # --- 7. Tool Argument Accumulation (Standard Tools) ---
+            # --- 8. Legacy Tool Accumulation (Fallback) ---
             elif c_type == "call_arguments":
                 is_collecting_tool = True
                 tool_args_buffer += chunk.get("content", "")
 
-            # --- 8. Status / Completion ---
+            # --- 9. Status / Completion ---
             elif c_type == "status":
                 status = chunk.get("status")
 
-                # If we were collecting a tool and the stream signals completion
+                # If we were collecting a tool via the old method
                 if is_collecting_tool and status == "complete":
                     if tool_args_buffer:
                         try:
                             captured_data = json.loads(tool_args_buffer)
-
-                            # Handle different LLM JSON formats (nested vs flat)
+                            # Handle different LLM JSON formats
                             if "arguments" in captured_data and isinstance(
                                 captured_data["arguments"], dict
                             ):
@@ -254,6 +277,7 @@ class SynchronousInferenceStream:
                                     run_id=run_id,
                                     tool_name=tool_name,
                                     args=final_args,
+                                    # No action_id here, requires search/polling in execute()
                                     thread_id=self.thread_id,
                                     assistant_id=self.assistant_id,
                                     _runs_client=self.runs_client,
@@ -270,7 +294,7 @@ class SynchronousInferenceStream:
 
                 yield StatusEvent(run_id=run_id, status=status)
 
-            # --- 9. Error ---
+            # --- 10. Error ---
             elif c_type == "error":
                 LOG.error(f"[SyncStream] Stream Error: {chunk}")
                 yield StatusEvent(run_id=run_id, status="failed")

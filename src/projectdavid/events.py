@@ -1,4 +1,3 @@
-# src/projectdavid/clients/events.py
 import json
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional, Union
@@ -108,10 +107,12 @@ class ToolCallRequestEvent(StreamEvent):
         _runs_client: Any,
         _actions_client: Any,
         _messages_client: Any,
+        action_id: Optional[str] = None,  # <--- NEW: Direct Action ID from Manifest
     ):
         super().__init__(run_id)
         self.tool_name = tool_name
         self.args = args
+        self.action_id = action_id
 
         # Internal references required for execution
         self._thread_id = thread_id
@@ -131,6 +132,9 @@ class ToolCallRequestEvent(StreamEvent):
         Returns:
             bool: True if execution and submission were successful, False otherwise.
         """
+        # We pass action_id to the client helper.
+        # This allows the client to skip looking up pending actions
+        # and submit directly to the specific ID provided by the manifest.
         return self._runs_client.execute_pending_action(
             run_id=self.run_id,
             thread_id=self._thread_id,
@@ -138,11 +142,12 @@ class ToolCallRequestEvent(StreamEvent):
             tool_executor=tool_executor,
             actions_client=self._actions_client,
             messages_client=self._messages_client,
-            streamed_args=self.args,  # Pass the pre-parsed args to skip DB retrieval of content
+            streamed_args=self.args,
+            action_id=self.action_id,  # <--- NEW: Pass ID to helper
         )
 
     def __repr__(self):
-        return f"<ToolCallRequestEvent tool='{self.tool_name}' args={self.args}>"
+        return f"<ToolCallRequestEvent tool='{self.tool_name}' action_id='{self.action_id}' args={self.args}>"
 
 
 @dataclass
