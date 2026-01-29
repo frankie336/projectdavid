@@ -1,3 +1,10 @@
+## [1.41.9](https://github.com/frankie336/projectdavid/compare/v1.41.8...v1.41.9) (2026-01-29)
+
+
+### Bug Fixes
+
+*  implement typed json streams in event based streaming. ([98fd4e5](https://github.com/frankie336/projectdavid/commit/98fd4e5fd29ff3463afd9ed67607b48e06ebef5a))
+
 ## [1.41.8](https://github.com/frankie336/projectdavid/compare/v1.41.7...v1.41.8) (2026-01-28)
 
 
