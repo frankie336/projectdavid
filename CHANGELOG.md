@@ -1,3 +1,10 @@
+## [1.41.10](https://github.com/frankie336/projectdavid/compare/v1.41.9...v1.41.10) (2026-01-29)
+
+
+### Bug Fixes
+
+*  SDK is performing Legacy Tool Accumulation (client-side reconstruction) simultaneously with handling the new Tool Call Manifest events from the server. ([b47ea41](https://github.com/frankie336/projectdavid/commit/b47ea41e0f0adf4c524fcb3b678267b5dd01566e))
+
 ## [1.41.9](https://github.com/frankie336/projectdavid/compare/v1.41.8...v1.41.9) (2026-01-29)
 
 
