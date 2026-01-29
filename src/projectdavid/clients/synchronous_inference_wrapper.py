@@ -163,14 +163,16 @@ class SynchronousInferenceStream:
                 "[SyncStream] Clients not bound. Tool execution events may fail."
             )
 
-        tool_args_buffer = ""
-        is_collecting_tool = False
+        # [REMOVED] Legacy local accumulation buffers
+        # tool_args_buffer = ""
+        # is_collecting_tool = False
 
         for chunk in self.stream_chunks(
             provider=provider,
             model=model,
             timeout_per_chunk=timeout_per_chunk,
-            suppress_fc=False,
+            # [FIX] Suppress raw args so we don't trigger legacy local reconstruction
+            suppress_fc=True,
         ):
             # ----------------------------------------------------
             # UNWRAPPING LOGIC for Code & Computer Mixins
@@ -187,7 +189,7 @@ class SynchronousInferenceStream:
             c_type = chunk.get("type")
             run_id = chunk.get("run_id")
 
-            # --- 1. Tool Call Manifest ---
+            # --- 1. Tool Call Manifest (THE AUTHORITATIVE EVENT) ---
             if c_type == "tool_call_manifest":
                 tool_name = chunk.get("tool", "unknown_tool")
                 final_args = chunk.get("args", {})
@@ -242,46 +244,18 @@ class SynchronousInferenceStream:
                     mime_type=file_data.get("mime_type", "application/octet-stream"),
                 )
 
-            # --- 8. Legacy Tool Accumulation ---
-            elif c_type == "call_arguments":
-                is_collecting_tool = True
-                tool_args_buffer += chunk.get("content", "")
+            # --- 8. Legacy Tool Accumulation (DISABLED) ---
+            # elif c_type == "call_arguments":
+            #     is_collecting_tool = True
+            #     tool_args_buffer += chunk.get("content", "")
 
             # --- 9. Status / Completion ---
             elif c_type == "status":
                 status = chunk.get("status")
 
-                if is_collecting_tool and status == "complete":
-                    if tool_args_buffer:
-                        try:
-                            captured_data = json.loads(tool_args_buffer)
-                            if "arguments" in captured_data and isinstance(
-                                captured_data["arguments"], dict
-                            ):
-                                final_args = captured_data["arguments"]
-                                tool_name = captured_data.get("name", "unknown_tool")
-                            else:
-                                final_args = captured_data
-                                tool_name = "unknown_tool"
-
-                            if self.runs_client:
-                                yield ToolCallRequestEvent(
-                                    run_id=run_id,
-                                    tool_name=tool_name,
-                                    args=final_args,
-                                    thread_id=self.thread_id,
-                                    assistant_id=self.assistant_id,
-                                    _runs_client=self.runs_client,
-                                    _actions_client=self.actions_client,
-                                    _messages_client=self.messages_client,
-                                )
-                        except json.JSONDecodeError:
-                            LOG.error(
-                                f"[SyncStream] JSON parse fail: {tool_args_buffer}"
-                            )
-
-                    tool_args_buffer = ""
-                    is_collecting_tool = False
+                # [FIX] Disabled local synthesis of tool events on 'complete'
+                # if is_collecting_tool and status == "complete":
+                #     ... (Legacy logic removed to prevent duplicates) ...
 
                 yield StatusEvent(run_id=run_id, status=status)
 
