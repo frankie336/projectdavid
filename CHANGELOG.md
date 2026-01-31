@@ -1,3 +1,10 @@
+## [1.41.12](https://github.com/frankie336/projectdavid/compare/v1.41.11...v1.41.12) (2026-01-31)
+
+
+### Bug Fixes
+
+* Add DecisionEvent to event management ([5e21612](https://github.com/frankie336/projectdavid/commit/5e21612c0ce6dfab97fd0bd3824a873e08ab48f0))
+
 ## [1.41.11](https://github.com/frankie336/projectdavid/compare/v1.41.10...v1.41.11) (2026-01-29)
 
 
