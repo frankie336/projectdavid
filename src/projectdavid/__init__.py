@@ -9,6 +9,7 @@ from .events import (
     CodeExecutionOutputEvent,
     ComputerExecutionOutputEvent,
     ContentEvent,
+    DecisionEvent,
     HotCodeEvent,
     ReasoningEvent,
     StatusEvent,
@@ -27,6 +28,7 @@ __all__ = [
     "CodeExecutionOutputEvent",
     "CodeExecutionGeneratedFileEvent",
     "ComputerExecutionOutputEvent",
+    "DecisionEvent",
     "ToolCallRequestEvent",
     "StatusEvent",
 ]
