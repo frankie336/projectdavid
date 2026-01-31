@@ -5,7 +5,8 @@ from typing import Any, Generator, Optional, Union
 
 from projectdavid_common import UtilsInterface
 
-# Import all event types
+# Import all event types, including the new DecisionEvent
+from projectdavid.events import DecisionEvent  # [NEW] Import
 from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
@@ -146,6 +147,7 @@ class SynchronousInferenceStream:
             ToolCallRequestEvent,
             StatusEvent,
             ReasoningEvent,
+            DecisionEvent,  # [NEW] Added to Type Hint
             HotCodeEvent,
             CodeExecutionOutputEvent,
             CodeExecutionGeneratedFileEvent,
@@ -163,15 +165,10 @@ class SynchronousInferenceStream:
                 "[SyncStream] Clients not bound. Tool execution events may fail."
             )
 
-        # [REMOVED] Legacy local accumulation buffers
-        # tool_args_buffer = ""
-        # is_collecting_tool = False
-
         for chunk in self.stream_chunks(
             provider=provider,
             model=model,
             timeout_per_chunk=timeout_per_chunk,
-            # [FIX] Suppress raw args so we don't trigger legacy local reconstruction
             suppress_fc=True,
         ):
             # ----------------------------------------------------
@@ -217,23 +214,27 @@ class SynchronousInferenceStream:
             elif c_type == "reasoning":
                 yield ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 4. Code Execution: Hot Code (Typing) ---
+            # --- 4. [NEW] Decision (Structured Logic) ---
+            elif c_type == "decision":
+                yield DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
+
+            # --- 5. Code Execution: Hot Code (Typing) ---
             elif c_type == "hot_code":
                 yield HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 5. Code Execution: Output (Stdout/Stderr) ---
+            # --- 6. Code Execution: Output (Stdout/Stderr) ---
             elif c_type == "hot_code_output":
                 yield CodeExecutionOutputEvent(
                     run_id=run_id, content=chunk.get("content", "")
                 )
 
-            # --- 6. Computer/Shell Execution Output ---
+            # --- 7. Computer/Shell Execution Output ---
             elif c_type == "computer_output":
                 yield ComputerExecutionOutputEvent(
                     run_id=run_id, content=chunk.get("content", "")
                 )
 
-            # --- 7. Code Execution: Generated Files ---
+            # --- 8. Code Execution: Generated Files ---
             elif c_type == "code_interpreter_stream":
                 file_data = chunk.get("content", {})
                 yield CodeExecutionGeneratedFileEvent(
@@ -244,19 +245,9 @@ class SynchronousInferenceStream:
                     mime_type=file_data.get("mime_type", "application/octet-stream"),
                 )
 
-            # --- 8. Legacy Tool Accumulation (DISABLED) ---
-            # elif c_type == "call_arguments":
-            #     is_collecting_tool = True
-            #     tool_args_buffer += chunk.get("content", "")
-
             # --- 9. Status / Completion ---
             elif c_type == "status":
                 status = chunk.get("status")
-
-                # [FIX] Disabled local synthesis of tool events on 'complete'
-                # if is_collecting_tool and status == "complete":
-                #     ... (Legacy logic removed to prevent duplicates) ...
-
                 yield StatusEvent(run_id=run_id, status=status)
 
             # --- 10. Error ---

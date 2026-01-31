@@ -20,6 +20,7 @@ class StreamEvent:
         mapping = {
             "ContentEvent": "content",
             "ReasoningEvent": "reasoning",
+            "DecisionEvent": "decision",  # [NEW] Registered here
             "ToolCallRequestEvent": "tool_call_manifest",
             "StatusEvent": "status",
             "HotCodeEvent": "hot_code",
@@ -43,6 +44,16 @@ class ContentEvent(StreamEvent):
 @dataclass
 class ReasoningEvent(StreamEvent):
     """Represents a 'thinking' delta (DeepSeek R1/V3)."""
+
+    content: str
+
+    def __str__(self):
+        return self.content
+
+
+@dataclass
+class DecisionEvent(StreamEvent):
+    """Represents a structural decision payload (JSON) from the assistant."""
 
     content: str
 
