@@ -57,13 +57,20 @@ class ActionsClient(BaseAPIClient):
         tool_name: str,
         run_id: str,
         function_args: Optional[Dict[str, Any]] = None,
-        tool_call_id: Optional[str] = None,  # <-- Added optional parameter
+        tool_call_id: Optional[str] = None,
         expires_at: Optional[datetime] = None,
+        # [NEW] Accept decision payload
+        decision: Optional[Dict[str, Any]] = None,
     ) -> validation.ActionRead:
         """
         Create a new action using the provided tool_name, run_id, and function_args.
 
+        :param tool_name: The name of the tool called in the action
+        :param run_id:  The  id generated from Runs.create_run
+        :param function_args: The assistants generated function call, passed in as tool arguments
+        :param expires_at: Expiration date for this action
         :param tool_call_id: Optional ID from the LLM generation step (Dialogue Binding).
+        :param decision: Optional decision object containing approval or routing metadata.
         """
         try:
             action_id = UtilsInterface.IdentifierService.generate_action_id()
@@ -74,9 +81,11 @@ class ActionsClient(BaseAPIClient):
                 tool_name=tool_name,
                 run_id=run_id,
                 function_args=function_args or {},
-                tool_call_id=tool_call_id,  # <-- Passed to schema
+                tool_call_id=tool_call_id,
                 expires_at=expires_at_iso,
                 status="pending",
+                # [NEW] Pass decision to the schema
+                decision=decision,
             ).dict()
 
             logging_utility.debug(
