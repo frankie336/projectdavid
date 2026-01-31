@@ -1,3 +1,10 @@
+## [1.41.13](https://github.com/frankie336/projectdavid/compare/v1.41.12...v1.41.13) (2026-01-31)
+
+
+### Bug Fixes
+
+* Expose: DecisionEvent ([0df02e7](https://github.com/frankie336/projectdavid/commit/0df02e701d1d870e3c995971102405eb3ba927f0))
+
 ## [1.41.12](https://github.com/frankie336/projectdavid/compare/v1.41.11...v1.41.12) (2026-01-31)
 
 
