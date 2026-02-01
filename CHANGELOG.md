@@ -1,3 +1,10 @@
+## [1.41.14](https://github.com/frankie336/projectdavid/compare/v1.41.13...v1.41.14) (2026-01-31)
+
+
+### Bug Fixes
+
+* Add decision signature and payload to Actions.create_action ([c2b7d6c](https://github.com/frankie336/projectdavid/commit/c2b7d6c764b07716a3d17c9c1ea538fb5c2ee404))
+
 ## [1.41.13](https://github.com/frankie336/projectdavid/compare/v1.41.12...v1.41.13) (2026-01-31)
 
 
