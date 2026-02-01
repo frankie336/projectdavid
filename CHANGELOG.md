@@ -1,3 +1,10 @@
+## [1.41.15](https://github.com/frankie336/projectdavid/compare/v1.41.14...v1.41.15) (2026-02-01)
+
+
+### Bug Fixes
+
+* update to projectdavid_common==0.21.9 ([ca6235f](https://github.com/frankie336/projectdavid/commit/ca6235fa1aae606473b938d0598835327efec412))
+
 ## [1.41.14](https://github.com/frankie336/projectdavid/compare/v1.41.13...v1.41.14) (2026-01-31)
 
 
