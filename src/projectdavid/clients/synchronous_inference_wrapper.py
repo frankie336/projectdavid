@@ -3,15 +3,17 @@ import json
 from contextlib import suppress
 from typing import Any, Generator, Optional, Union
 
+# [FIX] Import nest_asyncio to allow nested event loops in Uvicorn/Flask
+import nest_asyncio
 from projectdavid_common import UtilsInterface
 
 # Import all event types, including the new DecisionEvent
-from projectdavid.events import DecisionEvent  # [NEW] Import
 from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
     ComputerExecutionOutputEvent,
     ContentEvent,
+    DecisionEvent,
     HotCodeEvent,
     ReasoningEvent,
     StatusEvent,
@@ -23,7 +25,7 @@ LOG = UtilsInterface.LoggingUtility()
 
 class SynchronousInferenceStream:
     # ------------------------------------------------------------ #
-    #   GLOBAL EVENT LOOP  (single hidden thread for sync wrapper)
+    #   GLOBAL EVENT LOOP  (Fallback for standalone scripts)
     # ------------------------------------------------------------ #
     _GLOBAL_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_GLOBAL_LOOP)
@@ -106,9 +108,24 @@ class SynchronousInferenceStream:
         agen = _stream_chunks_async().__aiter__()
         LOG.debug("[SyncStream] Starting typed stream (Unified Orchestration Mode)")
 
+        # [FIX START] Determine the correct loop to use
+        try:
+            # 1. If we are running in Uvicorn/Flask, a loop is ALREADY active.
+            # We must use it, otherwise we get "RuntimeError: This event loop is already running"
+            active_loop = asyncio.get_running_loop()
+
+            # 2. Patch this loop to allow `run_until_complete` (re-entrancy)
+            nest_asyncio.apply(active_loop)
+
+        except RuntimeError:
+            # 1. No active loop (standalone script mode). Use our fallback global loop.
+            active_loop = self._GLOBAL_LOOP
+        # [FIX END]
+
         while True:
             try:
-                chunk = self._GLOBAL_LOOP.run_until_complete(
+                # Use the detected active_loop, not necessarily _GLOBAL_LOOP
+                chunk = active_loop.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
 
@@ -147,7 +164,7 @@ class SynchronousInferenceStream:
             ToolCallRequestEvent,
             StatusEvent,
             ReasoningEvent,
-            DecisionEvent,  # [NEW] Added to Type Hint
+            DecisionEvent,
             HotCodeEvent,
             CodeExecutionOutputEvent,
             CodeExecutionGeneratedFileEvent,
@@ -214,7 +231,7 @@ class SynchronousInferenceStream:
             elif c_type == "reasoning":
                 yield ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 4. [NEW] Decision (Structured Logic) ---
+            # --- 4. Decision (Structured Logic) ---
             elif c_type == "decision":
                 yield DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
 
@@ -272,7 +289,6 @@ class SynchronousInferenceStream:
         for event in self.stream_events(
             provider=provider, model=model, timeout_per_chunk=timeout_per_chunk
         ):
-            # event.to_dict() must be implemented in projectdavid.events
             yield json.dumps(event.to_dict())
 
     @classmethod

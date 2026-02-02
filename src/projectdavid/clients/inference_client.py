@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -11,17 +11,12 @@ from pydantic import ValidationError
 
 from projectdavid.clients.base_client import BaseAPIClient
 
-ent_validator = ValidationInterface()
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
 
 class InferenceClient(BaseAPIClient):
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
-        """
-        InferenceClient for interacting with the completions endpoint.
-        Inherits BaseAPIClient to maintain unified timeout, auth, and base_url configuration.
-        """
         super().__init__(
             base_url=base_url,
             api_key=api_key,
@@ -30,89 +25,80 @@ class InferenceClient(BaseAPIClient):
             read_timeout=280.0,
             write_timeout=30.0,
         )
+        self._async_client: Optional[httpx.AsyncClient] = None
         logging_utility.info("InferenceClient initialized using BaseAPIClient.")
 
-    def create_completion_sync(
-        self,
-        provider: str,
-        model: str,
-        thread_id: str,
-        message_id: str,
-        run_id: str,
-        assistant_id: str,
-        user_content: Optional[str] = None,
-        api_key: Optional[str] = None,
-    ) -> dict:
+    @property
+    def async_client(self) -> httpx.AsyncClient:
         """
-        Synchronously aggregates the streaming completions result and returns the JSON completion.
-        Internally, it uses the asynchronous stream_inference_response method in a background thread.
+        Lazily creates and returns a single shared AsyncClient.
+        This enables connection pooling and dramatically improves performance.
         """
-        payload = {
-            "provider": provider,
-            "model": model,
-            "api_key": api_key,
-            "thread_id": thread_id,
-            "message_id": message_id,
-            "run_id": run_id,
-            "assistant_id": assistant_id,
-        }
-        if user_content:
-            payload["content"] = user_content
+        if self._async_client is None or self._async_client.is_closed:
+            self._async_client = httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=httpx.Timeout(280.0, connect=10.0),
+                headers=(
+                    {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+                ),
+            )
+        return self._async_client
 
-        try:
-            validated_payload = StreamRequest(**payload)
-        except ValidationError as e:
-            logging_utility.error("Payload validation error: %s", e.json())
-            raise ValueError(f"Payload validation error: {e}")
+    async def aclose(self):
+        """Cleanly close the async connection pool."""
+        if self._async_client:
+            await self._async_client.aclose()
 
-        logging_utility.info(
-            "Sending completions request (sync wrapper): %s", validated_payload.dict()
-        )
+    async def create_completion(self, **kwargs) -> Dict[str, Any]:
+        """
+        Native ASYNC version of completion creation.
+        Use this in your new architecture instead of the sync version.
+        """
+        final_text = ""
+        run_id = kwargs.get("run_id", "unknown")
 
-        async def aggregate() -> str:
-            final_text = ""
-            async for chunk in self.stream_inference_response(
-                provider=provider,
-                model=model,
-                thread_id=thread_id,
-                message_id=message_id,
-                run_id=run_id,
-                assistant_id=assistant_id,
-                user_content=user_content,
-                api_key=api_key,
-            ):
-                final_text += chunk.get("content", "")
-            return final_text
+        async for chunk in self.stream_inference_response(**kwargs):
+            final_text += chunk.get("content", "")
 
-        loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(loop)
-            final_content = loop.run_until_complete(aggregate())
-        finally:
-            loop.close()
-
-        completions_response = {
+        return {
             "id": f"chatcmpl-{run_id}",
             "object": "chat.completion",
             "created": int(time.time()),
-            "model": model,
+            "model": kwargs.get("model"),
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": final_content,
-                    },
+                    "message": {"role": "assistant", "content": final_text},
                     "finish_reason": "stop",
                 }
             ],
-            "usage": {
-                "prompt_tokens": 0,
-                "completion_tokens": len(final_content.split()),
-                "total_tokens": len(final_content.split()),
-            },
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         }
-        return completions_response
+
+    def create_completion_sync(self, **kwargs) -> Dict[str, Any]:
+        """
+        Synchronous wrapper.
+        FIX: Uses a safer loop detection to prevent "Loop already running" errors.
+        """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        if loop.is_running():
+            # If we are in FastAPI/Async, we must use a thread to run this sync wrapper
+            # to avoid blocking the loop or triggering the 'running loop' error.
+            import threading
+            from concurrent.futures import ThreadPoolExecutor
+
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    lambda: asyncio.run(self.create_completion(**kwargs))
+                )
+                return future.result()
+        else:
+            return loop.run_until_complete(self.create_completion(**kwargs))
 
     async def stream_inference_response(
         self,
@@ -124,10 +110,9 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
-    ) -> AsyncGenerator[dict, None]:
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        Initiates an asynchronous streaming request to the completions
-        endpoint and yields each response chunk as a dict.
+        Asynchronously streams inference using the shared connection pool.
         """
         payload = {
             "provider": provider,
@@ -142,52 +127,47 @@ class InferenceClient(BaseAPIClient):
             payload["content"] = user_content
 
         try:
-            validated_payload = StreamRequest(**payload)
+            # Pydantic validation
+            StreamRequest(**payload)
         except ValidationError as e:
             logging_utility.error("Payload validation error: %s", e.json())
-            raise ValueError(f"Payload validation error: {e}")
+            raise
 
-        logging_utility.info(
-            "Sending streaming inference request: %s", validated_payload.dict()
-        )
+        # Use the shared async_client for connection pooling
+        client = self.async_client
 
-        async with httpx.AsyncClient(
-            base_url=self.base_url, timeout=self.timeout
-        ) as async_client:
-            if self.api_key:
-                async_client.headers["Authorization"] = f"Bearer {self.api_key}"
+        # Override key if provided specifically for this call
+        headers = None
+        if api_key:
+            headers = {"Authorization": f"Bearer {api_key}"}
 
-            try:
-                async with async_client.stream(
-                    "POST", "/v1/completions", json=validated_payload.dict()
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        if line.startswith("data:"):
-                            data_str = line[len("data:") :].strip()
-                            if data_str == "[DONE]":
-                                break
-                            try:
-                                chunk = json.loads(data_str)
-                                yield chunk
-                            except json.JSONDecodeError as json_exc:
-                                logging_utility.error(
-                                    "Error decoding JSON from stream: %s", str(json_exc)
-                                )
-                                continue
-            except httpx.HTTPStatusError as e:
-                logging_utility.error(
-                    "HTTP error during streaming completions: %s", str(e)
-                )
-                raise
-            except Exception as e:
-                logging_utility.error(
-                    "Unexpected error during streaming completions: %s", str(e)
-                )
-                raise
+        try:
+            async with client.stream(
+                "POST", "/v1/completions", json=payload, headers=headers
+            ) as response:
+                response.raise_for_status()
+
+                async for line in response.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+
+                    data_str = line[len("data:") :].strip()
+                    if data_str == "[DONE]":
+                        break
+
+                    try:
+                        yield json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+
+        except httpx.HTTPStatusError as e:
+            logging_utility.error(f"Inference Stream HTTP Error: {e.response.text}")
+            raise
+        except Exception as e:
+            logging_utility.error(f"Inference Stream Unexpected Error: {e}")
+            raise
 
     def close(self):
-        """
-        Closes the underlying synchronous HTTP client.
-        """
+        """Closes the underlying synchronous client."""
         self.client.close()
