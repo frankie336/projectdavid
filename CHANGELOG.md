@@ -1,3 +1,10 @@
+## [1.43.1](https://github.com/frankie336/projectdavid/compare/v1.43.0...v1.43.1) (2026-02-03)
+
+
+### Bug Fixes
+
+* add assistants_client=self.assistants  param to main interface ([c65826f](https://github.com/frankie336/projectdavid/commit/c65826f56df983e04e6149084cb0cbdfd7987055))
+
 # [1.43.0](https://github.com/frankie336/projectdavid/compare/v1.42.0...v1.43.0) (2026-02-03)
 
 
