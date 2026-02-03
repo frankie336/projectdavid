@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/frankie336/projectdavid/compare/v1.42.0...v1.43.0) (2026-02-03)
+
+
+### Features
+
+* Implement level 2 function calling validation and recovery. ([c898a9c](https://github.com/frankie336/projectdavid/commit/c898a9c3d59dff835ba898542d598fadb0809d7e))
+
 # [1.42.0](https://github.com/frankie336/projectdavid/compare/v1.41.15...v1.42.0) (2026-02-03)
 
 
