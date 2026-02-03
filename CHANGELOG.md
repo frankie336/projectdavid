@@ -1,3 +1,18 @@
+# [1.42.0](https://github.com/frankie336/projectdavid/compare/v1.41.15...v1.42.0) (2026-02-03)
+
+
+### Bug Fixes
+
+* Asynchronous client updates. ([4a817a9](https://github.com/frankie336/projectdavid/commit/4a817a93d3c5e6987ee2a874c50d4e914846a4d5))
+* Asynchronous client updates. ([b00f994](https://github.com/frankie336/projectdavid/commit/b00f9944f2c8cae0bcce41b16ea6902cea5a95fd))
+* Asynchronous client updates. ([d5089a5](https://github.com/frankie336/projectdavid/commit/d5089a5d669faffbb9d40dcd2a0d16f1303a2153))
+
+
+### Features
+
+* Implement level 2, phase 1 recursive inference calls that handles subsequent turns during function calls. ([3db90a8](https://github.com/frankie336/projectdavid/commit/3db90a8ee87b429f417fba0c0b117555ed0b95f4))
+* Implement level 2, phase 1 recursive inference calls that handles subsequent turns during function calls. ([15b9740](https://github.com/frankie336/projectdavid/commit/15b9740e4b403619ecf4993a25bd32fc36fc89b8))
+
 ## [1.41.15](https://github.com/frankie336/projectdavid/compare/v1.41.14...v1.41.15) (2026-02-01)
 
 
