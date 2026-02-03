@@ -1,7 +1,8 @@
 import asyncio
 import json
+import re
 from contextlib import suppress
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 
 # [FIX] Import nest_asyncio to allow nested event loops in Uvicorn/Flask
 import nest_asyncio
@@ -20,6 +21,7 @@ from projectdavid.events import (
     StreamEvent,
     ToolCallRequestEvent,
 )
+from projectdavid.utils.validation import ToolValidator
 
 LOG = UtilsInterface.LoggingUtility()
 
@@ -47,6 +49,10 @@ class SynchronousInferenceStream:
         self.runs_client: Any = None
         self.actions_client: Any = None
         self.messages_client: Any = None
+        self.assistants_client: Any = None  # [NEW] Added for schema retrieval
+
+        # Level 2 Logic
+        self.validator = ToolValidator()
 
     def setup(
         self,
@@ -66,7 +72,11 @@ class SynchronousInferenceStream:
         self.api_key = api_key
 
     def bind_clients(
-        self, runs_client: Any, actions_client: Any, messages_client: Any
+        self,
+        runs_client: Any,
+        actions_client: Any,
+        messages_client: Any,
+        assistants_client: Any,  # [NEW] Enable Assistant schema lookups
     ) -> None:
         """
         Injects the necessary clients to enable 'smart events' that can
@@ -75,6 +85,7 @@ class SynchronousInferenceStream:
         self.runs_client = runs_client
         self.actions_client = actions_client
         self.messages_client = messages_client
+        self.assistants_client = assistants_client
 
     # ------------------------------------------------------------ #
     #   Core sync-to-async streaming wrapper
@@ -159,10 +170,27 @@ class SynchronousInferenceStream:
         if not all([self.runs_client, self.actions_client, self.messages_client]):
             LOG.warning("[SyncStream] Clients not bound. Tool execution will fail.")
 
+        # --- LEVEL 2: LAZY SCHEMA INITIALIZATION ---
+        if self.assistant_id and self.assistants_client:
+            try:
+                # Fetch tool definitions from the API to enable SDK-side validation
+                ast = self.assistants_client.retrieve_assistant(self.assistant_id)
+                tools = (
+                    getattr(ast, "tools", [])
+                    if not isinstance(ast, dict)
+                    else ast.get("tools", [])
+                )
+                self.validator.build_registry_from_assistant(tools)
+            except Exception as e:
+                LOG.warning(
+                    f"[SyncStream] Failed to retrieve Assistant tool schemas: {e}"
+                )
+
         turn_count = 0
         while turn_count < max_turns:
             turn_count += 1
             last_tool_call: Optional[ToolCallRequestEvent] = None
+            validation_failed_this_turn = False
 
             # Execute current turn
             for chunk in self.stream_chunks(
@@ -175,6 +203,28 @@ class SynchronousInferenceStream:
                 if not event:
                     continue
 
+                # --- [STAGE 2] SCHEMA VALIDATION INTERCEPT ---
+                if isinstance(event, ToolCallRequestEvent):
+                    error_msg = self.validator.validate_args(
+                        event.tool_name, event.args
+                    )
+
+                    if error_msg:
+                        LOG.warning(f"[SDK] Intercepted invalid tool call: {error_msg}")
+                        # Auto-submit the error to the model's dialogue turn
+                        self.messages_client.submit_tool_output(
+                            thread_id=self.thread_id,
+                            content=error_msg,
+                            role="tool",
+                            assistant_id=self.assistant_id,
+                            tool_id=event.action_id,
+                        )
+                        # Mark for internal turn recursion and stop yielding this "bad" event to consumer
+                        event.executed = True
+                        last_tool_call = event
+                        validation_failed_this_turn = True
+                        break
+
                 yield event
 
                 # Track if the model requested a tool
@@ -182,10 +232,12 @@ class SynchronousInferenceStream:
                     last_tool_call = event
 
             # End of stream check:
-            # If a tool call was yielded and the user executed it, start next turn.
-            if last_tool_call and last_tool_call.executed:
+            # If a tool call was yielded and executed (or failed validation), trigger turn recursion.
+            if validation_failed_this_turn or (
+                last_tool_call and last_tool_call.executed
+            ):
                 LOG.info(
-                    f"[SyncStream] Tool executed. Automatically starting turn {turn_count + 1}"
+                    f"[SyncStream] Self-Correction triggered. Starting turn {turn_count + 1}"
                 )
                 continue
 
@@ -195,7 +247,7 @@ class SynchronousInferenceStream:
     def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
         """Maps raw API chunks to Typed Event instances."""
         # --- 1. Unwrapping Mixins (Code/Computer) ---
-        stream_type = chunk.get("stream_type")
+        stream_type = chunk.get("type") if "type" in chunk else chunk.get("stream_type")
         if stream_type in ["code_execution", "computer_execution"]:
             payload = chunk.get("chunk", {})
             if "run_id" not in payload:
@@ -205,12 +257,24 @@ class SynchronousInferenceStream:
         c_type = chunk.get("type")
         run_id = chunk.get("run_id")
 
-        # --- 2. Tool Call Manifest ---
+        # --- [STAGE 1] TOOL CALL ROBUST PARSING (THE HEALER) ---
         if c_type == "tool_call_manifest":
+            raw_args = chunk.get("args", {})
+
+            # If the model sends args as a chatty string, we 'heal' it into a dict
+            if isinstance(raw_args, str):
+                try:
+                    # Search for the first valid JSON block inside the string
+                    match = re.search(r"(\{.*\}|\[.*\])", raw_args, re.DOTALL)
+                    if match:
+                        raw_args = json.loads(match.group(1))
+                except Exception:
+                    LOG.warning(f"[SDK] Stage 1 Healing failed for args: {raw_args}")
+
             return ToolCallRequestEvent(
                 run_id=run_id,
                 tool_name=chunk.get("tool", "unknown_tool"),
-                args=chunk.get("args", {}),
+                args=raw_args,
                 action_id=chunk.get("action_id"),
                 thread_id=self.thread_id,
                 assistant_id=self.assistant_id,
