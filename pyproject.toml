@@ -30,6 +30,7 @@ dependencies = [
      "requests",
     "python-docx",
     "python-pptx",
+    "nest-asyncio>=1.6.0",
 
 ]
 
