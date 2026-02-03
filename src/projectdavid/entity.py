@@ -154,6 +154,7 @@ class Entity:
                 runs_client=self.runs,
                 actions_client=self.actions,
                 messages_client=self.messages,
+                assistants_client=self.assistants,
             )
         return self._synchronous_inference_stream
 
