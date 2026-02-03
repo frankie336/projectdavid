@@ -15,6 +15,7 @@ from projectdavid.clients.base_client import BaseAPIClient
 
 ent_validator = ValidationInterface()
 logging_utility = UtilsInterface.LoggingUtility()
+LOG = logging_utility
 
 
 class RunsClient(BaseAPIClient):
@@ -503,36 +504,31 @@ class RunsClient(BaseAPIClient):
         tool_name: str,
     ) -> bool:
         """
-        Executes a tool call action using direct identifiers.
-        This method skips database lookups and targets the specific Action ID
-        provided by the event stream.
+        Executes a tool call and submits results.
+        Level 2 Enhancement: On failure, the error is caught and submitted
+        to the thread to allow the model to self-correct.
         """
         if not callable(tool_executor):
             raise TypeError("tool_executor must be a callable function.")
 
         if not action_id:
-            logging_utility.error(
-                f"[SDK Helper] Missing action_id for run {run_id}. Cannot execute."
-            )
+            LOG.error(f"[SDK] Missing action_id for run {run_id}. Cannot execute.")
             return False
 
-        logging_utility.info(
-            f"[SDK Helper] Executing '{tool_name}' for Action: {action_id}"
-        )
+        LOG.info(f"[SDK] Executing '{tool_name}' (Action: {action_id})")
 
         try:
             # 1. Mark Action as Processing
             actions_client.update_action(action_id, status="processing")
 
             # 2. Execute the local function
-            # result_content must be a JSON string for the API to accept it
             result_content = tool_executor(tool_name, streamed_args)
+
+            # Ensure output is a string
             if not isinstance(result_content, str):
                 result_content = json.dumps(result_content)
 
-            # 3. Submit Tool Output
-            # We use action_id as the primary tool identifier.
-            # tool_call_id (the LLM's ID) is handled internally by the API mapping.
+            # 3. Submit Tool Output (Success Path)
             messages_client.submit_tool_output(
                 thread_id=thread_id,
                 tool_id=action_id,
@@ -544,21 +540,37 @@ class RunsClient(BaseAPIClient):
 
             # 4. Mark Action as Completed
             actions_client.update_action(action_id, status="completed")
-            logging_utility.info(
-                f"[SDK Helper] Tool '{tool_name}' completed successfully."
-            )
+            LOG.info(f"[SDK] Tool '{tool_name}' completed successfully.")
             return True
 
         except Exception as e:
-            logging_utility.error(
-                f"[SDK Helper] Execution failed for tool '{tool_name}': {e}"
-            )
-            # Attempt to mark the action as failed in the DB
+            # --- LEVEL 2 SELF-CORRECTION LOGIC ---
+            error_msg = f"Error executing tool '{tool_name}': {str(e)}"
+            LOG.error(f"[SDK] {error_msg}")
+
             try:
+                # Submit the ERROR as the tool output so the LLM can see it
+                messages_client.submit_tool_output(
+                    thread_id=thread_id,
+                    tool_id=action_id,
+                    tool_call_id=None,
+                    content=json.dumps({"error": error_msg, "retry": True}),
+                    role="tool",
+                    assistant_id=assistant_id,
+                )
+
+                # Mark as failed in DB, but return True because we successfully
+                # "finished" the turn by providing feedback to the model.
                 actions_client.update_action(action_id, status="failed")
-            except Exception:
-                pass
-            return False
+
+                LOG.info(f"[SDK] Error feedback sent to model for self-correction.")
+                return True
+
+            except Exception as critical_e:
+                LOG.error(
+                    f"[SDK] Critical failure submitting error feedback: {critical_e}"
+                )
+                return False
 
     # TODO: I think we need to decommission this, not used.
     def watch_run_events(

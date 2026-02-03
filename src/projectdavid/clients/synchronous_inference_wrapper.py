@@ -17,6 +17,7 @@ from projectdavid.events import (
     HotCodeEvent,
     ReasoningEvent,
     StatusEvent,
+    StreamEvent,
     ToolCallRequestEvent,
 )
 
@@ -108,23 +109,15 @@ class SynchronousInferenceStream:
         agen = _stream_chunks_async().__aiter__()
         LOG.debug("[SyncStream] Starting typed stream (Unified Orchestration Mode)")
 
-        # [FIX START] Determine the correct loop to use
+        # Determine the correct loop to use (standalone vs active web server)
         try:
-            # 1. If we are running in Uvicorn/Flask, a loop is ALREADY active.
-            # We must use it, otherwise we get "RuntimeError: This event loop is already running"
             active_loop = asyncio.get_running_loop()
-
-            # 2. Patch this loop to allow `run_until_complete` (re-entrancy)
             nest_asyncio.apply(active_loop)
-
         except RuntimeError:
-            # 1. No active loop (standalone script mode). Use our fallback global loop.
             active_loop = self._GLOBAL_LOOP
-        # [FIX END]
 
         while True:
             try:
-                # Use the detected active_loop, not necessarily _GLOBAL_LOOP
                 chunk = active_loop.run_until_complete(
                     asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                 )
@@ -138,15 +131,13 @@ class SynchronousInferenceStream:
                 yield chunk
 
             except StopAsyncIteration:
-                LOG.info("[SyncStream] Stream completed normally.")
+                LOG.info("[SyncStream] Chunk stream completed.")
                 break
             except asyncio.TimeoutError:
                 LOG.error("[SyncStream] Timeout waiting for next chunk.")
                 break
             except Exception as exc:
-                LOG.error(
-                    "[SyncStream] Unexpected streaming error: %s", exc, exc_info=True
-                )
+                LOG.error(f"[SyncStream] Streaming error: {exc}", exc_info=True)
                 break
 
     # ------------------------------------------------------------ #
@@ -158,119 +149,117 @@ class SynchronousInferenceStream:
         model: str,
         *,
         timeout_per_chunk: float = 280.0,
-    ) -> Generator[
-        Union[
-            ContentEvent,
-            ToolCallRequestEvent,
-            StatusEvent,
-            ReasoningEvent,
-            DecisionEvent,
-            HotCodeEvent,
-            CodeExecutionOutputEvent,
-            CodeExecutionGeneratedFileEvent,
-            ComputerExecutionOutputEvent,
-        ],
-        None,
-        None,
-    ]:
+        max_turns: int = 10,
+    ) -> Generator[Union[StreamEvent, Any], None, None]:
         """
-        High-level iterator that yields Events instead of raw dicts.
-        Handles buffering, parsing, unwrapping (Code/Computer), and execution prep.
+        High-level iterator that yields Events.
+        Handles Turn 2+ automatically: if a tool is executed, it loops back
+        to the model to get the next response.
         """
         if not all([self.runs_client, self.actions_client, self.messages_client]):
-            LOG.warning(
-                "[SyncStream] Clients not bound. Tool execution events may fail."
-            )
+            LOG.warning("[SyncStream] Clients not bound. Tool execution will fail.")
 
-        for chunk in self.stream_chunks(
-            provider=provider,
-            model=model,
-            timeout_per_chunk=timeout_per_chunk,
-            suppress_fc=True,
-        ):
-            # ----------------------------------------------------
-            # UNWRAPPING LOGIC for Code & Computer Mixins
-            # ----------------------------------------------------
-            stream_type = chunk.get("stream_type")
+        turn_count = 0
+        while turn_count < max_turns:
+            turn_count += 1
+            last_tool_call: Optional[ToolCallRequestEvent] = None
 
-            if stream_type in ["code_execution", "computer_execution"]:
-                payload = chunk.get("chunk", {})
-                if "run_id" not in payload:
-                    payload["run_id"] = chunk.get("run_id")
-                chunk = payload
-            # ----------------------------------------------------
+            # Execute current turn
+            for chunk in self.stream_chunks(
+                provider=provider,
+                model=model,
+                timeout_per_chunk=timeout_per_chunk,
+                suppress_fc=True,
+            ):
+                event = self._map_chunk_to_event(chunk)
+                if not event:
+                    continue
 
-            c_type = chunk.get("type")
-            run_id = chunk.get("run_id")
+                yield event
 
-            # --- 1. Tool Call Manifest (THE AUTHORITATIVE EVENT) ---
-            if c_type == "tool_call_manifest":
-                tool_name = chunk.get("tool", "unknown_tool")
-                final_args = chunk.get("args", {})
-                action_id = chunk.get("action_id")
+                # Track if the model requested a tool
+                if isinstance(event, ToolCallRequestEvent):
+                    last_tool_call = event
 
-                if self.runs_client:
-                    yield ToolCallRequestEvent(
-                        run_id=run_id,
-                        tool_name=tool_name,
-                        args=final_args,
-                        action_id=action_id,
-                        thread_id=self.thread_id,
-                        assistant_id=self.assistant_id,
-                        _runs_client=self.runs_client,
-                        _actions_client=self.actions_client,
-                        _messages_client=self.messages_client,
-                    )
+            # End of stream check:
+            # If a tool call was yielded and the user executed it, start next turn.
+            if last_tool_call and last_tool_call.executed:
+                LOG.info(
+                    f"[SyncStream] Tool executed. Automatically starting turn {turn_count + 1}"
+                )
                 continue
 
-            # --- 2. Standard Content ---
-            elif c_type == "content":
-                yield ContentEvent(run_id=run_id, content=chunk.get("content", ""))
+            # If no tool was called, or it wasn't executed, the conversation turn is over.
+            break
 
-            # --- 3. Reasoning (DeepSeek) ---
-            elif c_type == "reasoning":
-                yield ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
+    def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
+        """Maps raw API chunks to Typed Event instances."""
+        # --- 1. Unwrapping Mixins (Code/Computer) ---
+        stream_type = chunk.get("stream_type")
+        if stream_type in ["code_execution", "computer_execution"]:
+            payload = chunk.get("chunk", {})
+            if "run_id" not in payload:
+                payload["run_id"] = chunk.get("run_id")
+            chunk = payload
 
-            # --- 4. Decision (Structured Logic) ---
-            elif c_type == "decision":
-                yield DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
+        c_type = chunk.get("type")
+        run_id = chunk.get("run_id")
 
-            # --- 5. Code Execution: Hot Code (Typing) ---
-            elif c_type == "hot_code":
-                yield HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
+        # --- 2. Tool Call Manifest ---
+        if c_type == "tool_call_manifest":
+            return ToolCallRequestEvent(
+                run_id=run_id,
+                tool_name=chunk.get("tool", "unknown_tool"),
+                args=chunk.get("args", {}),
+                action_id=chunk.get("action_id"),
+                thread_id=self.thread_id,
+                assistant_id=self.assistant_id,
+                _runs_client=self.runs_client,
+                _actions_client=self.actions_client,
+                _messages_client=self.messages_client,
+            )
 
-            # --- 6. Code Execution: Output (Stdout/Stderr) ---
-            elif c_type == "hot_code_output":
-                yield CodeExecutionOutputEvent(
-                    run_id=run_id, content=chunk.get("content", "")
-                )
+        # --- 3. Content Deltas ---
+        elif c_type == "content":
+            return ContentEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 7. Computer/Shell Execution Output ---
-            elif c_type == "computer_output":
-                yield ComputerExecutionOutputEvent(
-                    run_id=run_id, content=chunk.get("content", "")
-                )
+        # --- 4. Reasoning (DeepSeek R1) ---
+        elif c_type == "reasoning":
+            return ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 8. Code Execution: Generated Files ---
-            elif c_type == "code_interpreter_stream":
-                file_data = chunk.get("content", {})
-                yield CodeExecutionGeneratedFileEvent(
-                    run_id=run_id,
-                    filename=file_data.get("filename", "unknown"),
-                    file_id=file_data.get("file_id"),
-                    base64_data=file_data.get("base64", ""),
-                    mime_type=file_data.get("mime_type", "application/octet-stream"),
-                )
+        # --- 5. Structural Decisions ---
+        elif c_type == "decision":
+            return DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
 
-            # --- 9. Status / Completion ---
-            elif c_type == "status":
-                status = chunk.get("status")
-                yield StatusEvent(run_id=run_id, status=status)
+        # --- 6. Code Interpreter Events ---
+        elif c_type == "hot_code":
+            return HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
+        elif c_type == "hot_code_output":
+            return CodeExecutionOutputEvent(
+                run_id=run_id, content=chunk.get("content", "")
+            )
+        elif c_type == "computer_output":
+            return ComputerExecutionOutputEvent(
+                run_id=run_id, content=chunk.get("content", "")
+            )
+        elif c_type == "code_interpreter_stream":
+            file_data = chunk.get("content", {})
+            return CodeExecutionGeneratedFileEvent(
+                run_id=run_id,
+                filename=file_data.get("filename", "unknown"),
+                file_id=file_data.get("file_id"),
+                base64_data=file_data.get("base64", ""),
+                mime_type=file_data.get("mime_type", "application/octet-stream"),
+            )
 
-            # --- 10. Error ---
-            elif c_type == "error":
-                LOG.error(f"[SyncStream] Stream Error: {chunk}")
-                yield StatusEvent(run_id=run_id, status="failed")
+        # --- 7. Status & Errors ---
+        elif c_type == "status":
+            return StatusEvent(run_id=run_id, status=chunk.get("status"))
+        elif c_type == "error":
+            LOG.error(f"[SyncStream] Error chunk received: {chunk}")
+            return StatusEvent(run_id=run_id, status="failed")
+
+        return None
 
     # ------------------------------------------------------------ #
     #   Typed JSON Stream (Front-end Handover)
@@ -284,7 +273,6 @@ class SynchronousInferenceStream:
     ) -> Generator[str, None, None]:
         """
         Consumes high-level Events and yields serialized JSON strings.
-        Ensures every chunk has a 'type' discriminator for the UI.
         """
         for event in self.stream_events(
             provider=provider, model=model, timeout_per_chunk=timeout_per_chunk

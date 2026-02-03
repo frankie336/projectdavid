@@ -1,3 +1,4 @@
+# src/projectdavid/events.py
 from dataclasses import asdict, dataclass
 from typing import Any, Callable, Dict, Optional
 
@@ -19,7 +20,7 @@ class StreamEvent:
         mapping = {
             "ContentEvent": "content",
             "ReasoningEvent": "reasoning",
-            "DecisionEvent": "decision",  # [NEW] Registered here
+            "DecisionEvent": "decision",
             "ToolCallRequestEvent": "tool_call_manifest",
             "StatusEvent": "status",
             "HotCodeEvent": "hot_code",
@@ -108,7 +109,10 @@ class StatusEvent(StreamEvent):
 
 
 class ToolCallRequestEvent(StreamEvent):
-    """A fully accumulated tool call request with execution capability."""
+    """
+    A fully accumulated tool call request.
+    Added 'executed' state to facilitate automated multi-turn handling in the SDK.
+    """
 
     def __init__(
         self,
@@ -132,6 +136,9 @@ class ToolCallRequestEvent(StreamEvent):
         self._actions_client = _actions_client
         self._messages_client = _messages_client
 
+        # Level 2 Turn-Management State
+        self.executed = False
+
     def to_dict(self) -> Dict[str, Any]:
         # Tool events contain private client references; we exclude them from JSON
         return {
@@ -143,8 +150,11 @@ class ToolCallRequestEvent(StreamEvent):
         }
 
     def execute(self, tool_executor: Callable[[str, Dict[str, Any]], str]) -> bool:
-        """Helper to run local code and submit results via Fast-Path Action ID."""
-        return self._runs_client.execute_pending_action(
+        """
+        Helper to run local code and submit results.
+        Updates internal state so the Stream Manager knows to trigger the next turn.
+        """
+        success = self._runs_client.execute_pending_action(
             run_id=self.run_id,
             thread_id=self._thread_id,
             assistant_id=self._assistant_id,
@@ -155,3 +165,8 @@ class ToolCallRequestEvent(StreamEvent):
             action_id=self.action_id,
             tool_name=self.tool_name,
         )
+
+        if success:
+            self.executed = True
+
+        return success
