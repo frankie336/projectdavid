@@ -505,8 +505,8 @@ class RunsClient(BaseAPIClient):
     ) -> bool:
         """
         Executes a tool call and submits results.
-        Level 2 Enhancement: On failure, the error is caught and submitted
-        to the thread to allow the model to self-correct.
+        Level 2 Enhancement: On failure, translates opaque errors into
+        instructional hints to guide the model's self-correction turn.
         """
         if not callable(tool_executor):
             raise TypeError("tool_executor must be a callable function.")
@@ -518,17 +518,17 @@ class RunsClient(BaseAPIClient):
         LOG.info(f"[SDK] Executing '{tool_name}' (Action: {action_id})")
 
         try:
-            # 1. Mark Action as Processing
+            # 1. Mark Action as Processing in the database
             actions_client.update_action(action_id, status="processing")
 
-            # 2. Execute the local function
+            # 2. Execute the local function provided by the developer
             result_content = tool_executor(tool_name, streamed_args)
 
-            # Ensure output is a string
+            # Ensure output is a string (API requirement)
             if not isinstance(result_content, str):
                 result_content = json.dumps(result_content)
 
-            # 3. Submit Tool Output (Success Path)
+            # 3. Submit Tool Output (The Success Path)
             messages_client.submit_tool_output(
                 thread_id=thread_id,
                 tool_id=action_id,
@@ -544,31 +544,47 @@ class RunsClient(BaseAPIClient):
             return True
 
         except Exception as e:
-            # --- LEVEL 2 SELF-CORRECTION LOGIC ---
-            error_msg = f"Error executing tool '{tool_name}': {str(e)}"
-            LOG.error(f"[SDK] {error_msg}")
+            # --- LEVEL 2 INSTRUCTIONAL ERROR WRAPPER ---
+            # We translate the opaque Python error into a behavioral hint for the LLM.
+            raw_error = str(e)
+
+            # This "Clean Hint" weights the LLM's next tokens toward correction/retry
+            instructional_hint = (
+                f"Tool Execution Error for '{tool_name}': {raw_error}. "
+                "Instructions: If this is a parameter error, please correct your JSON arguments and retry. "
+                "If it is a system/network error, you may attempt to retry once or notify the user of the delay."
+            )
+
+            LOG.error(
+                f"[SDK] Tool '{tool_name}' failed. Sending instructional hint to model."
+            )
 
             try:
-                # Submit the ERROR as the tool output so the LLM can see it
+                # Submit the INSTRUCTIONAL HINT as the tool output
+                # We wrap it in a JSON structure to maintain consistency for the model
                 messages_client.submit_tool_output(
                     thread_id=thread_id,
                     tool_id=action_id,
                     tool_call_id=None,
-                    content=json.dumps({"error": error_msg, "retry": True}),
+                    content=json.dumps(
+                        {"error": instructional_hint, "retry_allowed": True}
+                    ),
                     role="tool",
                     assistant_id=assistant_id,
                 )
 
-                # Mark as failed in DB, but return True because we successfully
-                # "finished" the turn by providing feedback to the model.
+                # Mark the action as failed in the DB
                 actions_client.update_action(action_id, status="failed")
 
-                LOG.info(f"[SDK] Error feedback sent to model for self-correction.")
+                # CRITICAL: We return True here.
+                # This signals the stream generator that a "Turn" has been completed,
+                # which triggers the recursive call for the model to self-correct.
+                LOG.info(f"[SDK] Error feedback successfully injected into dialogue.")
                 return True
 
             except Exception as critical_e:
                 LOG.error(
-                    f"[SDK] Critical failure submitting error feedback: {critical_e}"
+                    f"[SDK] Critical failure submitting error feedback to API: {critical_e}"
                 )
                 return False
 
