@@ -1,22 +1,16 @@
-# Function Calling and Tool Execution
+# Function Calling and Tool Execution (Unified Loop)
 
 ## Overview
 
-Most examples online only show a partial picture of **function calling**.
-They cover schema definition and happy-path demos, but skip what actually matters in production:
-how to **detect**, **handle**, **execute**, **stream**, and **scale** model-proposed actions inside a
-stateful system such as *Entities V1*.
+Most examples online show a "Stop-and-Go" approach to function calling: stream text, stop, run tool, start a new stream.
+*Entities V1* simplifies this with a **Unified Event Loop**.
 
-In LLM engineering:
+The SDK manages the state transitions for you. You use a **single iterator** that:
 
-- **Function calling** is a *model-level capability*  
-  (the model emits a structured proposal)
-- **Tool execution** is a *runtime responsibility*  
-  (the host system validates and executes side effects)
-
-The script below demonstrates the **Event-Driven** pattern. Unlike older polling-based approaches,
-this uses a "Smart Iterator" that buffers arguments in real-time and yields an executable
-event the moment a tool call is ready.
+1.  Streams initial thought/content.
+2.  Pauses to yield a `ToolCallRequestEvent` when action is needed.
+3.  Automatically submits your tool's result back to the model.
+4.  Resumes streaming the final answer immediately within the same loop.
 
 ---
 
@@ -37,110 +31,93 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# 1. Initialize Client
 client = Entity()
 
-
 # -----------------------------------------
-# Tool executor (runtime-owned)
+# Tool Logic & Registry
 #
-# This is a mock tool executor. Tool execution
-# is a consumer-side concern and is never
-# performed by the model itself.
+# Tool execution is a runtime responsibility.
+# We map tool names (from LLM) to Python functions.
 # -----------------------------------------
 def get_flight_times(tool_name, arguments):
-  if tool_name == "get_flight_times":
+    """Actual logic to fetch data."""
+    print(f"\n[Runtime] Fetching flights for {arguments.get('departure')}...")
     return json.dumps({
-      "status": "success",
-      "message": f"Flight from {arguments.get('departure')} to {arguments.get('arrival')}: 4h 30m",
-      "departure_time": "10:00 AM PST",
-      "arrival_time": "06:30 PM EST",
+        "status": "success",
+        "departure": "10:00 AM PST",
+        "arrival": "06:30 PM EST",
+        "duration": "4h 30m"
     })
-  return json.dumps({"error": f"Unknown tool: {tool_name}"})
+
+TOOL_REGISTRY = {
+    "get_flight_times": get_flight_times
+}
 
 
+# ----------------------------------------------------
+# 2. Setup: Thread, Message, Run
+# ----------------------------------------------------
 assistant_id = "plt_ast_9fnJT01VGrK4a9fcNr8z2O"
-
-# ----------------------------------------------------
-# 1. Setup: Thread, Message, Run
-# ----------------------------------------------------
 thread = client.threads.create_thread()
 
 message = client.messages.create_message(
-  thread_id=thread.id,
-  role="user",
-  content="Please fetch me the flight times between LAX and NYC, JFK",
-  assistant_id=assistant_id,
+    thread_id=thread.id,
+    role="user",
+    content="Please fetch me the flight times between LAX and NYC, JFK",
+    assistant_id=assistant_id,
 )
 
 run = client.runs.create_run(assistant_id=assistant_id, thread_id=thread.id)
 
 # ----------------------------------------------------
-# 2. Initialize the Smart Stream
+# 3. Unified Stream Setup
 # ----------------------------------------------------
 stream = client.synchronous_inference_stream
 stream.setup(
-  user_id=os.getenv("ENTITIES_USER_ID"),
-  thread_id=thread.id,
-  assistant_id=assistant_id,
-  message_id=message.id,
-  run_id=run.id,
-  api_key=os.getenv("HYPERBOLIC_API_KEY"),
-)
-
-print("Thinking...")
-
-tool_was_executed = False
-
-# ----------------------------------------------------
-# 3. Stream Events (The Event-Driven Loop)
-#
-# Instead of raw chunks, we iterate over high-level
-# events. The SDK handles JSON buffering and parsing.
-# ----------------------------------------------------
-for event in stream.stream_events(
-        provider="Hyperbolic",
-        model="hyperbolic/deepseek-ai/DeepSeek-V3"
-):
-  # A. Handle Text Generation
-  if isinstance(event, ContentEvent):
-    print(event.content, end="", flush=True)
-
-  # B. Handle Tool Requests
-  elif isinstance(event, ToolCallRequestEvent):
-    print(f"\n[SDK] Tool Call Detected: {event.tool_name}")
-
-    # The 'event' object holds the parsed arguments and 
-    # has a helper method to execute and submit the result.
-    success = event.execute(get_flight_times)
-
-    if success:
-      print("[SDK] Tool executed & result submitted.")
-      tool_was_executed = True
-
-# ----------------------------------------------------
-# 4. Final Response (If a tool was used)
-#
-# If a tool was executed, we re-stream to let the
-# model generate the final answer using the tool data.
-# ----------------------------------------------------
-if tool_was_executed:
-  print("\n[Generating Final Response...]\n")
-
-  stream.setup(
     user_id=os.getenv("ENTITIES_USER_ID"),
     thread_id=thread.id,
     assistant_id=assistant_id,
     message_id=message.id,
     run_id=run.id,
     api_key=os.getenv("HYPERBOLIC_API_KEY"),
-  )
+)
 
-  for event in stream.stream_events(
-          provider="Hyperbolic",
-          model="hyperbolic/deepseek-ai/DeepSeek-V3"
-  ):
-    if isinstance(event, ContentEvent):
-      print(event.content, end="", flush=True)
+print("Stream started...")
+
+# ----------------------------------------------------
+# 4. Single Event Loop (Handles Turns 1..N)
+# 
+# The generator yields events for the ENTIRE interaction.
+# It pauses only when it needs YOU to execute a tool.
+# ----------------------------------------------------
+try:
+    for event in stream.stream_events(
+        provider="Hyperbolic", 
+        model="hyperbolic/deepseek-ai/DeepSeek-V3"
+    ):
+        
+        # A. Handle Standard Content (Thoughts/Answers)
+        if isinstance(event, ContentEvent):
+            print(event.content, end="", flush=True)
+
+        # B. Handle Tool Requests
+        elif isinstance(event, ToolCallRequestEvent):
+            print(f"\n[SDK] Tool Call Detected: {event.tool_name}")
+
+            # 1. Lookup function in registry
+            handler = TOOL_REGISTRY.get(event.tool_name)
+
+            if handler:
+                # 2. Execute. 
+                # The SDK pauses here, executes the function, submits the result, 
+                # and silenty triggers the model to resume generating.
+                event.execute(handler) 
+            else:
+                print(f"[!] Unknown tool requested: {event.tool_name}")
+
+except Exception as e:
+    print(f"\nError during stream: {e}")
 
 print("\n\nDone.")
 ```
@@ -150,31 +127,32 @@ print("\n\nDone.")
 ## Example Console Output
 
 ```text
-Thinking...
+Stream started...
 [SDK] Tool Call Detected: get_flight_times
-[SDK] Tool executed & result submitted.
 
-[Generating Final Response...]
+[Runtime] Fetching flights for LAX...
 
 The flight from **Los Angeles (LAX)** to **New York (JFK)** has the following details:
 
 - **Flight Duration**: 4 hours and 30 minutes
 - **Departure Time**: 10:00 AM PST
 - **Arrival Time**: 06:30 PM EST
+
+Done.
 ```
 
 ---
 
 ## Lifecycle Summary
 
-*Entities* abstracts away the complexity of managing buffers and state transitions:
+The *Entities* SDK implements a **Recursive Turn** pattern:
 
-1.  **Detection:** The SDK monitors the stream. When `call_arguments` arrive, it buffers them internally.
-2.  **Event Yield:** Once the tool call is complete and valid, the SDK yields a `ToolCallRequestEvent`.
-3.  **Execution:** You call `event.execute(your_function)`. The SDK handles the API round-trip to submit the result.
-4.  **Synthesis:** You seamlessly continue streaming the final response.
+1.  **Bind:** You bind the client (`bind_clients`), giving the stream permission to manage runs internally.
+2.  **Detection:** The stream yields a `ToolCallRequestEvent`.
+3.  **Execution:** You call `event.execute(handler)`.
+    *   The SDK invokes your Python function.
+    *   The SDK submits the result to the API.
+    *   The SDK *silently* triggers the next generation step.
+4.  **Resumption:** The `for` loop continues immediately, now yielding the `ContentEvent` chunks for the final answer.
 
-The model proposes.  
-The runtime decides.  
-The system remains in control.
-```
+The developer writes one loop. The SDK handles the round-trips.

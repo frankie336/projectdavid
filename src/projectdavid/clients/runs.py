@@ -539,7 +539,8 @@ class RunsClient(BaseAPIClient):
             )
 
             # 4. Mark Action as Completed
-            actions_client.update_action(action_id, status="completed")
+            actions_client.update_action(action_id, status=StatusEnum.completed.value)
+
             LOG.info(f"[SDK] Tool '{tool_name}' completed successfully.")
             return True
 
@@ -574,7 +575,7 @@ class RunsClient(BaseAPIClient):
                 )
 
                 # Mark the action as failed in the DB
-                actions_client.update_action(action_id, status="failed")
+                actions_client.update_action(action_id, status=StatusEnum.failed.value)
 
                 # CRITICAL: We return True here.
                 # This signals the stream generator that a "Turn" has been completed,

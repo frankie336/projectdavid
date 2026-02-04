@@ -37,9 +37,24 @@ pip install projectdavid
 
 ---
 
-##  Quick Start
+#  Quick Start
+
+
+
+##  Standard Synchronous Stream
+
+**The standard synchronous streaming interface is considered legacy.
+Implementations based on this interface will continue to function, but developers are strongly encouraged to use the event-driven interface instead.**
 
 ```python
+"""
+Standard Inference Test (No Tools)
+---------------------------------------------------
+1. Simple prompt -> response.
+2. Handles Reasoning (DeepSeek) and Content events.
+3. No tool execution or recursion logic.
+"""
+
 import os
 
 from dotenv import load_dotenv
@@ -55,7 +70,7 @@ load_dotenv()
 # ---------------------------------------------------
 client = Entity(base_url="http://localhost:9000", api_key=os.getenv("ENTITIES_API_KEY"))
 
-user_id = "user_kUKV8octgG2aMc7kxAcD3i"
+user_id = os.getenv("ENTITIES_USER_ID")
 
 # -----------------------------
 # create an assistant
@@ -74,7 +89,7 @@ print(f"created assistant with ID: {assistant.id}")
 # multi turn conversation
 # ------------------------------------------------
 print("Creating thread...")
-thread = client.threads.create_thread(participant_ids=[user_id])
+thread = client.threads.create_thread()
 
 print(f"created thread with ID: {thread.id}")
 # Store the dynamically created thread ID
@@ -115,7 +130,7 @@ sync_stream.setup(
     assistant_id=assistant.id,
     message_id=message.id,
     run_id=run.id,
-    api_key=os.getenv("YOUR_API_KEY"),
+    api_key=os.getenv("HYPERBOLIC_API_KEY"),
 )
 print("Stream setup complete. Starting streaming...")
 
@@ -135,6 +150,118 @@ except Exception as e:
 
 print("Script finished.")
 ```
+
+
+##  Standard event-driven Stream
+
+**The event-driven interface provides access to advanced Level 2 and Level 3 agentic capabilities.
+Event and stream types can be handled in the back end before being rendered in the front-end application.**
+
+
+```python
+
+
+import os
+from projectdavid import Entity
+from projectdavid.events import ContentEvent, ReasoningEvent
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+
+# 1. Initialize Client
+client = Entity(base_url=os.getenv("BASE_URL"), 
+                api_key=os.getenv("ENTITIES_API_KEY"))
+
+# -----------------------------
+# create an assistant
+# ------------------------------
+assistant = client.assistants.create_assistant(
+    name="test_assistant",
+    instructions="You are a helpful AI assistant",
+)
+print(f"created assistant with ID: {assistant.id}")
+
+
+MODEL_ID = "hyperbolic/deepseek-ai/DeepSeek-V3"
+PROVIDER = "Hyperbolic"
+
+# 2. Create Conversation Context
+# We create a Thread, add a Message, and create a Run.
+thread = client.threads.create_thread()
+
+print("-> Sending Prompt...")
+message = client.messages.create_message(
+    thread_id=thread.id,
+    role="user",
+    content="Explain the difference between TCP and UDP in one paragraph.",
+    assistant_id=assistant.id,
+)
+
+run = client.runs.create_run(assistant_id=ASSISTANT_ID, thread_id=thread.id)
+
+# 4. Initialize the Stream
+stream = client.synchronous_inference_stream
+stream.setup(
+    user_id=ENTITIES_USER_ID,
+    thread_id=thread.id,
+    assistant_id=ASSISTANT_ID,
+    message_id=message.id,
+    run_id=run.id,
+    api_key=PROVIDER_API_KEY,
+)
+
+# 5. Event Loop
+# The SDK handles the connection and parses the stream into events.
+print(f"-> Streaming from {MODEL_ID}...\n")
+
+current_mode = None
+
+try:
+    for event in stream.stream_events(provider=PROVIDER, model=MODEL_ID):
+
+        # A. Handle Reasoning (Chain-of-Thought)
+        # Models like DeepSeek or o1 emit thoughts before the answer.
+        if isinstance(event, ReasoningEvent):
+            if current_mode != "reasoning":
+                print("\n[🤔 THOUGHTS]: ", end="")
+                current_mode = "reasoning"
+            
+            print(event.content, end="", flush=True)
+
+        # B. Handle Standard Content
+        # This is the final answer intended for the user.
+        elif isinstance(event, ContentEvent):
+            if current_mode != "content":
+                print("\n\n[🤖 ANSWER]: ", end="")
+                current_mode = "content"
+
+            print(event.content, end="", flush=True)
+
+except Exception as e:
+    print(f"\n[!] Error: {e}")
+
+print("\n\nDone.")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Model Routes
 

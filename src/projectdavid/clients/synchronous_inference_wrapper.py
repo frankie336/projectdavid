@@ -56,7 +56,7 @@ class SynchronousInferenceStream:
 
     def setup(
         self,
-        user_id: str,
+        # user_id: str,
         thread_id: str,
         assistant_id: str,
         message_id: str,
@@ -64,7 +64,7 @@ class SynchronousInferenceStream:
         api_key: str,
     ) -> None:
         """Populate IDs once, so callers only provide provider/model."""
-        self.user_id = user_id
+        # self.user_id = user_id
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
