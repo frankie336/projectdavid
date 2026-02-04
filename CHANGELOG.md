@@ -1,3 +1,10 @@
+## [1.44.1](https://github.com/frankie336/projectdavid/compare/v1.44.0...v1.44.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* Expose PlanEvent ([5917f0d](https://github.com/frankie336/projectdavid/commit/5917f0deb8ca6aa544a651adfdbe4688f164602f))
+
 # [1.44.0](https://github.com/frankie336/projectdavid/compare/v1.43.3...v1.44.0) (2026-02-04)
 
 
