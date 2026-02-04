@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/frankie336/projectdavid/compare/v1.43.3...v1.44.0) (2026-02-04)
+
+
+### Features
+
+* Add PlanEvent to event handler ([45d1840](https://github.com/frankie336/projectdavid/commit/45d1840a92fa4d3f916671f63e8298b5a61dc476))
+
 ## [1.43.3](https://github.com/frankie336/projectdavid/compare/v1.43.2...v1.43.3) (2026-02-04)
 
 
