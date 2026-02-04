@@ -1,4 +1,3 @@
-# src/projectdavid/events.py
 from dataclasses import asdict, dataclass
 from typing import Any, Callable, Dict, Optional
 
@@ -21,6 +20,7 @@ class StreamEvent:
             "ContentEvent": "content",
             "ReasoningEvent": "reasoning",
             "DecisionEvent": "decision",
+            "PlanEvent": "plan",  # [NEW] Registered for L3 Planning
             "ToolCallRequestEvent": "tool_call_manifest",
             "StatusEvent": "status",
             "HotCodeEvent": "hot_code",
@@ -54,6 +54,16 @@ class ReasoningEvent(StreamEvent):
 @dataclass
 class DecisionEvent(StreamEvent):
     """Represents a structural decision payload (JSON) from the assistant."""
+
+    content: str
+
+    def __str__(self):
+        return self.content
+
+
+@dataclass
+class PlanEvent(StreamEvent):
+    """Represents a strategic planning delta (Level 3) from the assistant."""
 
     content: str
 
@@ -140,7 +150,6 @@ class ToolCallRequestEvent(StreamEvent):
         self.executed = False
 
     def to_dict(self) -> Dict[str, Any]:
-        # Tool events contain private client references; we exclude them from JSON
         return {
             "type": "tool_call_manifest",
             "run_id": self.run_id,
@@ -150,10 +159,7 @@ class ToolCallRequestEvent(StreamEvent):
         }
 
     def execute(self, tool_executor: Callable[[str, Dict[str, Any]], str]) -> bool:
-        """
-        Helper to run local code and submit results.
-        Updates internal state so the Stream Manager knows to trigger the next turn.
-        """
+        """Helper to run local code and submit results."""
         success = self._runs_client.execute_pending_action(
             run_id=self.run_id,
             thread_id=self._thread_id,
