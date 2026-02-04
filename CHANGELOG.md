@@ -1,3 +1,10 @@
+## [1.43.2](https://github.com/frankie336/projectdavid/compare/v1.43.1...v1.43.2) (2026-02-03)
+
+
+### Bug Fixes
+
+* Provide the assistant with error handling hints. ([ba463d6](https://github.com/frankie336/projectdavid/commit/ba463d657ca431b46fa229cab1b8cb1d1f6534f6))
+
 ## [1.43.1](https://github.com/frankie336/projectdavid/compare/v1.43.0...v1.43.1) (2026-02-03)
 
 
