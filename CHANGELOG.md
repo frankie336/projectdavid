@@ -1,3 +1,10 @@
+## [1.43.3](https://github.com/frankie336/projectdavid/compare/v1.43.2...v1.43.3) (2026-02-04)
+
+
+### Bug Fixes
+
+* Remove user_id from synchronous interface set up ([5dfd1d0](https://github.com/frankie336/projectdavid/commit/5dfd1d08fe4e235e5550815e20df9fbea66c05b7))
+
 ## [1.43.2](https://github.com/frankie336/projectdavid/compare/v1.43.1...v1.43.2) (2026-02-03)
 
 
