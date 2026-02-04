@@ -11,6 +11,7 @@ from .events import (
     ContentEvent,
     DecisionEvent,
     HotCodeEvent,
+    PlanEvent,
     ReasoningEvent,
     StatusEvent,
     StreamEvent,
