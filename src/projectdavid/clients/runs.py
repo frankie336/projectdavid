@@ -502,11 +502,12 @@ class RunsClient(BaseAPIClient):
         streamed_args: Dict[str, Any],
         action_id: str,
         tool_name: str,
+        tool_call_id: Optional[str] = None,  # [L3] Mandatory for Parallel ID-Parity
     ) -> bool:
         """
         Executes a tool call and submits results.
-        Level 2 Enhancement: On failure, translates opaque errors into
-        instructional hints to guide the model's self-correction turn.
+        Level 3 Update: Propagates tool_call_id to the message history to link
+        responses to requests, preventing duplicate execution loops.
         """
         if not callable(tool_executor):
             raise TypeError("tool_executor must be a callable function.")
@@ -515,7 +516,9 @@ class RunsClient(BaseAPIClient):
             LOG.error(f"[SDK] Missing action_id for run {run_id}. Cannot execute.")
             return False
 
-        LOG.info(f"[SDK] Executing '{tool_name}' (Action: {action_id})")
+        LOG.info(
+            f"[SDK] Executing '{tool_name}' (Action: {action_id} | Call: {tool_call_id})"
+        )
 
         try:
             # 1. Mark Action as Processing in the database
@@ -529,10 +532,11 @@ class RunsClient(BaseAPIClient):
                 result_content = json.dumps(result_content)
 
             # 3. Submit Tool Output (The Success Path)
+            # Level 3: tool_call_id ensures the LLM can map this result to its Turn 1 plan.
             messages_client.submit_tool_output(
                 thread_id=thread_id,
                 tool_id=action_id,
-                tool_call_id=None,
+                tool_call_id=tool_call_id,  # [L3] Propagated ID
                 content=result_content,
                 role="tool",
                 assistant_id=assistant_id,
@@ -546,10 +550,8 @@ class RunsClient(BaseAPIClient):
 
         except Exception as e:
             # --- LEVEL 2 INSTRUCTIONAL ERROR WRAPPER ---
-            # We translate the opaque Python error into a behavioral hint for the LLM.
             raw_error = str(e)
 
-            # This "Clean Hint" weights the LLM's next tokens toward correction/retry
             instructional_hint = (
                 f"Tool Execution Error for '{tool_name}': {raw_error}. "
                 "Instructions: If this is a parameter error, please correct your JSON arguments and retry. "
@@ -562,11 +564,11 @@ class RunsClient(BaseAPIClient):
 
             try:
                 # Submit the INSTRUCTIONAL HINT as the tool output
-                # We wrap it in a JSON structure to maintain consistency for the model
+                # Level 3: Even error hints must be linked to the tool_call_id
                 messages_client.submit_tool_output(
                     thread_id=thread_id,
                     tool_id=action_id,
-                    tool_call_id=None,
+                    tool_call_id=tool_call_id,  # [L3] Propagated ID
                     content=json.dumps(
                         {"error": instructional_hint, "retry_allowed": True}
                     ),
@@ -577,10 +579,8 @@ class RunsClient(BaseAPIClient):
                 # Mark the action as failed in the DB
                 actions_client.update_action(action_id, status=StatusEnum.failed.value)
 
-                # CRITICAL: We return True here.
-                # This signals the stream generator that a "Turn" has been completed,
-                # which triggers the recursive call for the model to self-correct.
-                LOG.info(f"[SDK] Error feedback successfully injected into dialogue.")
+                # CRITICAL: Return True to trigger the recursive Turn 2 (Correction turn)
+                LOG.info(f"[SDK] Error feedback successfully linked and injected.")
                 return True
 
             except Exception as critical_e:
