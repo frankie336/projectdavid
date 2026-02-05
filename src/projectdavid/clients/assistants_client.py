@@ -116,6 +116,11 @@ class AssistantsClient(BaseAPIClient):
         top_p: float = 1.0,
         temperature: float = 1.0,
         response_format: str = "auto",
+        # --- New Agentic Parameters ---
+        max_turns: int = 1,
+        agent_mode: bool = False,
+        decision_telemetry: bool = False,
+        # ------------------------------
         assistant_id: Optional[str] = None,
     ) -> ent_validator.AssistantRead:
         """
@@ -136,6 +141,10 @@ class AssistantsClient(BaseAPIClient):
             "top_p": top_p,
             "temperature": temperature,
             "response_format": response_format,
+            # Add new fields to payload
+            "max_turns": max_turns,
+            "agent_mode": agent_mode,
+            "decision_telemetry": decision_telemetry,
         }
 
         try:
