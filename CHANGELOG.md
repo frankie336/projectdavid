@@ -1,3 +1,10 @@
+## [1.44.2](https://github.com/frankie336/projectdavid/compare/v1.44.1...v1.44.2) (2026-02-05)
+
+
+### Bug Fixes
+
+* Closing the Loop: When execute() is called, the tool_call_id is now passed down to the execute_pending_action method ([dac09f2](https://github.com/frankie336/projectdavid/commit/dac09f2380fe9ebbf2701509d2db3ca10451df1e))
+
 ## [1.44.1](https://github.com/frankie336/projectdavid/compare/v1.44.0...v1.44.1) (2026-02-04)
 
 
