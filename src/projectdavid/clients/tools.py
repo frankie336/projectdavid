@@ -3,11 +3,11 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from projectdavid_common.UtilsInterface import LoggingUtility
+from projectdavid_common import UtilsInterface, ValidationInterface
 
 from projectdavid.clients.base_client import BaseAPIClient
 
-LoggingUtility()
+logging_utility = UtilsInterface.LoggingUtility()
 
 
 class ToolsClientError(Exception):
