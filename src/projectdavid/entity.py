@@ -8,6 +8,7 @@ from projectdavid_common import UtilsInterface
 from .clients.actions_client import ActionsClient
 from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
+from .clients.computer import ComputerClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
 from .clients.messages_client import MessagesClient
@@ -69,6 +70,8 @@ class Entity:
         self._runs_client: Optional[RunsClient] = None
         self._actions_client: Optional[ActionsClient] = None
         self._tools_client: Optional[ToolsClient] = None
+        self._computer_client: Optional[ComputerClient] = None
+
         self._inference_client: Optional[InferenceClient] = None
         self._file_client: Optional[FileClient] = None
         self._vectors_client: Optional[VectorStoreClient] = None
@@ -136,6 +139,14 @@ class Entity:
                 base_url=self.base_url, api_key=self.api_key
             )
         return self._tools_client
+
+    @property
+    def computer(self) -> ComputerClient:
+        if self._computer_client is None:
+            self._computer_client = ComputerClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
+        return self._computer_client
 
     @property
     def inference(self) -> InferenceClient:
