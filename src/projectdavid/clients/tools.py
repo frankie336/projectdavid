@@ -1,0 +1,125 @@
+import time
+from typing import Any, Dict, Optional
+
+import httpx
+from projectdavid_common import UtilsInterface
+
+from projectdavid.clients.base_client import BaseAPIClient
+
+logging_utility = UtilsInterface.LoggingUtility()
+
+
+class ToolsClientError(Exception):
+    """Custom exception for ToolsClient errors."""
+
+
+class ToolsClient(BaseAPIClient):
+    # ------------------------------------------------------------------ #
+    #  INIT
+    # ------------------------------------------------------------------ #
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        read_timeout: float = 30.0,
+        write_timeout: float = 30.0,
+    ):
+        super().__init__(
+            base_url=base_url,
+            api_key=api_key,
+            timeout=timeout,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
+        )
+        logging_utility.info("ToolsClient ready at: %s", self.base_url)
+
+    # ------------------------------------------------------------------ #
+    #  INTERNAL HELPERS (Matches AssistantsClient Pattern)
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _parse_response(response: httpx.Response) -> Dict[str, Any]:
+        try:
+            return response.json()
+        except httpx.DecodingError:
+            logging_utility.error("Failed to decode JSON response: %s", response.text)
+            raise ToolsClientError("Invalid JSON response from API.")
+
+    def _request_with_retries(self, method: str, url: str, **kwargs) -> httpx.Response:
+        retries = 3
+        for attempt in range(retries):
+            try:
+                # self.client is inherited from BaseAPIClient (Sync httpx.Client)
+                resp = self.client.request(method, url, **kwargs)
+                resp.raise_for_status()
+                return resp
+            except httpx.HTTPStatusError as exc:
+                # Retry on Server Errors (5xx)
+                if (
+                    exc.response.status_code in {500, 502, 503, 504}
+                    and attempt < retries - 1
+                ):
+                    logging_utility.warning(
+                        "ToolsClient: Retrying request due to server error (attempt %d)",
+                        attempt + 1,
+                    )
+                    time.sleep(2**attempt)
+                else:
+                    # Propagate Client Errors (4xx) or final 5xx
+                    logging_utility.error(
+                        "ToolsClient Request Failed: %s %s | Status: %s",
+                        method,
+                        url,
+                        exc.response.status_code,
+                    )
+                    raise ToolsClientError(f"API Request Failed: {exc}") from exc
+            except httpx.RequestError as exc:
+                if attempt < retries - 1:
+                    time.sleep(2**attempt)
+                else:
+                    raise ToolsClientError(f"Network error: {exc}") from exc
+
+    # ------------------------------------------------------------------ #
+    #  WEB BROWSING CAPABILITIES
+    # ------------------------------------------------------------------ #
+    def web_read(self, url: str, force_refresh: bool = False) -> str:
+        """
+        Orders the API to visit a URL, scrape it, and return the first page (Page 0).
+
+        Args:
+            url: The website to visit.
+            force_refresh: If True, ignores Redis cache and re-scrapes.
+
+        Returns:
+            str: The formatted content of the web page.
+        """
+        logging_utility.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
+
+        payload = {"url": url, "force_refresh": force_refresh}
+
+        resp = self._request_with_retries("POST", "/tools/web/read", json=payload)
+
+        data = self._parse_response(resp)
+        return data.get("content", "")
+
+    def web_scroll(self, url: str, page: int) -> str:
+        """
+        Retrieves a specific page chunk from a previously read URL.
+
+        Args:
+            url: The website originally read.
+            page: The page number to retrieve (0-indexed).
+
+        Returns:
+            str: The formatted content of the specific page chunk.
+        """
+        logging_utility.info("Tools: Scrolling URL %s to page %d", url, page)
+
+        payload = {"url": url, "page": page}
+
+        resp = self._request_with_retries("POST", "/tools/web/scroll", json=payload)
+
+        data = self._parse_response(resp)
+        return data.get("content", "")
