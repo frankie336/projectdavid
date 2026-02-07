@@ -1,3 +1,10 @@
+## [1.47.1](https://github.com/frankie336/projectdavid/compare/v1.47.0...v1.47.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* Expose self._computer_client ([48d1c04](https://github.com/frankie336/projectdavid/commit/48d1c0454d1d36e7f79cc127631e800918b7082e))
+
 # [1.47.0](https://github.com/frankie336/projectdavid/compare/v1.46.3...v1.47.0) (2026-02-07)
 
 
