@@ -5,7 +5,7 @@ from contextlib import suppress
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import nest_asyncio
-from projectdavid_common import UtilsInterface
+from projectdavid_common import ToolValidator, UtilsInterface
 
 # Import the PlanEvent along with other types
 from projectdavid.events import PlanEvent  # [NEW]
@@ -21,7 +21,6 @@ from projectdavid.events import (
     StreamEvent,
     ToolCallRequestEvent,
 )
-from projectdavid.utils.validation import ToolValidator
 
 LOG = UtilsInterface.LoggingUtility()
 
