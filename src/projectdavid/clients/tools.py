@@ -3,7 +3,7 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from projectdavid_common import LoggingUtility
+from projectdavid_common.UtilsInterface import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
 
