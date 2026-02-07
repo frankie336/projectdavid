@@ -1,3 +1,12 @@
+## [1.46.3](https://github.com/frankie336/projectdavid/compare/v1.46.2...v1.46.3) (2026-02-07)
+
+
+### Bug Fixes
+
+* Expose tools client ([735a1c1](https://github.com/frankie336/projectdavid/commit/735a1c1ff811f451ac580e3fcf37ccd8ddd6287f))
+* Expose tools client ([280d470](https://github.com/frankie336/projectdavid/commit/280d4706ebb572a740858198c66282cedafe332e))
+* Expose tools client ([9b7e2d7](https://github.com/frankie336/projectdavid/commit/9b7e2d728ce9dcea571ee5bb2149d328486eccb7))
+
 ## [1.46.2](https://github.com/frankie336/projectdavid/compare/v1.46.1...v1.46.2) (2026-02-07)
 
 
