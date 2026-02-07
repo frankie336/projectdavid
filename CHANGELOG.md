@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/frankie336/projectdavid/compare/v1.45.0...v1.46.0) (2026-02-07)
+
+
+### Features
+
+* implement ToolsClient for agentic interaction wi th platform tools. ([9c85f05](https://github.com/frankie336/projectdavid/commit/9c85f05d132cba115330c705f4ffb35a9b233281))
+
 # [1.45.0](https://github.com/frankie336/projectdavid/compare/v1.44.2...v1.45.0) (2026-02-05)
 
 
