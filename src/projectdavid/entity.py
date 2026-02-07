@@ -14,6 +14,7 @@ from .clients.messages_client import MessagesClient
 from .clients.runs import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
+from .clients.tools import ToolsClient
 from .clients.users_client import UsersClient
 from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
@@ -67,6 +68,7 @@ class Entity:
 
         self._runs_client: Optional[RunsClient] = None
         self._actions_client: Optional[ActionsClient] = None
+        self._tools_client: Optional[ToolsClient] = None
         self._inference_client: Optional[InferenceClient] = None
         self._file_client: Optional[FileClient] = None
         self._vectors_client: Optional[VectorStoreClient] = None
@@ -126,6 +128,14 @@ class Entity:
                 base_url=self.base_url, api_key=self.api_key
             )
         return self._actions_client
+
+    @property
+    def tools(self) -> ToolsClient:
+        if self._tools_client is None:
+            self._tools_client = ToolsClient(
+                base_url=self.base_url, api_key=self.api_key
+            )
+        return self._tools_client
 
     @property
     def inference(self) -> InferenceClient:
