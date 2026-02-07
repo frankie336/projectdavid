@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/frankie336/projectdavid/compare/v1.46.3...v1.47.0) (2026-02-07)
+
+
+### Features
+
+* Create Computer client. ([c1a2ed7](https://github.com/frankie336/projectdavid/commit/c1a2ed71d8fecc974221458ef61d1364c5755f02))
+
 ## [1.46.3](https://github.com/frankie336/projectdavid/compare/v1.46.2...v1.46.3) (2026-02-07)
 
 
