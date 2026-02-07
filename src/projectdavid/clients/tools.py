@@ -3,11 +3,11 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from projectdavid_common import UtilsInterface
+from projectdavid_common import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
 
-logging_utility = UtilsInterface.LoggingUtility()
+LoggingUtility()
 
 
 class ToolsClientError(Exception):
@@ -35,7 +35,7 @@ class ToolsClient(BaseAPIClient):
             read_timeout=read_timeout,
             write_timeout=write_timeout,
         )
-        logging_utility.info("ToolsClient ready at: %s", self.base_url)
+        LoggingUtility.info("ToolsClient ready at: %s", self.base_url)
 
     # ------------------------------------------------------------------ #
     #  INTERNAL HELPERS (Matches AssistantsClient Pattern)
@@ -45,7 +45,7 @@ class ToolsClient(BaseAPIClient):
         try:
             return response.json()
         except httpx.DecodingError:
-            logging_utility.error("Failed to decode JSON response: %s", response.text)
+            LoggingUtility.error("Failed to decode JSON response: %s", response.text)
             raise ToolsClientError("Invalid JSON response from API.")
 
     def _request_with_retries(self, method: str, url: str, **kwargs) -> httpx.Response:
@@ -62,14 +62,14 @@ class ToolsClient(BaseAPIClient):
                     exc.response.status_code in {500, 502, 503, 504}
                     and attempt < retries - 1
                 ):
-                    logging_utility.warning(
+                    LoggingUtility.warning(
                         "ToolsClient: Retrying request due to server error (attempt %d)",
                         attempt + 1,
                     )
                     time.sleep(2**attempt)
                 else:
                     # Propagate Client Errors (4xx) or final 5xx
-                    logging_utility.error(
+                    LoggingUtility.error(
                         "ToolsClient Request Failed: %s %s | Status: %s",
                         method,
                         url,
@@ -96,7 +96,7 @@ class ToolsClient(BaseAPIClient):
         Returns:
             str: The formatted content of the web page.
         """
-        logging_utility.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
+        LoggingUtility.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
 
         payload = {"url": url, "force_refresh": force_refresh}
 
@@ -116,11 +116,32 @@ class ToolsClient(BaseAPIClient):
         Returns:
             str: The formatted content of the specific page chunk.
         """
-        logging_utility.info("Tools: Scrolling URL %s to page %d", url, page)
+        LoggingUtility.info("Tools: Scrolling URL %s to page %d", url, page)
 
         payload = {"url": url, "page": page}
 
         resp = self._request_with_retries("POST", "/tools/web/scroll", json=payload)
+
+        data = self._parse_response(resp)
+        return data.get("content", "")
+
+    def web_search(self, url: str, query: str) -> str:
+        """
+        Searches the entire document (all pages) for a specific keyword or phrase.
+        Use this instead of scrolling if you are looking for specific data.
+
+        Args:
+            url: The website URL.
+            query: The keyword to find (e.g., 'pricing', 'contact', 'API key').
+
+        Returns:
+            str: Snippets of text where the query was found, with Page numbers.
+        """
+        LoggingUtility.info("Tools: Searching URL %s for '%s'", url, query)
+
+        payload = {"url": url, "query": query}
+
+        resp = self._request_with_retries("POST", "/tools/web/search", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
