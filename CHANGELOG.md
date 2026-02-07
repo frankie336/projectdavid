@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/frankie336/projectdavid/compare/v1.44.2...v1.45.0) (2026-02-05)
+
+
+### Features
+
+* Add new agentic params to Assistants.Create ([bd61123](https://github.com/frankie336/projectdavid/commit/bd611233e4622c5acc4ce393b82bc1c461764323))
+
 ## [1.44.2](https://github.com/frankie336/projectdavid/compare/v1.44.1...v1.44.2) (2026-02-05)
 
 
