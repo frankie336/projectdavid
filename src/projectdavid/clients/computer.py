@@ -88,9 +88,10 @@ class ComputerClient(BaseAPIClient):
         """
         logging_utility.info("Computer: Creating session for Room %s", room_id)
 
+        # For GET requests, we pass data as query parameters, not JSON body
         payload = {"room_id": room_id}
 
-        # Calls the secure endpoint we defined in Step 1
-        resp = self._request_with_retries("POST", "/v1/computer/session", json=payload)
+        # CHANGED: "POST" -> "GET" and json=payload -> params=payload
+        resp = self._request_with_retries("GET", "/v1/computer/session", params=payload)
 
         return self._parse_response(resp)
