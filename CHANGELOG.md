@@ -1,3 +1,10 @@
+## [1.47.2](https://github.com/frankie336/projectdavid/compare/v1.47.1...v1.47.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* from projectdavid_common.utilities.logging_service import LoggingUtility ([633c24a](https://github.com/frankie336/projectdavid/commit/633c24a063f5d090b9a85096eb6f41a18610474d))
+
 ## [1.47.1](https://github.com/frankie336/projectdavid/compare/v1.47.0...v1.47.1) (2026-02-07)
 
 
