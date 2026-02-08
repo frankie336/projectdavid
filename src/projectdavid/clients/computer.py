@@ -91,6 +91,6 @@ class ComputerClient(BaseAPIClient):
         payload = {"room_id": room_id}
 
         # Calls the secure endpoint we defined in Step 1
-        resp = self._request_with_retries("POST", "/computer/session", json=payload)
+        resp = self._request_with_retries("POST", "/v1/computer/session", json=payload)
 
         return self._parse_response(resp)

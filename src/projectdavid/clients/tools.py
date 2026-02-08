@@ -99,7 +99,7 @@ class ToolsClient(BaseAPIClient):
 
         payload = {"url": url, "force_refresh": force_refresh}
 
-        resp = self._request_with_retries("POST", "/tools/web/read", json=payload)
+        resp = self._request_with_retries("POST", f"/v1/tools/web/read", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
@@ -119,7 +119,7 @@ class ToolsClient(BaseAPIClient):
 
         payload = {"url": url, "page": page}
 
-        resp = self._request_with_retries("POST", "/tools/web/scroll", json=payload)
+        resp = self._request_with_retries("POST", f"/v1/tools/web/scroll", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
@@ -140,7 +140,7 @@ class ToolsClient(BaseAPIClient):
 
         payload = {"url": url, "query": query}
 
-        resp = self._request_with_retries("POST", "/tools/web/search", json=payload)
+        resp = self._request_with_retries("POST", f"/v1/tools/web/search", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
