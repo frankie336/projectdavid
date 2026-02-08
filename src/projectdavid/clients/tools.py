@@ -4,10 +4,9 @@ from typing import Any, Dict, Optional
 
 import httpx
 from projectdavid_common import UtilsInterface, ValidationInterface
+from projectdavid_common.utilities.logging_service import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
-
-logging_utility = UtilsInterface.LoggingUtility()
 
 
 class ToolsClientError(Exception):
