@@ -1,3 +1,10 @@
+## [1.47.3](https://github.com/frankie336/projectdavid/compare/v1.47.2...v1.47.3) (2026-02-08)
+
+
+### Bug Fixes
+
+* Client update issues ([2ef6423](https://github.com/frankie336/projectdavid/commit/2ef642323cf4316ab3c5586d414b1bd1c54b1ad5))
+
 ## [1.47.2](https://github.com/frankie336/projectdavid/compare/v1.47.1...v1.47.2) (2026-02-08)
 
 
