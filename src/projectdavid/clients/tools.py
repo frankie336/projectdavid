@@ -1,4 +1,3 @@
-# src/projectdavid/clients/tools.py
 import time
 from typing import Any, Dict, Optional
 
@@ -7,6 +6,9 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.utilities.logging_service import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
+
+# [FIX] Instantiate the logger so we don't pass strings as 'self'
+LOG = LoggingUtility()
 
 
 class ToolsClientError(Exception):
@@ -34,7 +36,8 @@ class ToolsClient(BaseAPIClient):
             read_timeout=read_timeout,
             write_timeout=write_timeout,
         )
-        LoggingUtility.info("ToolsClient ready at: %s", self.base_url)
+        # [FIX] Use the instance (LOG), not the class (LoggingUtility)
+        LOG.info("ToolsClient ready at: %s", self.base_url)
 
     # ------------------------------------------------------------------ #
     #  INTERNAL HELPERS (Matches AssistantsClient Pattern)
@@ -44,7 +47,8 @@ class ToolsClient(BaseAPIClient):
         try:
             return response.json()
         except httpx.DecodingError:
-            LoggingUtility.error("Failed to decode JSON response: %s", response.text)
+            # [FIX] Use LOG instance
+            LOG.error("Failed to decode JSON response: %s", response.text)
             raise ToolsClientError("Invalid JSON response from API.")
 
     def _request_with_retries(self, method: str, url: str, **kwargs) -> httpx.Response:
@@ -61,14 +65,16 @@ class ToolsClient(BaseAPIClient):
                     exc.response.status_code in {500, 502, 503, 504}
                     and attempt < retries - 1
                 ):
-                    LoggingUtility.warning(
+                    # [FIX] Use LOG instance
+                    LOG.warning(
                         "ToolsClient: Retrying request due to server error (attempt %d)",
                         attempt + 1,
                     )
                     time.sleep(2**attempt)
                 else:
                     # Propagate Client Errors (4xx) or final 5xx
-                    LoggingUtility.error(
+                    # [FIX] Use LOG instance
+                    LOG.error(
                         "ToolsClient Request Failed: %s %s | Status: %s",
                         method,
                         url,
@@ -95,7 +101,8 @@ class ToolsClient(BaseAPIClient):
         Returns:
             str: The formatted content of the web page.
         """
-        LoggingUtility.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
+        # [FIX] Use LOG instance
+        LOG.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
 
         payload = {"url": url, "force_refresh": force_refresh}
 
@@ -115,7 +122,8 @@ class ToolsClient(BaseAPIClient):
         Returns:
             str: The formatted content of the specific page chunk.
         """
-        LoggingUtility.info("Tools: Scrolling URL %s to page %d", url, page)
+        # [FIX] Use LOG instance
+        LOG.info("Tools: Scrolling URL %s to page %d", url, page)
 
         payload = {"url": url, "page": page}
 
@@ -136,7 +144,8 @@ class ToolsClient(BaseAPIClient):
         Returns:
             str: Snippets of text where the query was found, with Page numbers.
         """
-        LoggingUtility.info("Tools: Searching URL %s for '%s'", url, query)
+        # [FIX] Use LOG instance
+        LOG.info("Tools: Searching URL %s for '%s'", url, query)
 
         payload = {"url": url, "query": query}
 

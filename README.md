@@ -339,7 +339,7 @@ Would you like a deeper dive into any of these trends?
 | Inference           | [inference.md](/docs/inference.md)                     |
 | Streaming           | [streams.md](/docs/streams.md)                         |
 | Tools               | [function_calls.md](/docs/function_calls.md)       |
-| Code Interpretation | [code_interpretation.md](/docs/code_interpretation.md) |
+| Code Interpretation | [code_interpretation.md](/docs/code_interpreter.md) |
 | Files               | [files.md](/docs/files.md)                             |
 | Vector Store(RAG)   | [vector_store.md](/docs/vector_store.md)               |
 | Versioning          | [versioning.md](/docs/versioning.md)                   |
