@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/frankie336/projectdavid/compare/v1.48.0...v1.49.0) (2026-02-10)
+
+
+### Features
+
+*  Add web search status events to event manager. ([d245e11](https://github.com/frankie336/projectdavid/commit/d245e115690cee82799c6d4e90ee380276f27c78))
+
 # [1.48.0](https://github.com/frankie336/projectdavid/compare/v1.47.5...v1.48.0) (2026-02-10)
 
 
