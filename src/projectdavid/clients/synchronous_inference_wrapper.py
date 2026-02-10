@@ -190,16 +190,29 @@ class SynchronousInferenceStream:
 
     def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
         """Maps raw API chunks to Typed Event instances."""
-        stream_type = chunk.get("type") if "type" in chunk else chunk.get("stream_type")
-        if stream_type in ["code_execution", "computer_execution"]:
-            payload = chunk.get("chunk", {})
-            if "run_id" not in payload:
-                payload["run_id"] = chunk.get("run_id")
-            chunk = payload
 
+        # 1. Detect the Stream Type (Outer Wrapper)
+        stream_type = chunk.get("type") if "type" in chunk else chunk.get("stream_type")
+
+        # 2. Unwrap specific protocols (Code Execution, Shell, and now Status/Web Tools)
+        # We check for "status" here so the inner dict (containing tool/message) replaces the outer dict.
+        if stream_type in ["code_execution", "computer_execution", "status"]:
+            payload = chunk.get("chunk", {})
+
+            # Ensure we are working with a dictionary payload
+            if isinstance(payload, dict):
+                # Inherit run_id from parent if missing in child
+                if "run_id" not in payload:
+                    payload["run_id"] = chunk.get("run_id")
+                chunk = payload
+            # (If payload is a string, we assume it's raw content and leave chunk as-is,
+            # though standard flow implies dict)
+
+        # 3. Extract Core Event Properties
         c_type = chunk.get("type")
         run_id = chunk.get("run_id")
 
+        # 4. Route to Event Classes
         if c_type == "tool_call_manifest":
             raw_args = chunk.get("args", {})
             if isinstance(raw_args, str):
@@ -231,7 +244,7 @@ class SynchronousInferenceStream:
         elif c_type == "decision":
             return DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
 
-        elif c_type == "plan":  # [NEW] Map Plan chunks to PlanEvent
+        elif c_type == "plan":
             return PlanEvent(run_id=run_id, content=chunk.get("content", ""))
 
         elif c_type == "hot_code":
@@ -258,10 +271,18 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "status":
-            return StatusEvent(run_id=run_id, status=chunk.get("status"))
+            # UPDATED: Capture extended Web Tool info (message, tool)
+            return StatusEvent(
+                run_id=run_id,
+                status=chunk.get("status"),
+                message=chunk.get("message"),
+                tool=chunk.get("tool"),
+            )
 
         elif c_type == "error":
-            return StatusEvent(run_id=run_id, status="failed")
+            # Map error content to message if available
+            msg = chunk.get("content") or chunk.get("message")
+            return StatusEvent(run_id=run_id, status="failed", message=msg)
 
         return None
 
