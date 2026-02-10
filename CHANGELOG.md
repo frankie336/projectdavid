@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/frankie336/projectdavid/compare/v1.47.5...v1.48.0) (2026-02-10)
+
+
+### Features
+
+*  Implement projectdavid.EngineerClient ([770e8b2](https://github.com/frankie336/projectdavid/commit/770e8b23cc217a9f57f5fa446392383063c44e4e))
+
 ## [1.47.5](https://github.com/frankie336/projectdavid/compare/v1.47.4...v1.47.5) (2026-02-09)
 
 
