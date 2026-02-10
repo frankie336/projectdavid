@@ -116,9 +116,10 @@ class AssistantsClient(BaseAPIClient):
         top_p: float = 1.0,
         temperature: float = 1.0,
         response_format: str = "auto",
-        # --- New Agentic Parameters ---
+        # --- Agentic Parameters (Level 3) ---
         max_turns: int = 1,
         agent_mode: bool = False,
+        web_access: bool = False,  # <--- NEW: Web Access Toggle
         decision_telemetry: bool = False,
         # ------------------------------
         assistant_id: Optional[str] = None,
@@ -144,6 +145,7 @@ class AssistantsClient(BaseAPIClient):
             # Add new fields to payload
             "max_turns": max_turns,
             "agent_mode": agent_mode,
+            "web_access": web_access,  # <--- Passed to Validator
             "decision_telemetry": decision_telemetry,
         }
 
@@ -199,6 +201,11 @@ class AssistantsClient(BaseAPIClient):
     def update_assistant(
         self, assistant_id: str, **updates
     ) -> ent_validator.AssistantRead:
+        """
+        Update an assistant.
+        Supported kwargs include: model, name, instructions, tools,
+        agent_mode, web_access, etc.
+        """
         logging_utility.info("Updating assistant id=%s", assistant_id)
 
         # Never allow primary key overwrite

@@ -1,3 +1,4 @@
+# src/projectdavid/events.py
 from dataclasses import asdict, dataclass
 from typing import Any, Callable, Dict, Optional
 
@@ -116,6 +117,9 @@ class StatusEvent(StreamEvent):
     """Represents a lifecycle change (complete, failed, tool_output_received)."""
 
     status: str
+    # Added to match WebSearchMixin payloads
+    message: Optional[str] = None
+    tool: Optional[str] = None
 
 
 class ToolCallRequestEvent(StreamEvent):
@@ -181,34 +185,6 @@ class ToolCallRequestEvent(StreamEvent):
             action_id=self.action_id,
             tool_name=self.tool_name,
             tool_call_id=self.tool_call_id,  # [L3] Pass ID to the execution layer
-        )
-
-        if success:
-            self.executed = True
-
-        return success
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "type": "tool_call_manifest",
-            "run_id": self.run_id,
-            "tool": self.tool_name,
-            "args": self.args,
-            "action_id": self.action_id,
-        }
-
-    def execute(self, tool_executor: Callable[[str, Dict[str, Any]], str]) -> bool:
-        """Helper to run local code and submit results."""
-        success = self._runs_client.execute_pending_action(
-            run_id=self.run_id,
-            thread_id=self._thread_id,
-            assistant_id=self._assistant_id,
-            tool_executor=tool_executor,
-            actions_client=self._actions_client,
-            messages_client=self._messages_client,
-            streamed_args=self.args,
-            action_id=self.action_id,
-            tool_name=self.tool_name,
         )
 
         if success:
