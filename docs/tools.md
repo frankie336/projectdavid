@@ -13,7 +13,7 @@ There are two distinct categories of tools:
 |----------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | [**computer** ](/docs/computer.md)        | The assistant has use of a Linux computer connected to the internet. Very powerful.                                              |
 | **waves**            | The assistant has access to a vectorized database that acts as long-term memory, document parsing, and cross-conversation recall.|
-| **web_search**       | The assistant can use a search engine and other aggregated content on the internet to synthesize responses.                      |
+| [**web_search**](/docs/web_search.md)       | The assistant can use a search engine and other aggregated content on the internet to synthesize responses.                      |
 | **file_search**      | The assistant can search, retrieve, and utilize files stored within its accessible storage systems.                              |
 | [**code_interpreter**](/docs/code_interpreter.md)| The assistant can execute arbitrary Python code, draft documents, and perform data analysis in a secure sandbox environment.     |
 
