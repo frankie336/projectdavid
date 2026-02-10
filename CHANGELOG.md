@@ -1,3 +1,10 @@
+## [1.49.1](https://github.com/frankie336/projectdavid/compare/v1.49.0...v1.49.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* Update projectdavid_common package to  projectdavid-common 0.25.0 ([2815ef0](https://github.com/frankie336/projectdavid/commit/2815ef00f7a2900cdf506ffd580b8808217ebb80))
+
 # [1.49.0](https://github.com/frankie336/projectdavid/compare/v1.48.0...v1.49.0) (2026-02-10)
 
 
