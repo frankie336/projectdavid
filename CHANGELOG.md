@@ -1,3 +1,10 @@
+## [1.47.5](https://github.com/frankie336/projectdavid/compare/v1.47.4...v1.47.5) (2026-02-09)
+
+
+### Bug Fixes
+
+* instantiate LoggingUtility in ToolsClient to fix AttributeError ([1c90f2a](https://github.com/frankie336/projectdavid/commit/1c90f2a0c35f109cd662f12a4e356e91d8f56534))
+
 ## [1.47.4](https://github.com/frankie336/projectdavid/compare/v1.47.3...v1.47.4) (2026-02-08)
 
 
