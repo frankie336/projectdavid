@@ -9,6 +9,7 @@ from .clients.actions_client import ActionsClient
 from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
 from .clients.computer import ComputerClient
+from .clients.engineer import EngineerClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
 from .clients.messages_client import MessagesClient
@@ -71,6 +72,7 @@ class Entity:
         self._actions_client: Optional[ActionsClient] = None
         self._tools_client: Optional[ToolsClient] = None
         self._computer_client: Optional[ComputerClient] = None
+        self._engineer_client: Optional[EngineerClient] = None
 
         self._inference_client: Optional[InferenceClient] = None
         self._file_client: Optional[FileClient] = None
@@ -195,6 +197,16 @@ class Entity:
             )
 
         return self._vectors_client
+
+    @property
+    def engineer(self) -> EngineerClient:
+        if self._engineer_client is None:
+            self._engineer_client = EngineerClient(
+                base_url=self.base_url,
+                api_key=self.api_key,
+            )
+
+        return self._engineer_client
 
     @property
     def keys(self) -> ApiKeysClient:
