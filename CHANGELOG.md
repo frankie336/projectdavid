@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/frankie336/projectdavid/compare/v1.49.3...v1.50.0) (2026-02-11)
+
+
+### Features
+
+* Implement deep research tools endpoints ([be98bce](https://github.com/frankie336/projectdavid/commit/be98bce6dcff8f1099c448fdc9656c041f32a4e1))
+
 ## [1.49.3](https://github.com/frankie336/projectdavid/compare/v1.49.2...v1.49.3) (2026-02-11)
 
 
