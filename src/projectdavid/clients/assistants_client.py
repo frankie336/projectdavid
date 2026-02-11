@@ -1,3 +1,4 @@
+# src/projectdavid/clients/assistants.py
 import time
 from typing import Any, Dict, List, Optional
 
@@ -119,7 +120,8 @@ class AssistantsClient(BaseAPIClient):
         # --- Agentic Parameters (Level 3) ---
         max_turns: int = 1,
         agent_mode: bool = False,
-        web_access: bool = False,  # <--- NEW: Web Access Toggle
+        web_access: bool = False,
+        deep_research: bool = False,  # <--- NEW: Deep Research Toggle
         decision_telemetry: bool = False,
         # ------------------------------
         assistant_id: Optional[str] = None,
@@ -145,7 +147,8 @@ class AssistantsClient(BaseAPIClient):
             # Add new fields to payload
             "max_turns": max_turns,
             "agent_mode": agent_mode,
-            "web_access": web_access,  # <--- Passed to Validator
+            "web_access": web_access,
+            "deep_research": deep_research,  # <--- Passed to Validator
             "decision_telemetry": decision_telemetry,
         }
 
@@ -204,7 +207,7 @@ class AssistantsClient(BaseAPIClient):
         """
         Update an assistant.
         Supported kwargs include: model, name, instructions, tools,
-        agent_mode, web_access, etc.
+        agent_mode, web_access, deep_research, etc.
         """
         logging_utility.info("Updating assistant id=%s", assistant_id)
 
@@ -214,6 +217,7 @@ class AssistantsClient(BaseAPIClient):
 
         # Accept tool_resources in patch payload
         try:
+            # deep_research and other fields are validated here against AssistantUpdate schema
             validated_updates = ent_validator.AssistantUpdate(**updates)
             resp = self._request_with_retries(
                 "PUT",
