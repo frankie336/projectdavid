@@ -1,3 +1,10 @@
+## [1.49.3](https://github.com/frankie336/projectdavid/compare/v1.49.2...v1.49.3) (2026-02-11)
+
+
+### Bug Fixes
+
+* properly map Web Tool status events in inference stream ([a224b9e](https://github.com/frankie336/projectdavid/commit/a224b9ea31b691248555c529e5b346cda99b971f))
+
 ## [1.49.2](https://github.com/frankie336/projectdavid/compare/v1.49.1...v1.49.2) (2026-02-10)
 
 
