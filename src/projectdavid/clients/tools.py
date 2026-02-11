@@ -2,7 +2,6 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.utilities.logging_service import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
@@ -36,26 +35,27 @@ class ToolsClient(BaseAPIClient):
             read_timeout=read_timeout,
             write_timeout=write_timeout,
         )
-        # [FIX] Use the instance (LOG), not the class (LoggingUtility)
         LOG.info("ToolsClient ready at: %s", self.base_url)
 
     # ------------------------------------------------------------------ #
-    #  INTERNAL HELPERS (Matches AssistantsClient Pattern)
+    #  INTERNAL HELPERS
     # ------------------------------------------------------------------ #
     @staticmethod
     def _parse_response(response: httpx.Response) -> Dict[str, Any]:
         try:
             return response.json()
         except httpx.DecodingError:
-            # [FIX] Use LOG instance
             LOG.error("Failed to decode JSON response: %s", response.text)
             raise ToolsClientError("Invalid JSON response from API.")
 
     def _request_with_retries(self, method: str, url: str, **kwargs) -> httpx.Response:
+        """
+        Executes HTTP requests with exponential backoff for 5xx errors.
+        """
         retries = 3
         for attempt in range(retries):
             try:
-                # self.client is inherited from BaseAPIClient (Sync httpx.Client)
+                # self.client is inherited from BaseAPIClient
                 resp = self.client.request(method, url, **kwargs)
                 resp.raise_for_status()
                 return resp
@@ -65,7 +65,6 @@ class ToolsClient(BaseAPIClient):
                     exc.response.status_code in {500, 502, 503, 504}
                     and attempt < retries - 1
                 ):
-                    # [FIX] Use LOG instance
                     LOG.warning(
                         "ToolsClient: Retrying request due to server error (attempt %d)",
                         attempt + 1,
@@ -73,7 +72,6 @@ class ToolsClient(BaseAPIClient):
                     time.sleep(2**attempt)
                 else:
                     # Propagate Client Errors (4xx) or final 5xx
-                    # [FIX] Use LOG instance
                     LOG.error(
                         "ToolsClient Request Failed: %s %s | Status: %s",
                         method,
@@ -93,20 +91,11 @@ class ToolsClient(BaseAPIClient):
     def web_read(self, url: str, force_refresh: bool = False) -> str:
         """
         Orders the API to visit a URL, scrape it, and return the first page (Page 0).
-
-        Args:
-            url: The website to visit.
-            force_refresh: If True, ignores Redis cache and re-scrapes.
-
-        Returns:
-            str: The formatted content of the web page.
         """
-        # [FIX] Use LOG instance
         LOG.info("Tools: Reading URL %s (refresh=%s)", url, force_refresh)
 
         payload = {"url": url, "force_refresh": force_refresh}
-
-        resp = self._request_with_retries("POST", f"/v1/tools/web/read", json=payload)
+        resp = self._request_with_retries("POST", "/v1/tools/web/read", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
@@ -114,42 +103,77 @@ class ToolsClient(BaseAPIClient):
     def web_scroll(self, url: str, page: int) -> str:
         """
         Retrieves a specific page chunk from a previously read URL.
-
-        Args:
-            url: The website originally read.
-            page: The page number to retrieve (0-indexed).
-
-        Returns:
-            str: The formatted content of the specific page chunk.
         """
-        # [FIX] Use LOG instance
         LOG.info("Tools: Scrolling URL %s to page %d", url, page)
 
         payload = {"url": url, "page": page}
-
-        resp = self._request_with_retries("POST", f"/v1/tools/web/scroll", json=payload)
+        resp = self._request_with_retries("POST", "/v1/tools/web/scroll", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
 
     def web_search(self, url: str, query: str) -> str:
         """
-        Searches the entire document (all pages) for a specific keyword or phrase.
-        Use this instead of scrolling if you are looking for specific data.
-
-        Args:
-            url: The website URL.
-            query: The keyword to find (e.g., 'pricing', 'contact', 'API key').
-
-        Returns:
-            str: Snippets of text where the query was found, with Page numbers.
+        Searches the entire document (all pages) for a specific keyword.
         """
-        # [FIX] Use LOG instance
         LOG.info("Tools: Searching URL %s for '%s'", url, query)
 
         payload = {"url": url, "query": query}
-
-        resp = self._request_with_retries("POST", f"/v1/tools/web/search", json=payload)
+        resp = self._request_with_retries("POST", "/v1/tools/web/search", json=payload)
 
         data = self._parse_response(resp)
         return data.get("content", "")
+
+    # ------------------------------------------------------------------ #
+    #  SCRATCHPAD CAPABILITIES (New)
+    # ------------------------------------------------------------------ #
+    def scratchpad_read(self, thread_id: str) -> str:
+        """
+        Retrieves the current research plan and notes for a specific thread.
+
+        Returns:
+            str: The formatted scratchpad content.
+        """
+        LOG.info("Tools: Reading Scratchpad for thread %s", thread_id)
+
+        payload = {"thread_id": thread_id}
+        resp = self._request_with_retries(
+            "POST", "/v1/tools/scratchpad/read", json=payload
+        )
+
+        data = self._parse_response(resp)
+        return data.get("content", "")
+
+    def scratchpad_update(self, thread_id: str, content: str) -> str:
+        """
+        Overwrites the entire scratchpad with new content (e.g., re-planning).
+
+        Returns:
+            str: Success message.
+        """
+        LOG.info("Tools: Overwriting Scratchpad for thread %s", thread_id)
+
+        payload = {"thread_id": thread_id, "content": content}
+        resp = self._request_with_retries(
+            "POST", "/v1/tools/scratchpad/update", json=payload
+        )
+
+        data = self._parse_response(resp)
+        return data.get("message", "Scratchpad updated.")
+
+    def scratchpad_append(self, thread_id: str, note: str) -> str:
+        """
+        Appends a specific note or finding to the bottom of the scratchpad.
+
+        Returns:
+            str: Success message.
+        """
+        LOG.info("Tools: Appending to Scratchpad for thread %s", thread_id)
+
+        payload = {"thread_id": thread_id, "note": note}
+        resp = self._request_with_retries(
+            "POST", "/v1/tools/scratchpad/append", json=payload
+        )
+
+        data = self._parse_response(resp)
+        return data.get("message", "Note appended.")
