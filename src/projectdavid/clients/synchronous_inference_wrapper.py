@@ -2,13 +2,11 @@ import asyncio
 import json
 import re
 from contextlib import suppress
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Generator, Optional, Union
 
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
-# Import the PlanEvent along with other types
-from projectdavid.events import PlanEvent  # [NEW]
 from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
@@ -16,6 +14,7 @@ from projectdavid.events import (
     ContentEvent,
     DecisionEvent,
     HotCodeEvent,
+    PlanEvent,
     ReasoningEvent,
     StatusEvent,
     StreamEvent,
@@ -26,8 +25,10 @@ LOG = UtilsInterface.LoggingUtility()
 
 
 class SynchronousInferenceStream:
-    _GLOBAL_LOOP = asyncio.new_event_loop()
-    asyncio.set_event_loop(_GLOBAL_LOOP)
+    # -------------------------------------------------------------
+    # FIXED: Removed _GLOBAL_LOOP to prevent thread collision and
+    # "loop already running" errors.
+    # -------------------------------------------------------------
 
     def __init__(self, inference) -> None:
         self.inference_client = inference
@@ -83,6 +84,8 @@ class SynchronousInferenceStream:
         resolved_api_key = api_key or self.api_key
 
         async def _stream_chunks_async():
+            # This will use the UPDATED InferenceClient which creates
+            # a fresh httpx client bound to the current loop.
             async for chk in self.inference_client.stream_inference_response(
                 provider=provider,
                 model=model,
@@ -96,26 +99,55 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
+        # ---------------------------------------------------------
+        # LOOP DETECTION LOGIC
+        # ---------------------------------------------------------
+        active_loop = None
+        is_new_loop = False
+
         try:
+            # Check if there is already a running loop (e.g. main thread or async worker)
             active_loop = asyncio.get_running_loop()
+            # If a loop exists, we MUST apply nest_asyncio to block on it
             nest_asyncio.apply(active_loop)
         except RuntimeError:
-            active_loop = self._GLOBAL_LOOP
+            # No running loop (e.g. inside a standard Thread like asyncio.to_thread)
+            # Create a FRESH loop specifically for this thread
+            active_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(active_loop)
+            is_new_loop = True
 
-        while True:
-            try:
-                chunk = active_loop.run_until_complete(
-                    asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
-                )
-                chunk["run_id"] = self.run_id
-                if suppress_fc and chunk.get("type") == "call_arguments":
-                    continue
-                yield chunk
-            except StopAsyncIteration:
-                break
-            except Exception as exc:
-                LOG.error(f"[SyncStream] Streaming error: {exc}", exc_info=True)
-                break
+        try:
+            while True:
+                try:
+                    # Execute the async generator step synchronously on the chosen loop
+                    chunk = active_loop.run_until_complete(
+                        asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
+                    )
+
+                    chunk["run_id"] = self.run_id
+                    if suppress_fc and chunk.get("type") == "call_arguments":
+                        continue
+                    yield chunk
+
+                except StopAsyncIteration:
+                    break
+                except Exception as exc:
+                    LOG.error(f"[SyncStream] Streaming error: {exc}", exc_info=True)
+                    break
+        finally:
+            # Only close the loop if we created it for this specific call
+            if is_new_loop and active_loop:
+                try:
+                    # Cancel pending tasks to avoid "Task was destroyed but it is pending!"
+                    pending = asyncio.all_tasks(active_loop)
+                    for task in pending:
+                        task.cancel()
+                        with suppress(asyncio.CancelledError):
+                            active_loop.run_until_complete(task)
+                    active_loop.close()
+                except Exception as e:
+                    LOG.error(f"[SyncStream] Error cleanup loop: {e}")
 
     def stream_events(
         self,
@@ -231,7 +263,7 @@ class SynchronousInferenceStream:
         elif c_type == "decision":
             return DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
 
-        elif c_type == "plan":  # [NEW] Map Plan chunks to PlanEvent
+        elif c_type == "plan":
             return PlanEvent(run_id=run_id, content=chunk.get("content", ""))
 
         elif c_type == "hot_code":
@@ -275,9 +307,8 @@ class SynchronousInferenceStream:
 
     @classmethod
     def shutdown_loop(cls) -> None:
-        if cls._GLOBAL_LOOP and not cls._GLOBAL_LOOP.is_closed():
-            cls._GLOBAL_LOOP.stop()
-            cls._GLOBAL_LOOP.close()
+        """Deprecated: No longer uses a global loop."""
+        pass
 
     def close(self) -> None:
         with suppress(Exception):

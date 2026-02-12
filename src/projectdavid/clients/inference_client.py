@@ -9,6 +9,7 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.validation import StreamRequest
 from pydantic import ValidationError
 
+# Assuming BaseAPIClient is imported here
 from projectdavid.clients.base_client import BaseAPIClient
 
 load_dotenv()
@@ -31,8 +32,7 @@ class InferenceClient(BaseAPIClient):
     @property
     def async_client(self) -> httpx.AsyncClient:
         """
-        Lazily creates and returns a single shared AsyncClient.
-        This enables connection pooling and dramatically improves performance.
+        Lazily creates and returns a single shared AsyncClient for the MAIN loop.
         """
         if self._async_client is None or self._async_client.is_closed:
             self._async_client = httpx.AsyncClient(
@@ -52,7 +52,6 @@ class InferenceClient(BaseAPIClient):
     async def create_completion(self, **kwargs) -> Dict[str, Any]:
         """
         Native ASYNC version of completion creation.
-        Use this in your new architecture instead of the sync version.
         """
         final_text = ""
         run_id = kwargs.get("run_id", "unknown")
@@ -77,8 +76,7 @@ class InferenceClient(BaseAPIClient):
 
     def create_completion_sync(self, **kwargs) -> Dict[str, Any]:
         """
-        Synchronous wrapper.
-        FIX: Uses a safer loop detection to prevent "Loop already running" errors.
+        Synchronous wrapper with safer loop detection.
         """
         try:
             loop = asyncio.get_event_loop()
@@ -87,8 +85,6 @@ class InferenceClient(BaseAPIClient):
             asyncio.set_event_loop(loop)
 
         if loop.is_running():
-            # If we are in FastAPI/Async, we must use a thread to run this sync wrapper
-            # to avoid blocking the loop or triggering the 'running loop' error.
             import threading
             from concurrent.futures import ThreadPoolExecutor
 
@@ -112,7 +108,12 @@ class InferenceClient(BaseAPIClient):
         api_key: Optional[str] = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        Asynchronously streams inference using the shared connection pool.
+        Asynchronously streams inference.
+
+        CRITICAL UPDATE: This method now instantiates a fresh AsyncClient if called.
+        Because this is often called from 'SynchronousInferenceStream' running in
+        a separate thread/loop, we cannot reuse 'self.async_client' (which belongs
+        to the main loop) without triggering 'Future attached to different loop' errors.
         """
         payload = {
             "provider": provider,
@@ -133,41 +134,49 @@ class InferenceClient(BaseAPIClient):
             logging_utility.error("Payload validation error: %s", e.json())
             raise
 
-        # Use the shared async_client for connection pooling
-        client = self.async_client
-
-        # Override key if provided specifically for this call
+        # Determine headers
         headers = None
         if api_key:
             headers = {"Authorization": f"Bearer {api_key}"}
 
-        try:
-            async with client.stream(
-                "POST", "/v1/completions", json=payload, headers=headers
-            ) as response:
-                response.raise_for_status()
+        # We create a local client context to ensure it binds to the CURRENT loop.
+        # This is necessary because SynchronousInferenceStream creates ephemeral loops.
+        async with httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=httpx.Timeout(280.0, connect=10.0),
+            headers=(
+                {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+            ),
+        ) as client:
+            try:
+                async with client.stream(
+                    "POST", "/v1/completions", json=payload, headers=headers
+                ) as response:
+                    response.raise_for_status()
 
-                async for line in response.aiter_lines():
-                    line = line.strip()
-                    if not line or not line.startswith("data:"):
-                        continue
+                    async for line in response.aiter_lines():
+                        line = line.strip()
+                        if not line or not line.startswith("data:"):
+                            continue
 
-                    data_str = line[len("data:") :].strip()
-                    if data_str == "[DONE]":
-                        break
+                        data_str = line[len("data:") :].strip()
+                        if data_str == "[DONE]":
+                            break
 
-                    try:
-                        yield json.loads(data_str)
-                    except json.JSONDecodeError:
-                        continue
+                        try:
+                            yield json.loads(data_str)
+                        except json.JSONDecodeError:
+                            continue
 
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(f"Inference Stream HTTP Error: {e.response.text}")
-            raise
-        except Exception as e:
-            logging_utility.error(f"Inference Stream Unexpected Error: {e}")
-            raise
+            except httpx.HTTPStatusError as e:
+                logging_utility.error(f"Inference Stream HTTP Error: {e.response.text}")
+                raise
+            except Exception as e:
+                logging_utility.error(f"Inference Stream Unexpected Error: {e}")
+                raise
 
     def close(self):
         """Closes the underlying synchronous client."""
-        self.client.close()
+        # Note: If BaseAPIClient has a .client, close it here.
+        if hasattr(self, "client") and self.client:
+            self.client.close()
