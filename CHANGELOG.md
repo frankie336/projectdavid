@@ -1,3 +1,10 @@
+## [1.51.1](https://github.com/frankie336/projectdavid/compare/v1.51.0...v1.51.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* Resolve global loop issues. ([7277b27](https://github.com/frankie336/projectdavid/commit/7277b27c8a3ccd543ed3420a846e03e334c9a84c))
+
 # [1.51.0](https://github.com/frankie336/projectdavid/compare/v1.50.0...v1.51.0) (2026-02-12)
 
 
