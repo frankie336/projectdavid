@@ -1,3 +1,17 @@
+# [1.51.0](https://github.com/frankie336/projectdavid/compare/v1.50.0...v1.51.0) (2026-02-12)
+
+
+### Bug Fixes
+
+* delete vision-file_processor.py  llm synth ([b1a9831](https://github.com/frankie336/projectdavid/commit/b1a9831d3f2e367d2534fe62a86c62549917b161))
+* Remove ollama from dependencies ([607fe6d](https://github.com/frankie336/projectdavid/commit/607fe6d0cb94d721a4244f9fa487c832c82dca57))
+
+
+### Features
+
+* Add deep_research toggle to assistants_client.py ([9911119](https://github.com/frankie336/projectdavid/commit/9911119e199abbab21639fe9955dead9662197e5))
+* Add deep_research toggle to assistants_client.py ([106ee2e](https://github.com/frankie336/projectdavid/commit/106ee2e452efb7dfb1e2ee3491316686ac2528f2))
+
 # [1.50.0](https://github.com/frankie336/projectdavid/compare/v1.49.3...v1.50.0) (2026-02-11)
 
 
