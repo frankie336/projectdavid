@@ -8,6 +8,7 @@ import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
 from projectdavid.events import (
+    ActivityEvent,
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
     ComputerExecutionOutputEvent,
@@ -272,6 +273,14 @@ class SynchronousInferenceStream:
         elif c_type == "hot_code_output":
             return CodeExecutionOutputEvent(
                 run_id=run_id, content=chunk.get("content", "")
+            )
+
+        elif c_type == "activity":
+            return ActivityEvent(
+                run_id=run_id,
+                activity=chunk.get("activity", ""),
+                state=chunk.get("state", "in_progress"),
+                tool=chunk.get("tool"),
             )
 
         elif c_type == "computer_output":

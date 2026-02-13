@@ -21,15 +21,30 @@ class StreamEvent:
             "ContentEvent": "content",
             "ReasoningEvent": "reasoning",
             "DecisionEvent": "decision",
-            "PlanEvent": "plan",  # [NEW] Registered for L3 Planning
+            "PlanEvent": "plan",
             "ToolCallRequestEvent": "tool_call_manifest",
             "StatusEvent": "status",
+            "ActivityEvent": "activity",  # NEW
             "HotCodeEvent": "hot_code",
             "CodeExecutionOutputEvent": "code_output",
             "ComputerExecutionOutputEvent": "computer_output",
             "CodeExecutionGeneratedFileEvent": "generated_file",
         }
         return mapping.get(self.__class__.__name__, "unknown")
+
+
+@dataclass
+class ActivityEvent(StreamEvent):
+    """Represents user-visible progress updates during tool execution."""
+
+    activity: (
+        str  # The activity message (e.g., "Spawning ephemeral research assistant...")
+    )
+    tool: Optional[str] = None  # Optional tool name for context
+    state: str = "in_progress"  # in_progress, completed, error
+
+    def __str__(self):
+        return self.activity
 
 
 @dataclass
