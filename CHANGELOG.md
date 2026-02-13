@@ -1,3 +1,10 @@
+# [1.52.0](https://github.com/frankie336/projectdavid/compare/v1.51.2...v1.52.0) (2026-02-13)
+
+
+### Features
+
+* Add ActivityEvent for user-visible progress updates ([21b5bc4](https://github.com/frankie336/projectdavid/commit/21b5bc4dd1ed3dbd3f5a6865dcde957968171409))
+
 ## [1.51.2](https://github.com/frankie336/projectdavid/compare/v1.51.1...v1.51.2) (2026-02-13)
 
 
