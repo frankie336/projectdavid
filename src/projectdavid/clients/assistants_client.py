@@ -230,11 +230,6 @@ class AssistantsClient(BaseAPIClient):
             logging_utility.error("Validation error: %s", e.json())
             raise AssistantsClientError(f"Validation error: {e}") from e
 
-    def delete_assistant(self, assistant_id: str) -> Dict[str, Any]:
-        logging_utility.info("Deleting assistant id=%s", assistant_id)
-        resp = self._request_with_retries("DELETE", f"/v1/assistants/{assistant_id}")
-        return self._parse_response(resp)
-
     # ------------------------------------------------------------------ #
     #  USER ASSOCIATIONS
     # ------------------------------------------------------------------ #
@@ -263,3 +258,35 @@ class AssistantsClient(BaseAPIClient):
         resp = self._request_with_retries("GET", "/v1/assistants")
         raw = self._parse_response(resp)
         return [ent_validator.AssistantRead(**a) for a in raw]
+
+    def delete_assistant(
+        self, assistant_id: str, permanent: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Delete an assistant.
+
+        :param assistant_id: The ID of the assistant.
+        :param permanent:
+            If False (default): Soft delete (recoverable).
+            If True: Hard delete (irreversible/GDPR).
+        """
+        action = "PERMANENTLY" if permanent else "soft"
+        logging_utility.info("%s deleting assistant id=%s", action, assistant_id)
+
+        # Pass 'permanent' as a query parameter so FastAPI picks it up
+        resp = self._request_with_retries(
+            "DELETE", f"/v1/assistants/{assistant_id}", params={"permanent": permanent}
+        )
+
+        # The API returns 204 No Content for successful deletes.
+        # Attempting to parse JSON on an empty body will raise an error,
+        # so we return a synthetic success response for the SDK user.
+        if resp.status_code == 204:
+            return {
+                "id": assistant_id,
+                "deleted": True,
+                "permanent": permanent,
+                "object": "assistant.deleted",
+            }
+
+        return self._parse_response(resp)
