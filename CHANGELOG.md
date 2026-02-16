@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/frankie336/projectdavid/compare/v1.52.0...v1.53.0) (2026-02-14)
+
+
+### Features
+
+* update delete_assistant to support permanent deletion ([ee51e75](https://github.com/frankie336/projectdavid/commit/ee51e75c94bfbb8b501aa4d7af18ede3cc81f38c))
+
 # [1.52.0](https://github.com/frankie336/projectdavid/compare/v1.51.2...v1.52.0) (2026-02-13)
 
 
