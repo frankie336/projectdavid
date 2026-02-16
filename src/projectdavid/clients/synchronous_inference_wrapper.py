@@ -79,7 +79,7 @@ class SynchronousInferenceStream:
         model: str,
         *,
         api_key: Optional[str] = None,
-        timeout_per_chunk: float = 280.0,
+        timeout_per_chunk: float = 600.0,
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
         resolved_api_key = api_key or self.api_key
@@ -95,6 +95,7 @@ class SynchronousInferenceStream:
                 message_id=self.message_id,
                 run_id=self.run_id,
                 assistant_id=self.assistant_id,
+                timeout=timeout_per_chunk,
             ):
                 yield chk
 

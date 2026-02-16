@@ -1,3 +1,4 @@
+# src/projectdavid/clients/inference_client.py
 import asyncio
 import json
 import time
@@ -106,6 +107,7 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
+        timeout: float = 600.0,  # <--- UPDATED: Accepts timeout arg (Default 600s)
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Asynchronously streams inference.
@@ -143,7 +145,8 @@ class InferenceClient(BaseAPIClient):
         # This is necessary because SynchronousInferenceStream creates ephemeral loops.
         async with httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=httpx.Timeout(280.0, connect=10.0),
+            # UPDATED: Now uses the passed 'timeout' variable instead of hardcoded 600.0
+            timeout=httpx.Timeout(timeout, connect=10.0),
             headers=(
                 {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
             ),
