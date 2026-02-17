@@ -289,15 +289,19 @@ class SynchronousInferenceStream:
                 run_id=run_id, content=chunk.get("content", "")
             )
 
-        elif c_type == "code_interpreter_stream":
-            file_data = chunk.get("content", {})
+        elif (
+            c_type == "code_interpreter_file"
+        ):  # ✅ Changed from "code_interpreter_stream"
+
             return CodeExecutionGeneratedFileEvent(
                 run_id=run_id,
-                filename=file_data.get("filename", "unknown"),
-                file_id=file_data.get("file_id"),
-                base64_data=file_data.get("base64", ""),
-                mime_type=file_data.get("mime_type", "application/octet-stream"),
-                url=file_data.get("url"),
+                filename=chunk.get(
+                    "filename", "unknown"
+                ),  # ✅ Direct access, not nested
+                file_id=chunk.get("file_id"),
+                base64_data=chunk.get("base64"),
+                mime_type=chunk.get("mime_type", "application/octet-stream"),
+                url=chunk.get("url"),  # ✅ Direct access
             )
 
         elif c_type == "status":
