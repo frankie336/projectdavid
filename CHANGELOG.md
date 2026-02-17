@@ -1,3 +1,10 @@
+## [1.53.1](https://github.com/frankie336/projectdavid/compare/v1.53.0...v1.53.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* add url to the CodeExecutionGeneratedFileEvent signature ([14d60eb](https://github.com/frankie336/projectdavid/commit/14d60eb7970de20cff36c5a6c61bba861b11e4fc))
+
 # [1.53.0](https://github.com/frankie336/projectdavid/compare/v1.52.0...v1.53.0) (2026-02-14)
 
 
