@@ -297,6 +297,7 @@ class SynchronousInferenceStream:
                 file_id=file_data.get("file_id"),
                 base64_data=file_data.get("base64", ""),
                 mime_type=file_data.get("mime_type", "application/octet-stream"),
+                url=file_data.get("url"),
             )
 
         elif c_type == "status":

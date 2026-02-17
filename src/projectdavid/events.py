@@ -125,6 +125,7 @@ class CodeExecutionGeneratedFileEvent(StreamEvent):
     file_id: str
     base64_data: str
     mime_type: str
+    url: Optional[str] = None
 
 
 @dataclass
