@@ -1,3 +1,10 @@
+## [1.53.2](https://github.com/frankie336/projectdavid/compare/v1.53.1...v1.53.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* make base64_data optional ([620722a](https://github.com/frankie336/projectdavid/commit/620722a9d1884557bf86ee03a7393033e26a0273))
+
 ## [1.53.1](https://github.com/frankie336/projectdavid/compare/v1.53.0...v1.53.1) (2026-02-17)
 
 
