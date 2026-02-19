@@ -24,13 +24,31 @@ class StreamEvent:
             "PlanEvent": "plan",
             "ToolCallRequestEvent": "tool_call_manifest",
             "StatusEvent": "status",
-            "ActivityEvent": "activity",  # NEW
+            "ActivityEvent": "activity",
+            "ScratchpadEvent": "scratchpad",  # <--- NEW MAPPING
             "HotCodeEvent": "hot_code",
             "CodeExecutionOutputEvent": "code_output",
             "ComputerExecutionOutputEvent": "computer_output",
             "CodeExecutionGeneratedFileEvent": "generated_file",
         }
         return mapping.get(self.__class__.__name__, "unknown")
+
+
+@dataclass
+class ScratchpadEvent(StreamEvent):
+    """
+    Represents a scratchpad operation (read/update/append).
+    Corresponds to the ScratchpadStatus.js frontend component.
+    """
+
+    operation: str  # 'read', 'update', 'append'
+    activity: str  # Human readable status e.g. "📝 Appending to scratchpad..."
+    state: str  # 'in_progress', 'success', 'error'
+    entry: Optional[str] = None  # For 'append' operations
+    content: Optional[str] = None  # For 'update' or 'read' operations
+
+    def __str__(self):
+        return f"Scratchpad[{self.operation}]: {self.activity}"
 
 
 @dataclass

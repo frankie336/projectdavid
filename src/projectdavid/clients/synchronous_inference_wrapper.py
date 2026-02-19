@@ -7,6 +7,7 @@ from typing import Any, Generator, Optional, Union
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
+from projectdavid.events import ScratchpadEvent  # <--- IMPORT ADDED HERE
 from projectdavid.events import (
     ActivityEvent,
     CodeExecutionGeneratedFileEvent,
@@ -284,24 +285,32 @@ class SynchronousInferenceStream:
                 tool=chunk.get("tool"),
             )
 
+        # -------------------------------------------------------------
+        # ✅ NEW: SCRATCHPAD MAPPING
+        # -------------------------------------------------------------
+        elif c_type == "scratchpad":
+            return ScratchpadEvent(
+                run_id=run_id,
+                operation=chunk.get("operation"),
+                activity=chunk.get("activity"),
+                state=chunk.get("state"),
+                entry=chunk.get("entry"),
+                content=chunk.get("content"),
+            )
+
         elif c_type == "computer_output":
             return ComputerExecutionOutputEvent(
                 run_id=run_id, content=chunk.get("content", "")
             )
 
-        elif (
-            c_type == "code_interpreter_file"
-        ):  # ✅ Changed from "code_interpreter_stream"
-
+        elif c_type == "code_interpreter_file":
             return CodeExecutionGeneratedFileEvent(
                 run_id=run_id,
-                filename=chunk.get(
-                    "filename", "unknown"
-                ),  # ✅ Direct access, not nested
+                filename=chunk.get("filename", "unknown"),
                 file_id=chunk.get("file_id"),
                 base64_data=chunk.get("base64"),
                 mime_type=chunk.get("mime_type", "application/octet-stream"),
-                url=chunk.get("url"),  # ✅ Direct access
+                url=chunk.get("url"),
             )
 
         elif c_type == "status":
