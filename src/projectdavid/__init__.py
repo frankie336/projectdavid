@@ -13,9 +13,9 @@ from .events import (
     HotCodeEvent,
     PlanEvent,
     ReasoningEvent,
-    StatusEvent,
     StreamEvent,
     ToolCallRequestEvent,
+    WebEvent,
 )
 
 __all__ = [
@@ -31,5 +31,5 @@ __all__ = [
     "ComputerExecutionOutputEvent",
     "DecisionEvent",
     "ToolCallRequestEvent",
-    "StatusEvent",
+    "WebEvent",
 ]

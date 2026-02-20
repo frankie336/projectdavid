@@ -18,9 +18,9 @@ from projectdavid.events import (
     HotCodeEvent,
     PlanEvent,
     ReasoningEvent,
-    StatusEvent,
     StreamEvent,
     ToolCallRequestEvent,
+    WebEvent,
 )
 
 LOG = UtilsInterface.LoggingUtility()
@@ -285,9 +285,6 @@ class SynchronousInferenceStream:
                 tool=chunk.get("tool"),
             )
 
-        # -------------------------------------------------------------
-        # ✅ NEW: SCRATCHPAD MAPPING
-        # -------------------------------------------------------------
         elif c_type == "scratchpad":
             return ScratchpadEvent(
                 run_id=run_id,
@@ -313,11 +310,32 @@ class SynchronousInferenceStream:
                 url=chunk.get("url"),
             )
 
-        elif c_type == "status":
-            return StatusEvent(run_id=run_id, status=chunk.get("status"))
+        # -------------------------------------------------------------
+        # WebEvent: emitted by WebSearchMixin as type='web'.
+        # Maps all three payload fields — status, tool, message.
+        # Previously routed on c_type == "status" against the Pythonic
+        # StatusEvent dataclass; now routes on "web" against raw JSON
+        # conforming to the EVENT_CONTRACT.
+        # -------------------------------------------------------------
+        elif c_type == "web":
+            return WebEvent(
+                run_id=run_id,
+                status=chunk.get("status", "running"),
+                tool=chunk.get("tool"),
+                message=chunk.get("message"),
+            )
 
+        # -------------------------------------------------------------
+        # error events collapse to a WebEvent with status='failed'
+        # so consumers have a single type to handle for terminal errors.
+        # -------------------------------------------------------------
         elif c_type == "error":
-            return StatusEvent(run_id=run_id, status="failed")
+            return WebEvent(
+                run_id=run_id,
+                status="failed",
+                tool=chunk.get("tool"),
+                message=chunk.get("error") or chunk.get("message"),
+            )
 
         return None
 

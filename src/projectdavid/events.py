@@ -23,7 +23,7 @@ class StreamEvent:
             "DecisionEvent": "decision",
             "PlanEvent": "plan",
             "ToolCallRequestEvent": "tool_call_manifest",
-            "StatusEvent": "status",
+            "WebEvent": "status",
             "ActivityEvent": "activity",
             "ScratchpadEvent": "scratchpad",  # <--- NEW MAPPING
             "HotCodeEvent": "hot_code",
@@ -51,6 +51,10 @@ class ScratchpadEvent(StreamEvent):
         return f"Scratchpad[{self.operation}]: {self.activity}"
 
 
+# ============================================
+# This activity event is not related to
+# standard status messages
+# =============================================
 @dataclass
 class ActivityEvent(StreamEvent):
     """Represents user-visible progress updates during tool execution."""
@@ -147,7 +151,7 @@ class CodeExecutionGeneratedFileEvent(StreamEvent):
 
 
 @dataclass
-class StatusEvent(StreamEvent):
+class WebEvent(StreamEvent):
     """Represents a lifecycle change (complete, failed, tool_output_received)."""
 
     status: str
