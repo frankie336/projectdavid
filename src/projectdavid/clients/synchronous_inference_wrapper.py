@@ -7,20 +7,21 @@ from typing import Any, Generator, Optional, Union
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
-from projectdavid.events import ScratchpadEvent  # <--- IMPORT ADDED HERE
-from projectdavid.events import (
-    ActivityEvent,
+from projectdavid.events import (  # <--- IMPORT ADDED HERE
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
+    CodeStatusEvent,
     ComputerExecutionOutputEvent,
     ContentEvent,
     DecisionEvent,
     HotCodeEvent,
     PlanEvent,
     ReasoningEvent,
+    ResearchStatusEvent,
+    ScratchpadEvent,
     StreamEvent,
     ToolCallRequestEvent,
-    WebEvent,
+    WebStatusEvent,
 )
 
 LOG = UtilsInterface.LoggingUtility()
@@ -278,7 +279,7 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "activity":
-            return ActivityEvent(
+            return ResearchStatusEvent(
                 run_id=run_id,
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
@@ -300,6 +301,14 @@ class SynchronousInferenceStream:
                 run_id=run_id, content=chunk.get("content", "")
             )
 
+        elif c_type == "code_status":
+            return CodeStatusEvent(
+                run_id=run_id,
+                activity=chunk.get("activity", ""),
+                state=chunk.get("state", "in_progress"),
+                tool=chunk.get("tool"),
+            )
+
         elif c_type == "code_interpreter_file":
             return CodeExecutionGeneratedFileEvent(
                 run_id=run_id,
@@ -311,14 +320,14 @@ class SynchronousInferenceStream:
             )
 
         # -------------------------------------------------------------
-        # WebEvent: emitted by WebSearchMixin as type='web'.
+        # WebStatusEvent: emitted by WebSearchMixin as type='web_status'.
         # Maps all three payload fields — status, tool, message.
         # Previously routed on c_type == "status" against the Pythonic
         # StatusEvent dataclass; now routes on "web" against raw JSON
         # conforming to the EVENT_CONTRACT.
         # -------------------------------------------------------------
-        elif c_type == "web":
-            return WebEvent(
+        elif c_type == "web_status":
+            return WebStatusEvent(
                 run_id=run_id,
                 status=chunk.get("status", "running"),
                 tool=chunk.get("tool"),
@@ -326,11 +335,11 @@ class SynchronousInferenceStream:
             )
 
         # -------------------------------------------------------------
-        # error events collapse to a WebEvent with status='failed'
+        # error events collapse to a WebStatusEvent with status='failed'
         # so consumers have a single type to handle for terminal errors.
         # -------------------------------------------------------------
         elif c_type == "error":
-            return WebEvent(
+            return WebStatusEvent(
                 run_id=run_id,
                 status="failed",
                 tool=chunk.get("tool"),

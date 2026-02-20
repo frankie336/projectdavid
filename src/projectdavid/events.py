@@ -23,8 +23,8 @@ class StreamEvent:
             "DecisionEvent": "decision",
             "PlanEvent": "plan",
             "ToolCallRequestEvent": "tool_call_manifest",
-            "WebEvent": "status",
-            "ActivityEvent": "activity",
+            "WebStatusEvent": "status",
+            "ResearchStatusEvent": "activity",
             "ScratchpadEvent": "scratchpad",  # <--- NEW MAPPING
             "HotCodeEvent": "hot_code",
             "CodeExecutionOutputEvent": "code_output",
@@ -56,7 +56,7 @@ class ScratchpadEvent(StreamEvent):
 # standard status messages
 # =============================================
 @dataclass
-class ActivityEvent(StreamEvent):
+class ResearchStatusEvent(StreamEvent):
     """Represents user-visible progress updates during tool execution."""
 
     activity: (
@@ -151,12 +151,26 @@ class CodeExecutionGeneratedFileEvent(StreamEvent):
 
 
 @dataclass
-class WebEvent(StreamEvent):
+class WebStatusEvent(StreamEvent):
     """Represents a lifecycle change (complete, failed, tool_output_received)."""
 
     status: str
     # Added to match WebSearchMixin payloads
     message: Optional[str] = None
+    tool: Optional[str] = None
+
+
+@dataclass
+class CodeStatusEvent(StreamEvent):
+    """
+    Represents a code interpreter lifecycle update.
+    Emitted by CodeExecutionMixin as type='code_status'.
+    Distinct from ResearchStatusEvent (deep research/orchestration)
+    so the frontend can route them independently.
+    """
+
+    activity: str
+    state: str
     tool: Optional[str] = None
 
 
@@ -222,7 +236,7 @@ class ToolCallRequestEvent(StreamEvent):
             streamed_args=self.args,
             action_id=self.action_id,
             tool_name=self.tool_name,
-            tool_call_id=self.tool_call_id,  # [L3] Pass ID to the execution layer
+            tool_call_id=self.tool_call_id,
         )
 
         if success:

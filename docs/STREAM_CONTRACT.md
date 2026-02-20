@@ -318,7 +318,7 @@ When a `type:'content'` event arrives, consumers must evaluate in this exact ord
    → accumulate into scratchpad buffer, `return`
 2. **Mid scratchpad block?** — is an accumulation currently open?
    → append to buffer, `return`
-3. **Legacy WebEvent string?** — does the text start with `WebEvent(`?
+3. **Legacy WebStatusEvent string?** — does the text start with `WebStatusEvent(`?
    → parse and route to status component, `return`
 4. **Bleed string?** — does the text match the filter list above?
    → swallow silently, `return`
