@@ -1,3 +1,10 @@
+## [1.54.1](https://github.com/frankie336/projectdavid/compare/v1.54.0...v1.54.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* standardise WebEvent emission across backend, SDK, and frontend ([9eb43d8](https://github.com/frankie336/projectdavid/commit/9eb43d88750d46bb168d1d46e294da9d09d5664e))
+
 # [1.54.0](https://github.com/frankie336/projectdavid/compare/v1.53.2...v1.54.0) (2026-02-19)
 
 
