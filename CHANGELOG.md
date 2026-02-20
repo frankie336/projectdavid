@@ -1,3 +1,10 @@
+## [1.54.2](https://github.com/frankie336/projectdavid/compare/v1.54.1...v1.54.2) (2026-02-20)
+
+
+### Bug Fixes
+
+* rename content event type discriminator to 'web_status' / 'research_status' ([ea5e0ff](https://github.com/frankie336/projectdavid/commit/ea5e0ff3a0d1430f433dcaed496cb2af53735f04))
+
 ## [1.54.1](https://github.com/frankie336/projectdavid/compare/v1.54.0...v1.54.1) (2026-02-20)
 
 
