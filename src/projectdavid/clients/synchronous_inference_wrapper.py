@@ -310,22 +310,15 @@ class SynchronousInferenceStream:
                 run_id=run_id, content=chunk.get("content", "")
             )
 
-        # -------------------------------------------------------------
-        # "scratchpad_status" is the new explicit type for scratchpad
-        # operational updates once ScratchpadMixin is updated to emit it.
-        # Routing both "activity" and "scratchpad_status" to the same
-        # ScratchpadStatusEvent means the transition is backward-compatible
-        # — old emissions still work while the mixin is being updated.
-        # -------------------------------------------------------------
-        elif c_type in ["activity", "scratchpad_status", "scratchpad"]:
+        elif c_type == "scratchpad_status":
             return ScratchpadEvent(
                 run_id=run_id,
-                operation=chunk.get("operation", "unknown"),  # Required by dataclass
-                state=chunk.get("state", "in_progress"),  # Required by dataclass
-                activity=chunk.get("activity"),  # Optional
-                tool=chunk.get("tool"),  # Optional
-                entry=chunk.get("entry"),  # Optional
-                content=chunk.get("content"),  # Optional (legacy)
+                operation=chunk.get("operation", "unknown"),
+                state=chunk.get("state", "in_progress"),
+                activity=chunk.get("activity"),
+                tool=chunk.get("tool"),
+                entry=chunk.get("entry"),
+                content=chunk.get("content"),
             )
 
         elif c_type == "computer_output":
