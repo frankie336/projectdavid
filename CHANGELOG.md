@@ -1,3 +1,10 @@
+## [1.54.6](https://github.com/project-david-ai/projectdavid/compare/v1.54.5...v1.54.6) (2026-02-21)
+
+
+### Bug Fixes
+
+* unwrap double-encoded mixin JSON and extract delegation payloads ([05c1e7b](https://github.com/project-david-ai/projectdavid/commit/05c1e7b684013d24802c45de9b0b20f680fb8aeb))
+
 ## [1.54.5](https://github.com/project-david-ai/projectdavid/compare/v1.54.4...v1.54.5) (2026-02-21)
 
 
