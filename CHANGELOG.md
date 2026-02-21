@@ -1,3 +1,10 @@
+## [1.54.3](https://github.com/project-david-ai/projectdavid/compare/v1.54.2...v1.54.3) (2026-02-21)
+
+
+### Bug Fixes
+
+* correct activity event routing — scratchpad ops were misrouted to ResearchStatusEvent ([8658203](https://github.com/project-david-ai/projectdavid/commit/865820340936787531daa02c4743bbece4cf9936))
+
 ## [1.54.2](https://github.com/frankie336/projectdavid/compare/v1.54.1...v1.54.2) (2026-02-20)
 
 
