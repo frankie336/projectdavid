@@ -1,3 +1,10 @@
+## [1.54.4](https://github.com/project-david-ai/projectdavid/compare/v1.54.3...v1.54.4) (2026-02-21)
+
+
+### Bug Fixes
+
+* add src/projectdavid/events.py ([cf88ffb](https://github.com/project-david-ai/projectdavid/commit/cf88ffba7a1632569633d0ae5c2755144231d307))
+
 ## [1.54.3](https://github.com/project-david-ai/projectdavid/compare/v1.54.2...v1.54.3) (2026-02-21)
 
 
