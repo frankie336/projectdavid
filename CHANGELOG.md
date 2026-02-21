@@ -1,3 +1,10 @@
+## [1.54.7](https://github.com/project-david-ai/projectdavid/compare/v1.54.6...v1.54.7) (2026-02-21)
+
+
+### Bug Fixes
+
+* narrow ScratchpadEvent routing to scratchpad_status type only ([935e236](https://github.com/project-david-ai/projectdavid/commit/935e2361b4e27e81025a16526b0355bc4a2b53ca))
+
 ## [1.54.6](https://github.com/project-david-ai/projectdavid/compare/v1.54.5...v1.54.6) (2026-02-21)
 
 
