@@ -301,12 +301,15 @@ class SynchronousInferenceStream:
         # ScratchpadStatusEvent means the transition is backward-compatible
         # — old emissions still work while the mixin is being updated.
         # -------------------------------------------------------------
-        elif c_type == "scratchpad_status":
+        elif c_type in ["activity", "scratchpad_status", "scratchpad"]:
             return ScratchpadEvent(
                 run_id=run_id,
-                activity=chunk.get("activity", ""),
-                state=chunk.get("state", "in_progress"),
-                tool=chunk.get("tool"),
+                operation=chunk.get("operation", "unknown"),  # Required by dataclass
+                state=chunk.get("state", "in_progress"),  # Required by dataclass
+                activity=chunk.get("activity"),  # Optional
+                tool=chunk.get("tool"),  # Optional
+                entry=chunk.get("entry"),  # Optional
+                content=chunk.get("content"),  # Optional (legacy)
             )
 
         elif c_type == "scratchpad":
