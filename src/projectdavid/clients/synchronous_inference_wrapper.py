@@ -278,8 +278,31 @@ class SynchronousInferenceStream:
                 run_id=run_id, content=chunk.get("content", "")
             )
 
+        # -------------------------------------------------------------
+        # "activity" is the legacy generic type emitted by ScratchpadMixin
+        # for its operational status labels (📖 Reading..., 📝 Appending...).
+        # These are NOT ResearchStatusEvents — they are internal scratchpad
+        # housekeeping that the backend consumer silently swallows.
+        # Routed to ScratchpadStatusEvent so the backend can handle them
+        # independently of research delegation activity.
+        # -------------------------------------------------------------
         elif c_type == "activity":
-            return ResearchStatusEvent(
+            return ScratchpadStatusEvent(
+                run_id=run_id,
+                activity=chunk.get("activity", ""),
+                state=chunk.get("state", "in_progress"),
+                tool=chunk.get("tool"),
+            )
+
+        # -------------------------------------------------------------
+        # "scratchpad_status" is the new explicit type for scratchpad
+        # operational updates once ScratchpadMixin is updated to emit it.
+        # Routing both "activity" and "scratchpad_status" to the same
+        # ScratchpadStatusEvent means the transition is backward-compatible
+        # — old emissions still work while the mixin is being updated.
+        # -------------------------------------------------------------
+        elif c_type == "scratchpad_status":
+            return ScratchpadStatusEvent(
                 run_id=run_id,
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
@@ -320,11 +343,21 @@ class SynchronousInferenceStream:
             )
 
         # -------------------------------------------------------------
+        # ResearchStatusEvent: emitted by DelegationMixin as
+        # type='research_status'. Distinct from ScratchpadStatusEvent
+        # (scratchpad ops) and CodeStatusEvent (sandbox lifecycle).
+        # -------------------------------------------------------------
+        elif c_type == "research_status":
+            return ResearchStatusEvent(
+                run_id=run_id,
+                activity=chunk.get("activity", ""),
+                state=chunk.get("state", "in_progress"),
+                tool=chunk.get("tool"),
+            )
+
+        # -------------------------------------------------------------
         # WebStatusEvent: emitted by WebSearchMixin as type='web_status'.
         # Maps all three payload fields — status, tool, message.
-        # Previously routed on c_type == "status" against the Pythonic
-        # StatusEvent dataclass; now routes on "web" against raw JSON
-        # conforming to the EVENT_CONTRACT.
         # -------------------------------------------------------------
         elif c_type == "web_status":
             return WebStatusEvent(
@@ -347,20 +380,3 @@ class SynchronousInferenceStream:
             )
 
         return None
-
-    def stream_typed_json(
-        self, provider: str, model: str, *, timeout_per_chunk: float = 280.0
-    ):
-        for event in self.stream_events(
-            provider=provider, model=model, timeout_per_chunk=timeout_per_chunk
-        ):
-            yield json.dumps(event.to_dict())
-
-    @classmethod
-    def shutdown_loop(cls) -> None:
-        """Deprecated: No longer uses a global loop."""
-        pass
-
-    def close(self) -> None:
-        with suppress(Exception):
-            self.inference_client.close()
