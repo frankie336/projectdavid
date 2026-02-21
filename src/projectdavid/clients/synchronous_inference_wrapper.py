@@ -279,22 +279,6 @@ class SynchronousInferenceStream:
             )
 
         # -------------------------------------------------------------
-        # "activity" is the legacy generic type emitted by ScratchpadMixin
-        # for its operational status labels (📖 Reading..., 📝 Appending...).
-        # These are NOT ResearchStatusEvents — they are internal scratchpad
-        # housekeeping that the backend consumer silently swallows.
-        # Routed to ScratchpadStatusEvent so the backend can handle them
-        # independently of research delegation activity.
-        # -------------------------------------------------------------
-        elif c_type == "activity":
-            return ScratchpadStatusEvent(
-                run_id=run_id,
-                activity=chunk.get("activity", ""),
-                state=chunk.get("state", "in_progress"),
-                tool=chunk.get("tool"),
-            )
-
-        # -------------------------------------------------------------
         # "scratchpad_status" is the new explicit type for scratchpad
         # operational updates once ScratchpadMixin is updated to emit it.
         # Routing both "activity" and "scratchpad_status" to the same
@@ -310,16 +294,6 @@ class SynchronousInferenceStream:
                 tool=chunk.get("tool"),  # Optional
                 entry=chunk.get("entry"),  # Optional
                 content=chunk.get("content"),  # Optional (legacy)
-            )
-
-        elif c_type == "scratchpad":
-            return ScratchpadEvent(
-                run_id=run_id,
-                operation=chunk.get("operation"),
-                activity=chunk.get("activity"),
-                state=chunk.get("state"),
-                entry=chunk.get("entry"),
-                content=chunk.get("content"),
             )
 
         elif c_type == "computer_output":
