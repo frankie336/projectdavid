@@ -226,10 +226,42 @@ class SynchronousInferenceStream:
 
     def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
         """Maps raw API chunks to Typed Event instances."""
+
+        # --- 1. DOUBLE-ENCODED JSON UNWRAPPER ---
+        # If the inference client wrapped a raw JSON string from a mixin into a "content"
+        # text chunk, we intercept and safely unwrap it so it can be typed correctly.
+        if chunk.get("type") == "content":
+            content_val = chunk.get("content", "")
+            if isinstance(content_val, str):
+                c_val_stripped = content_val.strip()
+                if c_val_stripped.startswith("{") and c_val_stripped.endswith("}"):
+                    with suppress(Exception):
+                        parsed = json.loads(c_val_stripped)
+                        if isinstance(parsed, dict):
+                            # Target specific mixin payloads to avoid falsely unwrapping valid LLM JSON
+                            if (
+                                parsed.get("type")
+                                in [
+                                    "web_status",
+                                    "research_status",
+                                    "scratchpad_status",
+                                    "code_status",
+                                    "status",
+                                    "error",
+                                ]
+                                or "stream_type" in parsed
+                            ):
+                                chunk = parsed
+
+        # --- 2. EXTRACT NESTED PAYLOADS ---
+        # code_execution, computer_execution, and delegation streams nest
+        # their actual events under a "chunk" key.
         stream_type = chunk.get("type") if "type" in chunk else chunk.get("stream_type")
-        if stream_type in ["code_execution", "computer_execution"]:
+        if stream_type in ["code_execution", "computer_execution", "delegation"]:
             payload = chunk.get("chunk", {})
-            if "run_id" not in payload:
+            if "run_id" not in payload and "run_id" in chunk:
+                payload["run_id"] = chunk.get("run_id")
+            elif "run_id" not in payload:
                 payload["run_id"] = chunk.get("run_id")
             chunk = payload
 
