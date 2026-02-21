@@ -23,9 +23,9 @@ class StreamEvent:
             "DecisionEvent": "decision",
             "PlanEvent": "plan",
             "ToolCallRequestEvent": "tool_call_manifest",
-            "WebStatusEvent": "status",
-            "ResearchStatusEvent": "activity",
-            "ScratchpadEvent": "scratchpad",  # <--- NEW MAPPING
+            "WebStatusEvent": "web_status",
+            "ResearchStatusEvent": "research_status",
+            "ScratchpadEvent": "scratchpad_status",
             "HotCodeEvent": "hot_code",
             "CodeExecutionOutputEvent": "code_output",
             "ComputerExecutionOutputEvent": "computer_output",
