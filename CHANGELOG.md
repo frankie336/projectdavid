@@ -1,3 +1,11 @@
+## [1.54.5](https://github.com/project-david-ai/projectdavid/compare/v1.54.4...v1.54.5) (2026-02-21)
+
+
+### Bug Fixes
+
+* remove redundant scratchpad event routing blocks ([6214e7c](https://github.com/project-david-ai/projectdavid/commit/6214e7c8c696029ec0e17db288e3887b7de011c9))
+* resolve missing 'operation' argument in ScratchpadEvent ([76f8109](https://github.com/project-david-ai/projectdavid/commit/76f81095760dfb5cd7b4ba6e1020ff2f5dab513e))
+
 ## [1.54.4](https://github.com/project-david-ai/projectdavid/compare/v1.54.3...v1.54.4) (2026-02-21)
 
 
