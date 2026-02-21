@@ -42,13 +42,18 @@ class ScratchpadEvent(StreamEvent):
     """
 
     operation: str  # 'read', 'update', 'append'
-    activity: str  # Human readable status e.g. "📝 Appending to scratchpad..."
-    state: str  # 'in_progress', 'success', 'error'
-    entry: Optional[str] = None  # For 'append' operations
-    content: Optional[str] = None  # For 'update' or 'read' operations
+    state: str  # 'in_progress', 'success', 'completed', 'error'
+    activity: Optional[str] = (
+        None  # Human readable status e.g. "📝 Appending to scratchpad..."
+    )
+    tool: Optional[str] = None  # The tool that triggered the event
+    entry: Optional[str] = None  # For text returns (all operations now use this)
+    content: Optional[str] = None  # Kept for legacy backward compatibility
 
     def __str__(self):
-        return f"Scratchpad[{self.operation}]: {self.activity}"
+        if self.activity:
+            return f"Scratchpad[{self.operation}]: {self.activity}"
+        return f"Scratchpad[{self.operation}]: {self.state}"
 
 
 # ============================================

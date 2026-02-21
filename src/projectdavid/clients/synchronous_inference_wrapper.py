@@ -302,7 +302,7 @@ class SynchronousInferenceStream:
         # — old emissions still work while the mixin is being updated.
         # -------------------------------------------------------------
         elif c_type == "scratchpad_status":
-            return ScratchpadStatusEvent(
+            return ScratchpadEvent(
                 run_id=run_id,
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
