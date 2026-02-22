@@ -1,3 +1,10 @@
+## [1.54.8](https://github.com/project-david-ai/projectdavid/compare/v1.54.7...v1.54.8) (2026-02-21)
+
+
+### Bug Fixes
+
+* correct stale type discriminators in get_event_type mapping ([285b3e1](https://github.com/project-david-ai/projectdavid/commit/285b3e10586f5d747c5859b5068eea04d4edb31e))
+
 ## [1.54.7](https://github.com/project-david-ai/projectdavid/compare/v1.54.6...v1.54.7) (2026-02-21)
 
 
