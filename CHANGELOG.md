@@ -1,3 +1,10 @@
+## [1.54.9](https://github.com/project-david-ai/projectdavid/compare/v1.54.8...v1.54.9) (2026-02-22)
+
+
+### Bug Fixes
+
+* propagate assistant_id through event stream ([497b5f6](https://github.com/project-david-ai/projectdavid/commit/497b5f64ccc9bc13a36b2c52fddeab5af1c974ac))
+
 ## [1.54.8](https://github.com/project-david-ai/projectdavid/compare/v1.54.7...v1.54.8) (2026-02-21)
 
 
