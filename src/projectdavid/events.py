@@ -41,19 +41,13 @@ class ScratchpadEvent(StreamEvent):
     Corresponds to the ScratchpadStatus.js frontend component.
     """
 
-    operation: str  # 'read', 'update', 'append'
-    state: str  # 'in_progress', 'success', 'completed', 'error'
-    activity: Optional[str] = (
-        None  # Human readable status e.g. "📝 Appending to scratchpad..."
-    )
-    tool: Optional[str] = None  # The tool that triggered the event
-    entry: Optional[str] = None  # For text returns (all operations now use this)
-    content: Optional[str] = None  # Kept for legacy backward compatibility
-
-    def __str__(self):
-        if self.activity:
-            return f"Scratchpad[{self.operation}]: {self.activity}"
-        return f"Scratchpad[{self.operation}]: {self.state}"
+    operation: str
+    state: str
+    activity: Optional[str] = None
+    tool: Optional[str] = None
+    entry: Optional[str] = None
+    content: Optional[str] = None
+    assistant_id: Optional[str] = None
 
 
 # ============================================

@@ -227,43 +227,39 @@ class SynchronousInferenceStream:
     def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
         """Maps raw API chunks to Typed Event instances."""
 
-        # --- 1. DOUBLE-ENCODED JSON UNWRAPPER ---
-        # If the inference client wrapped a raw JSON string from a mixin into a "content"
-        # text chunk, we intercept and safely unwrap it so it can be typed correctly.
-        if chunk.get("type") == "content":
-            content_val = chunk.get("content", "")
-            if isinstance(content_val, str):
-                c_val_stripped = content_val.strip()
-                if c_val_stripped.startswith("{") and c_val_stripped.endswith("}"):
-                    with suppress(Exception):
-                        parsed = json.loads(c_val_stripped)
-                        if isinstance(parsed, dict):
-                            # Target specific mixin payloads to avoid falsely unwrapping valid LLM JSON
-                            if (
-                                parsed.get("type")
-                                in [
-                                    "web_status",
-                                    "research_status",
-                                    "scratchpad_status",
-                                    "code_status",
-                                    "status",
-                                    "error",
-                                ]
-                                or "stream_type" in parsed
-                            ):
-                                chunk = parsed
+        # --- 1. ENFORCE CONTRACT: UNWRAP MIXIN JSON ---
+        # Mixins emit raw JSON strings. If the stream multiplexer incorrectly wraps
+        # them as LLM 'content', we must unwrap them to fulfill the Event Contract.
+        if chunk.get("type") == "content" and isinstance(chunk.get("content"), str):
+            text = chunk["content"].strip()
+            if text.startswith("{") and text.endswith("}"):
+                with suppress(Exception):
+                    parsed = json.loads(text)
+                    if isinstance(parsed, dict):
+                        # Only promote recognized system events defined in the Contract
+                        if (
+                            parsed.get("type")
+                            in {
+                                "web_status",
+                                "research_status",
+                                "scratchpad_status",
+                                "code_status",
+                                "status",
+                                "error",
+                            }
+                            or "stream_type" in parsed
+                        ):
+                            chunk = parsed
 
         # --- 2. EXTRACT NESTED PAYLOADS ---
-        # code_execution, computer_execution, and delegation streams nest
-        # their actual events under a "chunk" key.
-        stream_type = chunk.get("type") if "type" in chunk else chunk.get("stream_type")
-        if stream_type in ["code_execution", "computer_execution", "delegation"]:
+        # delegation, code, and computer executions nest their payloads in a "chunk" key.
+        stream_type = chunk.get("type", chunk.get("stream_type"))
+        if stream_type in {"code_execution", "computer_execution", "delegation"}:
             payload = chunk.get("chunk", {})
-            if "run_id" not in payload and "run_id" in chunk:
-                payload["run_id"] = chunk.get("run_id")
-            elif "run_id" not in payload:
-                payload["run_id"] = chunk.get("run_id")
-            chunk = payload
+            if isinstance(payload, dict):
+                # Ensure run_id propagates down to the extracted payload
+                payload.setdefault("run_id", chunk.get("run_id"))
+                chunk = payload
 
         c_type = chunk.get("type")
         run_id = chunk.get("run_id")
@@ -311,6 +307,7 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "scratchpad_status":
+
             return ScratchpadEvent(
                 run_id=run_id,
                 operation=chunk.get("operation", "unknown"),
@@ -319,6 +316,7 @@ class SynchronousInferenceStream:
                 tool=chunk.get("tool"),
                 entry=chunk.get("entry"),
                 content=chunk.get("content"),
+                assistant_id=chunk.get("assistant_id"),
             )
 
         elif c_type == "computer_output":
