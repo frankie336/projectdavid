@@ -1,3 +1,10 @@
+## [1.56.1](https://github.com/project-david-ai/projectdavid/compare/v1.56.0...v1.56.1) (2026-02-23)
+
+
+### Bug Fixes
+
+* remove provider from stream_inference_response ([b65b64e](https://github.com/project-david-ai/projectdavid/commit/b65b64eefc983107cd76633a0126857f5af14120))
+
 # [1.56.0](https://github.com/project-david-ai/projectdavid/compare/v1.55.0...v1.56.0) (2026-02-23)
 
 
