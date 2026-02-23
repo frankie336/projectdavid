@@ -19,6 +19,9 @@ pip install projectdavid
 ## Supported Inference Providers
 
 
+[Find supported Inference endpoints and providers here.](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/providers/providers.md) 
+
+
 ## Quick Start
 
 ```python
@@ -97,6 +100,9 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 | Code Interpreter | [sdk-code-interpreter.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/platform-tools/sdk-code-interpreter.md) |
 | Files | [sdk-files.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-files.md) |
 | Vector Store | [sdk-vector-store.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-vector-store.md) |
+
+
+[Find all SDK documentation here.](https://github.com/project-david-ai/projectdavid_docs/tree/master/src/pages/sdk) 
 
 ## Related Repositories
 
