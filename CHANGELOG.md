@@ -1,3 +1,10 @@
+## [1.56.2](https://github.com/project-david-ai/projectdavid/compare/v1.56.1...v1.56.2) (2026-02-23)
+
+
+### Bug Fixes
+
+* Update to projectdavid_common==0.27.1 ([3f25f90](https://github.com/project-david-ai/projectdavid/commit/3f25f902dc3f1b593f55f4bfc282764b539c7e9c))
+
 ## [1.56.1](https://github.com/project-david-ai/projectdavid/compare/v1.56.0...v1.56.1) (2026-02-23)
 
 
