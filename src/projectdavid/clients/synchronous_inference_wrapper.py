@@ -155,7 +155,6 @@ class SynchronousInferenceStream:
 
     def stream_events(
         self,
-        provider: str,
         model: str,
         *,
         timeout_per_chunk: float = 280.0,
