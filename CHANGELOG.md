@@ -1,3 +1,10 @@
+# [1.56.0](https://github.com/project-david-ai/projectdavid/compare/v1.55.0...v1.56.0) (2026-02-23)
+
+
+### Features
+
+* remove provider from the inference_client.py payload. It is not needed for endpoint routing. ([9b63f79](https://github.com/project-david-ai/projectdavid/commit/9b63f79ba66fdbeeb13ab49754a4958ebb49bd43))
+
 # [1.55.0](https://github.com/project-david-ai/projectdavid/compare/v1.54.9...v1.55.0) (2026-02-23)
 
 
