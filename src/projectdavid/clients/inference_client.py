@@ -99,7 +99,7 @@ class InferenceClient(BaseAPIClient):
 
     async def stream_inference_response(
         self,
-        provider: str,
+        # provider: str,
         model: str,
         thread_id: str,
         message_id: str,
