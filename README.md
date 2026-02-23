@@ -94,7 +94,7 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 | Inference | [sdk-inference.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-inference.md) |
 | Tools | [sdk-tools.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-tools.md) |
 | Function Calls | [function-calling-and-tool-execution.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-function-calls.md) |
-| Code Interpreter | [sdk-code-interpreter.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-code-interpreter.md) |
+| Code Interpreter | [sdk-code-interpreter.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/platform-tools/sdk-code-interpreter.md) |
 | Files | [sdk-files.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-files.md) |
 | Vector Store | [sdk-vector-store.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-vector-store.md) |
 
