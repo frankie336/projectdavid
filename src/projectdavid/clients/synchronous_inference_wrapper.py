@@ -77,7 +77,7 @@ class SynchronousInferenceStream:
 
     def stream_chunks(
         self,
-        provider: str,
+        # provider: str,
         model: str,
         *,
         api_key: Optional[str] = None,
@@ -90,7 +90,7 @@ class SynchronousInferenceStream:
             # This will use the UPDATED InferenceClient which creates
             # a fresh httpx client bound to the current loop.
             async for chk in self.inference_client.stream_inference_response(
-                provider=provider,
+                # provider=provider,
                 model=model,
                 api_key=resolved_api_key,
                 thread_id=self.thread_id,
@@ -183,7 +183,7 @@ class SynchronousInferenceStream:
             validation_failed_this_turn = False
 
             for chunk in self.stream_chunks(
-                provider=provider,
+                # provider=provider,
                 model=model,
                 timeout_per_chunk=timeout_per_chunk,
                 suppress_fc=True,

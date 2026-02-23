@@ -118,7 +118,7 @@ class InferenceClient(BaseAPIClient):
         to the main loop) without triggering 'Future attached to different loop' errors.
         """
         payload = {
-            "provider": provider,
+            # "provider": provider,
             "model": model,
             "api_key": api_key,
             "thread_id": thread_id,
