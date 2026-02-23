@@ -1,361 +1,109 @@
-# Entity  — by Project David
+# projectdavid — Entity SDK
 
-[![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/entitites_sdk/actions/workflows/test_tag_release.yml)
+[![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 
-The **Entity SDK** is a composable, Pythonic interface to the [Entities API](https://github.com/frankie336/entities_api) for building intelligent applications across **local, open-source**, and **cloud LLMs**.
+Python SDK for the Entities API — build, run, and coordinate AI assistants across local and cloud inference providers.
 
-It unifies:
-
-- Users, threads, assistants, messages, runs, inference
-- **Function calling**, **code interpretation**, and **structured streaming**
-- Vector memory, file uploads, and secure tool orchestration
-
-Local inference is fully supported via [Ollama](https://github.com/ollama).
-
----
-
-## 🔌 Supported Inference Providers
-
-| Provider                                         | Type                     |
-|--------------------------------------------------|--------------------------|
-| [Ollama](https://github.com/ollama)              |  **Local** (Self-Hosted) |
-| [DeepSeek](https://platform.deepseek.com/)       | ☁ **Cloud** (Open-Source) |
-| [Hyperbolic](https://hyperbolic.xyz/)            | ☁ **Cloud** (Proprietary) |
-| [OpenAI](https://platform.openai.com/)           | ☁ **Cloud** (Proprietary) |
-| [Together AI](https://www.together.ai/)          | ☁ **Cloud** (Aggregated) |
-| [Azure Foundry](https://azure.microsoft.com)     | ☁ **Cloud** (Enterprise) |
-
----
-
-## 📦 Installation
+## Installation
 
 ```bash
 pip install projectdavid
-
 ```
 
----
+## Requirements
 
-#  Quick Start
+- Python 3.10+
+- An Entities API key (`ENTITIES_API_KEY`)
+
+## Supported Inference Providers
 
 
-
-##  Standard Synchronous Stream
-
-**The standard synchronous streaming interface is considered legacy.
-Implementations based on this interface will continue to function, but developers are strongly encouraged to use the event-driven interface instead.**
+## Quick Start
 
 ```python
-"""
-Standard Inference Test (No Tools)
----------------------------------------------------
-1. Simple prompt -> response.
-2. Handles Reasoning (DeepSeek) and Content events.
-3. No tool execution or recursion logic.
-"""
-
 import os
-
 from dotenv import load_dotenv
 from projectdavid import Entity
 
 load_dotenv()
 
-# --------------------------------------------------
-# Load the Entities client with your user API key
-# Note: if you define ENTITIES_API_KEY="ea_6zZiZ..."
-# in .env, you do not need to pass in the API key directly.
-# We pass in here directly for clarity
-# ---------------------------------------------------
-client = Entity(base_url="http://localhost:9000", api_key=os.getenv("ENTITIES_API_KEY"))
-
-user_id = os.getenv("ENTITIES_USER_ID")
-
-# -----------------------------
-# create an assistant
-# ------------------------------
-assistant = client.assistants.create_assistant(
-    name="test_assistant",
-    instructions="You are a helpful AI assistant",
+client = Entity(
+    base_url=os.getenv("BASE_URL"),
+    api_key=os.getenv("ENTITIES_API_KEY"),
 )
-print(f"created assistant with ID: {assistant.id}")
 
-# -----------------------------------------------
-# Create a thread
-# Note:
-# - Threads are re-usable
-# Reuse threads in the case you want as continued
-# multi turn conversation
-# ------------------------------------------------
-print("Creating thread...")
+assistant = client.assistants.create_assistant(
+    name="my_assistant",
+    instructions="You are a helpful AI assistant.",
+)
+
 thread = client.threads.create_thread()
 
-print(f"created thread with ID: {thread.id}")
-# Store the dynamically created thread ID
-actual_thread_id = thread.id
-
-
-# -----------------------------------------
-#  Create a message using the NEW thread ID
-# --------------------------------------------
-print(f"Creating message in thread {actual_thread_id}...")
-message = client.messages.create_message(
-    thread_id=actual_thread_id,
-    role="user",
-    content="Hello, assistant! Tell me about the latest trends in AI.",
-    assistant_id=assistant.id,
-)
-print(f"Created message with ID: {message.id}")
-
-# ---------------------------------------------
-# step 3 - Create a run using the NEW thread ID
-# ----------------------------------------------
-print(f"Creating run in thread {actual_thread_id}...")
-run = client.runs.create_run(assistant_id=assistant.id, thread_id=actual_thread_id)
-print(f"Created run with ID: {run.id}")
-
-# ------------------------------------------------
-# Instantiate the synchronous streaming helper
-# --------------------------------------------------
-sync_stream = client.synchronous_inference_stream
-
-# ------------------------------------------------------
-# step 4 - Set up the stream using the NEW thread ID
-# --------------------------------------------------------
-print(f"Setting up stream for thread {actual_thread_id}...")
-sync_stream.setup(
-    user_id=user_id,
-    thread_id=actual_thread_id,
-    assistant_id=assistant.id,
-    message_id=message.id,
-    run_id=run.id,
-    api_key=os.getenv("HYPERBOLIC_API_KEY"),
-)
-print("Stream setup complete. Starting streaming...")
-
-# --- Stream initial LLM response ---
-try:
-    for chunk in sync_stream.stream_chunks(
-        provider="Hyperbolic",
-        model="hyperbolic/deepseek-ai/DeepSeek-V3-0324",  # Ensure this model is valid/available
-        timeout_per_chunk=15.0,
-    ):
-        content = chunk.get("content", "")
-        if content:
-            print(content, end="", flush=True)
-    print("\n--- End of Stream ---")  # Add newline after stream
-except Exception as e:
-    print(f"\n--- Stream Error: {e} ---")  # Catch errors during streaming
-
-print("Script finished.")
-```
-
-
-##  Standard event-driven Stream
-
-**The event-driven interface provides access to advanced Level 2 and Level 3 agentic capabilities.
-Event and stream types can be handled in the back end before being rendered in the front-end application.**
-
-
-```python
-
-
-import os
-from projectdavid import Entity
-from projectdavid.events import ContentEvent, ReasoningEvent
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-
-# 1. Initialize Client
-client = Entity(base_url=os.getenv("BASE_URL"), 
-                api_key=os.getenv("ENTITIES_API_KEY"))
-
-# -----------------------------
-# create an assistant
-# ------------------------------
-assistant = client.assistants.create_assistant(
-    name="test_assistant",
-    instructions="You are a helpful AI assistant",
-)
-print(f"created assistant with ID: {assistant.id}")
-
-
-MODEL_ID = "hyperbolic/deepseek-ai/DeepSeek-V3"
-PROVIDER = "Hyperbolic"
-
-# 2. Create Conversation Context
-# We create a Thread, add a Message, and create a Run.
-thread = client.threads.create_thread()
-
-print("-> Sending Prompt...")
 message = client.messages.create_message(
     thread_id=thread.id,
     role="user",
-    content="Explain the difference between TCP and UDP in one paragraph.",
+    content="Tell me about the latest trends in AI.",
     assistant_id=assistant.id,
 )
 
-run = client.runs.create_run(assistant_id=ASSISTANT_ID, thread_id=thread.id)
+run = client.runs.create_run(
+    assistant_id=assistant.id,
+    thread_id=thread.id,
+)
 
-# 4. Initialize the Stream
 stream = client.synchronous_inference_stream
 stream.setup(
-    user_id=ENTITIES_USER_ID,
+    user_id=os.getenv("ENTITIES_USER_ID"),
     thread_id=thread.id,
-    assistant_id=ASSISTANT_ID,
+    assistant_id=assistant.id,
     message_id=message.id,
     run_id=run.id,
-    api_key=PROVIDER_API_KEY,
+    api_key=os.getenv("PROVIDER_API_KEY"),
 )
 
-# 5. Event Loop
-# The SDK handles the connection and parses the stream into events.
-print(f"-> Streaming from {MODEL_ID}...\n")
-
-current_mode = None
-
-try:
-    for event in stream.stream_events(provider=PROVIDER, model=MODEL_ID):
-
-        # A. Handle Reasoning (Chain-of-Thought)
-        # Models like DeepSeek or o1 emit thoughts before the answer.
-        if isinstance(event, ReasoningEvent):
-            if current_mode != "reasoning":
-                print("\n[🤔 THOUGHTS]: ", end="")
-                current_mode = "reasoning"
-            
-            print(event.content, end="", flush=True)
-
-        # B. Handle Standard Content
-        # This is the final answer intended for the user.
-        elif isinstance(event, ContentEvent):
-            if current_mode != "content":
-                print("\n\n[🤖 ANSWER]: ", end="")
-                current_mode = "content"
-
-            print(event.content, end="", flush=True)
-
-except Exception as e:
-    print(f"\n[!] Error: {e}")
-
-print("\n\nDone.")
+for chunk in stream.stream_chunks(
+    model="hyperbolic/deepseek-ai/DeepSeek-V3-0324",
+    timeout_per_chunk=15.0,
+):
+    content = chunk.get("content", "")
+    if content:
+        print(content, end="", flush=True)
 ```
 
+See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) for the event-driven interface and advanced usage.
 
+## Environment Variables
 
+| Variable | Description |
+|---|---|
+| `ENTITIES_API_KEY` | Your Entities API key |
+| `ENTITIES_USER_ID` | Your user ID |
+| `BASE_URL` | API base URL (default: `http://localhost:9000`) |
+| `PROVIDER_API_KEY` | Your inference provider API key |
 
+## Documentation
 
+| Topic | Link |
+|---|---|
+| Quick Start | [sdk-quick-start.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) |
+| Assistants | [sdk-assistants.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-assistants.md) |
+| Threads | [sdk-threads.md](https://github.com/project-david-ai/docs/blob/main/src/pages/sdk/sdk-threads.md) |
+| Messages | [sdk-messages.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-messages.md) |
+| Runs | [sdk-runs.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-runs.md) |
+| Inference | [sdk-inference.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-inference.md) |
+| Tools | [sdk-tools.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-tools.md) |
+| Function Calls | [function-calling-and-tool-execution.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-function-calls.md) |
+| Code Interpreter | [sdk-code-interpreter.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-code-interpreter.md) |
+| Files | [sdk-files.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-files.md) |
+| Vector Store | [sdk-vector-store.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-vector-store.md) |
 
+## Related Repositories
 
+| Repo | Description |
+|---|---|
+| [platform](https://github.com/project-david-ai/platform) | Core orchestration engine |
+| [entities-common](https://github.com/project-david-ai/entities-common) | Shared utilities and validation |
+| [david-core](https://github.com/project-david-ai/david-core) | Docker orchestration layer |
 
-
-
-
-
-
-
-
-
-
-
-
-### Model Routes
-
-The script above maps each model to a route suffix that you use when calling the API.
-For example, to invoke the DeepSeek V3 model hosted on Hyperbolic you would use the suffix:
-
-`hyperbolic/deepseek-ai/DeepSeek-V3-0324`
-
-Below is a table that lists the route suffix for every supported model.
-
-
-
-Below is a table that lists the route suffix for every supported model.
-
-[View Model Routes Table](./docs/model_routes.md)
-
-**The assisants  response**:
-
-
-Hello! The field of AI is evolving rapidly, and here are some of the latest trends as of early 2025:
-
-### 1. **Multimodal AI Models**  
-   - Models like GPT-4, Gemini, and others now seamlessly process text, images, audio, and video in a unified way, enabling richer interactions (e.g., ChatGPT with vision).  
-   - Applications include real-time translation with context, AI-generated video synthesis, and more immersive virtual assistants.
-
-### 2. **Smaller, More Efficient Models**  
-   - While giant models (e.g., GPT-4, Claude 3) still dominate, there’s a push for smaller, specialized models (e.g., Microsoft’s Phi-3, Mistral 7B) that run locally on devices with near-LLM performance.  
-   - Focus on **energy efficiency** and reduced computational costs.
-
-### 3. **AI Agents & Autonomous Systems**  
-   - AI “agents” (e.g., OpenAI’s “Agentic workflows”) can now perform multi-step tasks autonomously, like coding, research, or booking trips.  
-   - Companies are integrating agentic AI into workflows (e.g., Salesforce, Notion AI).
-
-### 4. **Generative AI Advancements**  
-   - **Video generation**: Tools like OpenAI’s Sora, Runway ML, and Pika Labs produce high-quality, longer AI-generated videos.  
-   - **3D asset creation**: AI can now generate 3D models from text prompts (e.g., Nvidia’s tools).  
-   - **Voice cloning**: Ultra-realistic voice synthesis (e.g., ElevenLabs) is raising ethical debates.
-
-### 5. **Regulation & Ethical AI**  
-   - Governments are catching up with laws like the EU AI Act and U.S. executive orders on AI safety.  
-   - Watermarking AI content (e.g., C2PA standards) is gaining traction to combat deepfakes.
-
-### 6. **AI in Science & Healthcare**  
-   - AlphaFold 3 (DeepMind) predicts protein interactions with unprecedented accuracy.  
-   - AI-driven drug discovery (e.g., Insilico Medicine) is accelerating clinical trials.
-
-### 7. **Open-Source vs. Closed AI**  
-   - Tension between open-source (Mistral, Meta’s Llama 3) and proprietary models (GPT-4, Gemini) continues, with debates over safety and innovation.
-
-### 8. **AI Hardware Innovations**  
-   - New chips (e.g., Nvidia’s Blackwell, Groq’s LPUs) are optimizing speed and cost for AI workloads.  
-   - “AI PCs” with NPUs (neural processing units) are becoming mainstream.
-
-### 9. **Personalized AI**  
-   - Tailored AI assistants learn individual preferences (e.g., Rabbit R1, Humane AI Pin).  
-   - Privacy-focused local AI (e.g., Apple’s on-device AI in iOS 18).
-
-### 10. **Quantum AI (Early Stages)**  
-   - Companies like Google and IBM are exploring quantum machine learning, though practical applications remain limited.
-
-Would you like a deeper dive into any of these trends?
-
----
-
-
-
-##  Documentation
-
-| Domain              | Link                                                   |
-|---------------------|--------------------------------------------------------|
-| Assistants          | [assistants.md](/docs/assistants.md)                   |
-| Threads             | [threads.md](/docs/threads.md)                         |
-| Messages            | [messages.md](/docs/messages.md)                       |
-| Runs                | [runs.md](/docs/runs.md)                               |
-| Inference           | [inference.md](/docs/inference.md)                     |
-| Streaming           | [streams.md](/docs/streams.md)                         |
-| Tools               | [function_calls.md](/docs/function_calls.md)       |
-| Code Interpretation | [code_interpretation.md](/docs/code_interpreter.md) |
-| Files               | [files.md](/docs/files.md)                             |
-| Vector Store(RAG)   | [vector_store.md](/docs/vector_store.md)               |
-| Versioning          | [versioning.md](/docs/versioning.md)                   |
-
----
-
-## ✅ Compatibility & Requirements
-
-- Python **3.10+**
-- Compatible with **local** or **cloud** deployments of the Entities API
-
----
-
-##   Related Repositories
-
--   [Entities API](https://github.com/frankie336/entities_api) — containerized API backend
-- 
--   [entities_common](https://github.com/frankie336/entities_common) — shared validation, schemas, utilities, and tools.
-      This package is auto installed as dependency of entities SDK or entities API.
+> When the hosted docs site is live, all documentation links will be updated to `docs.projectdavid.co.uk`.
