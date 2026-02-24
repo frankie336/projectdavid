@@ -94,34 +94,30 @@ class EngineerClient(BaseAPIClient):
     # ------------------------------------------------------------------ #
     def ingest_inventory(
         self,
-        assistant_id: str,
         devices: List[Dict[str, Any]],
         clear_existing: bool = False,
     ) -> Dict[str, Any]:
         """
-        Uploads a list of network devices to build the Assistant's mental map.
+        Uploads a list of network devices to build the User's mental map.
 
         SECURITY NOTE:
         This payload should ONLY contain metadata (Hostname, IP, Platform, Groups).
         Do NOT include passwords or secrets in the 'devices' list.
 
         Args:
-            assistant_id: The UUID of the specific AI Assistant.
             devices: A list of dicts matching the DeviceIngest schema.
                      Example: [{"host_name": "sw1", "platform": "cisco_ios", "groups": ["core"]}]
-            clear_existing: If True, wipes previous map for this assistant before adding new ones.
+            clear_existing: If True, wipes previous map for this user before adding new ones.
 
         Returns:
             Dict: Success message and count of devices ingested.
         """
         LOG.info(
-            "Engineer: Uploading map for Assistant %s (%d devices)",
-            assistant_id,
+            "Engineer: Uploading map for User (%d devices)",
             len(devices),
         )
 
         payload = {
-            "assistant_id": assistant_id,
             "devices": devices,
             "clear_existing": clear_existing,
         }
@@ -137,32 +133,34 @@ class EngineerClient(BaseAPIClient):
     #
     #  INVENTORY RETRIEVAL (For the AI Tools)
     # ------------------------------------------------------------------ #
-    def get_device_info(
-        self, assistant_id: str, hostname: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_device_info(self, hostname: str) -> Optional[Dict[str, Any]]:
         """Matches the 'get_device_info' platform tool."""
-        LOG.info(
-            "Engineer: Fetching device '%s' for Assistant %s", hostname, assistant_id
-        )
+        LOG.info("Engineer: Fetching device '%s' for User", hostname)
 
-        # We pass assistant_id as a query param or header depending on your design.
-        # Here we use query params for GET requests.
-        resp = self._request_with_retries(
-            "GET",
-            f"/v1/engineer/inventory/device/{hostname}",
-            params={"assistant_id": assistant_id},
-        )
-        return self._parse_response(resp)
+        try:
+            resp = self._request_with_retries(
+                "GET",
+                f"/v1/engineer/inventory/device/{hostname}",
+            )
+            return self._parse_response(resp)
+        except EngineerClientError as e:
+            # Gracefully handle 404s so the LLM knows the device isn't in the map
+            if "404" in str(e):
+                return None
+            raise
 
-    def search_inventory_by_group(
-        self, assistant_id: str, group: str
-    ) -> List[Dict[str, Any]]:
+    def search_inventory_by_group(self, group: str) -> List[Dict[str, Any]]:
         """Matches the 'search_inventory_by_group' platform tool."""
-        LOG.info("Engineer: Searching group '%s' for Assistant %s", group, assistant_id)
+        LOG.info("Engineer: Searching group '%s' for User", group)
 
-        resp = self._request_with_retries(
-            "GET",
-            f"/v1/engineer/inventory/group/{group}",
-            params={"assistant_id": assistant_id},
-        )
-        return self._parse_response(resp).get("devices", [])
+        try:
+            resp = self._request_with_retries(
+                "GET",
+                f"/v1/engineer/inventory/group/{group}",
+            )
+            return self._parse_response(resp).get("devices", [])
+        except EngineerClientError as e:
+            # Gracefully handle 404s so the LLM knows the group doesn't exist
+            if "404" in str(e):
+                return []
+            raise
