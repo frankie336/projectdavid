@@ -1,3 +1,10 @@
+# [1.58.0](https://github.com/project-david-ai/projectdavid/compare/v1.57.0...v1.58.0) (2026-02-24)
+
+
+### Features
+
+* support engineer flag in AssistantsClient create_assistant method ([5e52d27](https://github.com/project-david-ai/projectdavid/commit/5e52d27c44f7d5b790929b6f93fa88423116dfb0))
+
 # [1.57.0](https://github.com/project-david-ai/projectdavid/compare/v1.56.3...v1.57.0) (2026-02-24)
 
 
