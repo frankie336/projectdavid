@@ -1,3 +1,10 @@
+# [1.57.0](https://github.com/project-david-ai/projectdavid/compare/v1.56.3...v1.57.0) (2026-02-24)
+
+
+### Features
+
+* Implement Engineering events ([a22a286](https://github.com/project-david-ai/projectdavid/commit/a22a286b991ffb7de43170eb2afb37ba9d52ca96))
+
 ## [1.56.3](https://github.com/project-david-ai/projectdavid/compare/v1.56.2...v1.56.3) (2026-02-23)
 
 
