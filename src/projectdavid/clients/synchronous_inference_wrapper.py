@@ -7,6 +7,7 @@ from typing import Any, Generator, Optional, Union
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
+from projectdavid.events import EngineerStatusEvent  # ✅ ADDED
 from projectdavid.events import (  # <--- IMPORT ADDED HERE
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
@@ -243,6 +244,7 @@ class SynchronousInferenceStream:
                                 "research_status",
                                 "scratchpad_status",
                                 "code_status",
+                                "engineer_status",  # ✅ ADDED
                                 "status",
                                 "error",
                             }
@@ -360,6 +362,17 @@ class SynchronousInferenceStream:
         # -------------------------------------------------------------
         elif c_type == "web_status":
             return WebStatusEvent(
+                run_id=run_id,
+                status=chunk.get("status", "running"),
+                tool=chunk.get("tool"),
+                message=chunk.get("message"),
+            )
+
+        # -------------------------------------------------------------
+        # ✅ ADDED: EngineerStatusEvent: emitted by NetworkEngineerMixin
+        # -------------------------------------------------------------
+        elif c_type == "engineer_status":
+            return EngineerStatusEvent(
                 run_id=run_id,
                 status=chunk.get("status", "running"),
                 tool=chunk.get("tool"),

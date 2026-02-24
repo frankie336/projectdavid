@@ -30,6 +30,7 @@ class StreamEvent:
             "CodeExecutionOutputEvent": "code_output",
             "ComputerExecutionOutputEvent": "computer_output",
             "CodeExecutionGeneratedFileEvent": "generated_file",
+            "EngineerStatusEvent": "engineer_status",  # ✅ ADDED
         }
         return mapping.get(self.__class__.__name__, "unknown")
 
@@ -155,6 +156,15 @@ class WebStatusEvent(StreamEvent):
 
     status: str
     # Added to match WebSearchMixin payloads
+    message: Optional[str] = None
+    tool: Optional[str] = None
+
+
+@dataclass
+class EngineerStatusEvent(StreamEvent):
+    """Represents a lifecycle update from the Network Engineer tools."""
+
+    status: str
     message: Optional[str] = None
     tool: Optional[str] = None
 
