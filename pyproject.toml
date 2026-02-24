@@ -1,3 +1,4 @@
+#
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -13,7 +14,6 @@ authors = [
 license = { text = "PolyForm Noncommercial License 1.0.0" }
 keywords = ["AI", "SDK", "Entities", "LLM", "Assistant"]
 requires-python = ">=3.9"
-
 
 dependencies = [
     "httpx>=0.25.2,<0.29",
