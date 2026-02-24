@@ -1,3 +1,10 @@
+## [1.60.1](https://github.com/project-david-ai/projectdavid/compare/v1.60.0...v1.60.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* scope network inventory to user_id instead of assistant_id ([a04d555](https://github.com/project-david-ai/projectdavid/commit/a04d555281dc776a5fcd5ce5eb79b45f00712900))
+
 # [1.60.0](https://github.com/project-david-ai/projectdavid/compare/v1.59.0...v1.60.0) (2026-02-24)
 
 
