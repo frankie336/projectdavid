@@ -121,7 +121,8 @@ class AssistantsClient(BaseAPIClient):
         max_turns: int = 1,
         agent_mode: bool = False,
         web_access: bool = False,
-        deep_research: bool = False,  # <--- NEW: Deep Research Toggle
+        deep_research: bool = False,
+        engineer: bool = False,  # <--- NEW: Engineering Mode Toggle
         decision_telemetry: bool = False,
         # ------------------------------
         assistant_id: Optional[str] = None,
@@ -148,7 +149,8 @@ class AssistantsClient(BaseAPIClient):
             "max_turns": max_turns,
             "agent_mode": agent_mode,
             "web_access": web_access,
-            "deep_research": deep_research,  # <--- Passed to Validator
+            "deep_research": deep_research,
+            "engineer": engineer,  # <--- NEW: Passed to Validator
             "decision_telemetry": decision_telemetry,
         }
 
@@ -207,7 +209,7 @@ class AssistantsClient(BaseAPIClient):
         """
         Update an assistant.
         Supported kwargs include: model, name, instructions, tools,
-        agent_mode, web_access, deep_research, etc.
+        agent_mode, web_access, deep_research, engineer, etc.
         """
         logging_utility.info("Updating assistant id=%s", assistant_id)
 
