@@ -1,3 +1,10 @@
+# [1.60.0](https://github.com/project-david-ai/projectdavid/compare/v1.59.0...v1.60.0) (2026-02-24)
+
+
+### Features
+
+* bridge client and service layers for inventory tools ([2b8a961](https://github.com/project-david-ai/projectdavid/commit/2b8a96188230f14b045e4b87df7df3aa64bee897))
+
 # [1.59.0](https://github.com/project-david-ai/projectdavid/compare/v1.58.0...v1.59.0) (2026-02-24)
 
 
