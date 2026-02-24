@@ -132,3 +132,37 @@ class EngineerClient(BaseAPIClient):
         )
 
         return self._parse_response(resp)
+
+    # ------------------------------------------------------------------  #
+    #
+    #  INVENTORY RETRIEVAL (For the AI Tools)
+    # ------------------------------------------------------------------ #
+    def get_device_info(
+        self, assistant_id: str, hostname: str
+    ) -> Optional[Dict[str, Any]]:
+        """Matches the 'get_device_info' platform tool."""
+        LOG.info(
+            "Engineer: Fetching device '%s' for Assistant %s", hostname, assistant_id
+        )
+
+        # We pass assistant_id as a query param or header depending on your design.
+        # Here we use query params for GET requests.
+        resp = self._request_with_retries(
+            "GET",
+            f"/v1/engineer/inventory/device/{hostname}",
+            params={"assistant_id": assistant_id},
+        )
+        return self._parse_response(resp)
+
+    def search_inventory_by_group(
+        self, assistant_id: str, group: str
+    ) -> List[Dict[str, Any]]:
+        """Matches the 'search_inventory_by_group' platform tool."""
+        LOG.info("Engineer: Searching group '%s' for Assistant %s", group, assistant_id)
+
+        resp = self._request_with_retries(
+            "GET",
+            f"/v1/engineer/inventory/group/{group}",
+            params={"assistant_id": assistant_id},
+        )
+        return self._parse_response(resp).get("devices", [])
