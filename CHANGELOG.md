@@ -1,3 +1,15 @@
+# [1.59.0](https://github.com/project-david-ai/projectdavid/compare/v1.58.0...v1.59.0) (2026-02-24)
+
+
+### Bug Fixes
+
+* NetworkDeviceHandler ([3aff2aa](https://github.com/project-david-ai/projectdavid/commit/3aff2aa9775d15450ad6ac84db05173e8ccde5a4))
+
+
+### Features
+
+* introduce zero-trust NetworkDeviceHandler with local Store & Slice ([04903e1](https://github.com/project-david-ai/projectdavid/commit/04903e181176592517ea2dd16ea3c1d9518d7e4f))
+
 # [1.58.0](https://github.com/project-david-ai/projectdavid/compare/v1.57.0...v1.58.0) (2026-02-24)
 
 
