@@ -17,6 +17,7 @@ from .events import (
     ToolCallRequestEvent,
     WebStatusEvent,
 )
+from .utils.network_device_handler import NetworkDeviceHandler
 
 __all__ = [
     "Entity",
@@ -32,4 +33,5 @@ __all__ = [
     "DecisionEvent",
     "ToolCallRequestEvent",
     "WebStatusEvent",
+    "NetworkDeviceHandler",
 ]
