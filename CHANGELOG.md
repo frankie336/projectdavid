@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/project-david-ai/projectdavid/compare/v1.62.1...v1.63.0) (2026-02-25)
+
+
+### Features
+
+* add ToolInterceptEvent pipeline and execute_delegated_action for worker tool handling ([e5e28ff](https://github.com/project-david-ai/projectdavid/commit/e5e28ff1d875372b05fd6e5c0b50aae9a35ae30c))
+
 ## [1.62.1](https://github.com/project-david-ai/projectdavid/compare/v1.62.0...v1.62.1) (2026-02-25)
 
 
