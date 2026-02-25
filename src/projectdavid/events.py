@@ -179,6 +179,34 @@ class ToolInterceptEvent(StreamEvent):
     thread_id: Optional[str] = None  # the worker's active thread
     tool_call_id: Optional[str] = None
 
+    def execute_intercepted(
+        self,
+        tool_executor: Callable[[str, Dict[str, Any]], str],
+        runs_client: Any,
+        actions_client: Any,
+        messages_client: Any,
+        assistant_id: str,  # resolved from run retrieval using self.run_id
+    ) -> bool:
+        """
+        Executes this intercepted worker tool call server-side.
+        Mirrors ToolCallRequestEvent.execute() but delegates to
+        execute_delegated_action, scoped to the worker's thread.
+
+        assistant_id should be resolved by the caller via run retrieval
+        using self.run_id before calling this method.
+        """
+        return runs_client.execute_delegated_action(
+            tool_name=self.tool_name,
+            args=self.args,
+            action_id=self.action_id,
+            thread_id=self.thread_id,
+            assistant_id=assistant_id,
+            tool_executor=tool_executor,
+            actions_client=actions_client,
+            messages_client=messages_client,
+            tool_call_id=self.tool_call_id,
+        )
+
 
 @dataclass
 class CodeStatusEvent(StreamEvent):
