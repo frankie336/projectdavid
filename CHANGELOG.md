@@ -1,3 +1,10 @@
+# [1.62.0](https://github.com/project-david-ai/projectdavid/compare/v1.61.1...v1.62.0) (2026-02-25)
+
+
+### Features
+
+* add ToolInterceptEvent for delegated worker tool call visibility ([80a6a02](https://github.com/project-david-ai/projectdavid/commit/80a6a02c7039ad914e04d189fad9aadd6ed68502))
+
 ## [1.61.1](https://github.com/project-david-ai/projectdavid/compare/v1.61.0...v1.61.1) (2026-02-25)
 
 
