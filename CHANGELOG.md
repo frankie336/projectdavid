@@ -1,3 +1,10 @@
+# [1.65.0](https://github.com/project-david-ai/projectdavid/compare/v1.64.0...v1.65.0) (2026-02-25)
+
+
+### Features
+
+* enrich ToolInterceptEvent with junior context for self-contained execution ([dae7bba](https://github.com/project-david-ai/projectdavid/commit/dae7bbab5d9f16aef06e285aacec939b9876b138))
+
 # [1.64.0](https://github.com/project-david-ai/projectdavid/compare/v1.63.0...v1.64.0) (2026-02-25)
 
 
