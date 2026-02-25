@@ -1,3 +1,10 @@
+## [1.60.3](https://github.com/project-david-ai/projectdavid/compare/v1.60.2...v1.60.3) (2026-02-25)
+
+
+### Bug Fixes
+
+* scope platform-side inventory lookups to the owning user ([348b510](https://github.com/project-david-ai/projectdavid/commit/348b510cda1f1fa9d98bbe6c31d4be6b87cf3a3f))
+
 ## [1.60.2](https://github.com/project-david-ai/projectdavid/compare/v1.60.1...v1.60.2) (2026-02-24)
 
 
