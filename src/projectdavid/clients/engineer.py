@@ -1,3 +1,4 @@
+# src/projectdavid/clients/engineer.py
 import time
 from typing import Any, Dict, List, Optional
 
@@ -7,7 +8,6 @@ from projectdavid_common.utilities.logging_service import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
 
-# Instantiate the logger
 LOG = LoggingUtility()
 
 
@@ -64,7 +64,6 @@ class EngineerClient(BaseAPIClient):
                 resp.raise_for_status()
                 return resp
             except httpx.HTTPStatusError as exc:
-                # Retry on Server Errors (5xx)
                 if (
                     exc.response.status_code in {500, 502, 503, 504}
                     and attempt < retries - 1
@@ -75,7 +74,6 @@ class EngineerClient(BaseAPIClient):
                     )
                     time.sleep(2**attempt)
                 else:
-                    # Propagate Client Errors (4xx) or final 5xx
                     LOG.error(
                         "EngineerClient Request Failed: %s %s | Status: %s",
                         method,
@@ -112,55 +110,78 @@ class EngineerClient(BaseAPIClient):
         Returns:
             Dict: Success message and count of devices ingested.
         """
-        LOG.info(
-            "Engineer: Uploading map for User (%d devices)",
-            len(devices),
-        )
+        LOG.info("Engineer: Uploading map for User (%d devices)", len(devices))
 
         payload = {
             "devices": devices,
             "clear_existing": clear_existing,
         }
 
-        # Route matches 'the_engineer_router.py'
         resp = self._request_with_retries(
             "POST", "/v1/engineer/inventory/ingest", json=payload
         )
 
         return self._parse_response(resp)
 
-    # ------------------------------------------------------------------  #
-    #
+    # ------------------------------------------------------------------ #
     #  INVENTORY RETRIEVAL (For the AI Tools)
     # ------------------------------------------------------------------ #
-    def get_device_info(self, hostname: str) -> Optional[Dict[str, Any]]:
-        """Matches the 'get_device_info' platform tool."""
+    def get_device_info(
+        self,
+        hostname: str,
+        user_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Matches the 'get_device_info' platform tool.
+
+        Args:
+            hostname:  Exact hostname of the device to look up.
+            user_id:   Optional. When the caller is using an admin API key,
+                       pass the target user's ID here so the endpoint scopes
+                       the lookup to the correct inventory bucket.
+        """
         LOG.info("Engineer: Fetching device '%s' for User", hostname)
+
+        params = {"user_id": user_id} if user_id else {}
 
         try:
             resp = self._request_with_retries(
                 "GET",
                 f"/v1/engineer/inventory/device/{hostname}",
+                params=params,
             )
             return self._parse_response(resp)
         except EngineerClientError as e:
-            # Gracefully handle 404s so the LLM knows the device isn't in the map
             if "404" in str(e):
                 return None
             raise
 
-    def search_inventory_by_group(self, group: str) -> List[Dict[str, Any]]:
-        """Matches the 'search_inventory_by_group' platform tool."""
+    def search_inventory_by_group(
+        self,
+        group: str,
+        user_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Matches the 'search_inventory_by_group' platform tool.
+
+        Args:
+            group:    Group name to search within the inventory.
+            user_id:  Optional. When the caller is using an admin API key,
+                      pass the target user's ID here so the endpoint scopes
+                      the lookup to the correct inventory bucket.
+        """
         LOG.info("Engineer: Searching group '%s' for User", group)
+
+        params = {"user_id": user_id} if user_id else {}
 
         try:
             resp = self._request_with_retries(
                 "GET",
                 f"/v1/engineer/inventory/group/{group}",
+                params=params,
             )
             return self._parse_response(resp).get("devices", [])
         except EngineerClientError as e:
-            # Gracefully handle 404s so the LLM knows the group doesn't exist
             if "404" in str(e):
                 return []
             raise
