@@ -1,3 +1,10 @@
+# [1.64.0](https://github.com/project-david-ai/projectdavid/compare/v1.63.0...v1.64.0) (2026-02-25)
+
+
+### Features
+
+* add execute_intercepted to ToolInterceptEvent ([a1b3989](https://github.com/project-david-ai/projectdavid/commit/a1b398941a8d5cecb3a3ad10f37adcd5e8a03146))
+
 # [1.63.0](https://github.com/project-david-ai/projectdavid/compare/v1.62.1...v1.63.0) (2026-02-25)
 
 
