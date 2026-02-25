@@ -7,14 +7,14 @@ from typing import Any, Generator, Optional, Union
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
-from projectdavid.events import EngineerStatusEvent  # ✅ ADDED
-from projectdavid.events import (  # <--- IMPORT ADDED HERE
+from projectdavid.events import (
     CodeExecutionGeneratedFileEvent,
     CodeExecutionOutputEvent,
     CodeStatusEvent,
     ComputerExecutionOutputEvent,
     ContentEvent,
     DecisionEvent,
+    EngineerStatusEvent,
     HotCodeEvent,
     PlanEvent,
     ReasoningEvent,
@@ -29,10 +29,29 @@ LOG = UtilsInterface.LoggingUtility()
 
 
 class SynchronousInferenceStream:
-    # -------------------------------------------------------------
-    # FIXED: Removed _GLOBAL_LOOP to prevent thread collision and
-    # "loop already running" errors.
-    # -------------------------------------------------------------
+    """
+    A per-request inference stream.
+
+    IMPORTANT — Thread Safety:
+    --------------------------
+    This class must be instantiated fresh for every request. It must NOT be
+    stored as a shared singleton on the client (e.g. as a cached property).
+    Sharing an instance across concurrent requests causes .setup() to race-
+    overwrite thread_id, run_id, and other fields mid-stream.
+
+    Correct usage in Flask route:
+        sync_stream = SynchronousInferenceStream.for_request(
+            inference=client.inference,
+            runs_client=client.runs,
+            actions_client=client.actions,
+            messages_client=client.messages,
+            assistants_client=client.assistants,
+        )
+        sync_stream.setup(thread_id=..., assistant_id=..., message_id=...,
+                          run_id=..., api_key=...)
+        for event in sync_stream.stream_events(model=...):
+            ...
+    """
 
     def __init__(self, inference) -> None:
         self.inference_client = inference
@@ -49,6 +68,31 @@ class SynchronousInferenceStream:
         self.assistants_client: Any = None
 
         self.validator = ToolValidator()
+
+    # ------------------------------------------------------------------
+    # Factory: preferred way to create a ready-to-use, isolated instance
+    # ------------------------------------------------------------------
+    @classmethod
+    def for_request(
+        cls,
+        inference: Any,
+        runs_client: Any,
+        actions_client: Any,
+        messages_client: Any,
+        assistants_client: Any,
+    ) -> "SynchronousInferenceStream":
+        """
+        Create a fresh, fully-bound instance for a single request.
+        Avoids shared-state races between concurrent requests.
+        """
+        instance = cls(inference)
+        instance.bind_clients(
+            runs_client=runs_client,
+            actions_client=actions_client,
+            messages_client=messages_client,
+            assistants_client=assistants_client,
+        )
+        return instance
 
     def setup(
         self,
@@ -78,7 +122,6 @@ class SynchronousInferenceStream:
 
     def stream_chunks(
         self,
-        # provider: str,
         model: str,
         *,
         api_key: Optional[str] = None,
@@ -87,23 +130,26 @@ class SynchronousInferenceStream:
     ) -> Generator[dict, None, None]:
         resolved_api_key = api_key or self.api_key
 
+        # Capture instance fields into locals NOW so a concurrent .setup()
+        # on a (mis-)shared instance cannot mutate them mid-stream.
+        thread_id = self.thread_id
+        message_id = self.message_id
+        run_id = self.run_id
+        assistant_id = self.assistant_id
+
         async def _stream_chunks_async():
-            # This will use the UPDATED InferenceClient which creates
-            # a fresh httpx client bound to the current loop.
             async for chk in self.inference_client.stream_inference_response(
-                # provider=provider,
                 model=model,
                 api_key=resolved_api_key,
-                thread_id=self.thread_id,
-                message_id=self.message_id,
-                run_id=self.run_id,
-                assistant_id=self.assistant_id,
+                thread_id=thread_id,
+                message_id=message_id,
+                run_id=run_id,
+                assistant_id=assistant_id,
                 timeout=timeout_per_chunk,
             ):
                 yield chk
 
         agen = _stream_chunks_async().__aiter__()
-
         # ---------------------------------------------------------
         # LOOP DETECTION LOGIC
         # ---------------------------------------------------------
@@ -111,13 +157,9 @@ class SynchronousInferenceStream:
         is_new_loop = False
 
         try:
-            # Check if there is already a running loop (e.g. main thread or async worker)
             active_loop = asyncio.get_running_loop()
-            # If a loop exists, we MUST apply nest_asyncio to block on it
             nest_asyncio.apply(active_loop)
         except RuntimeError:
-            # No running loop (e.g. inside a standard Thread like asyncio.to_thread)
-            # Create a FRESH loop specifically for this thread
             active_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(active_loop)
             is_new_loop = True
@@ -125,12 +167,11 @@ class SynchronousInferenceStream:
         try:
             while True:
                 try:
-                    # Execute the async generator step synchronously on the chosen loop
                     chunk = active_loop.run_until_complete(
                         asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                     )
 
-                    chunk["run_id"] = self.run_id
+                    chunk["run_id"] = run_id
                     if suppress_fc and chunk.get("type") == "call_arguments":
                         continue
                     yield chunk
@@ -141,10 +182,8 @@ class SynchronousInferenceStream:
                     LOG.error(f"[SyncStream] Streaming error: {exc}", exc_info=True)
                     break
         finally:
-            # Only close the loop if we created it for this specific call
             if is_new_loop and active_loop:
                 try:
-                    # Cancel pending tasks to avoid "Task was destroyed but it is pending!"
                     pending = asyncio.all_tasks(active_loop)
                     for task in pending:
                         task.cancel()
@@ -183,7 +222,6 @@ class SynchronousInferenceStream:
             validation_failed_this_turn = False
 
             for chunk in self.stream_chunks(
-                # provider=provider,
                 model=model,
                 timeout_per_chunk=timeout_per_chunk,
                 suppress_fc=True,
@@ -228,15 +266,12 @@ class SynchronousInferenceStream:
         """Maps raw API chunks to Typed Event instances."""
 
         # --- 1. ENFORCE CONTRACT: UNWRAP MIXIN JSON ---
-        # Mixins emit raw JSON strings. If the stream multiplexer incorrectly wraps
-        # them as LLM 'content', we must unwrap them to fulfill the Event Contract.
         if chunk.get("type") == "content" and isinstance(chunk.get("content"), str):
             text = chunk["content"].strip()
             if text.startswith("{") and text.endswith("}"):
                 with suppress(Exception):
                     parsed = json.loads(text)
                     if isinstance(parsed, dict):
-                        # Only promote recognized system events defined in the Contract
                         if (
                             parsed.get("type")
                             in {
@@ -244,7 +279,7 @@ class SynchronousInferenceStream:
                                 "research_status",
                                 "scratchpad_status",
                                 "code_status",
-                                "engineer_status",  # ✅ ADDED
+                                "engineer_status",
                                 "status",
                                 "error",
                             }
@@ -253,12 +288,10 @@ class SynchronousInferenceStream:
                             chunk = parsed
 
         # --- 2. EXTRACT NESTED PAYLOADS ---
-        # delegation, code, and computer executions nest their payloads in a "chunk" key.
         stream_type = chunk.get("type", chunk.get("stream_type"))
         if stream_type in {"code_execution", "computer_execution", "delegation"}:
             payload = chunk.get("chunk", {})
             if isinstance(payload, dict):
-                # Ensure run_id propagates down to the extracted payload
                 payload.setdefault("run_id", chunk.get("run_id"))
                 chunk = payload
 
@@ -308,7 +341,6 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "scratchpad_status":
-
             return ScratchpadEvent(
                 run_id=run_id,
                 operation=chunk.get("operation", "unknown"),
@@ -343,11 +375,6 @@ class SynchronousInferenceStream:
                 url=chunk.get("url"),
             )
 
-        # -------------------------------------------------------------
-        # ResearchStatusEvent: emitted by DelegationMixin as
-        # type='research_status'. Distinct from ScratchpadStatusEvent
-        # (scratchpad ops) and CodeStatusEvent (sandbox lifecycle).
-        # -------------------------------------------------------------
         elif c_type == "research_status":
             return ResearchStatusEvent(
                 run_id=run_id,
@@ -356,10 +383,6 @@ class SynchronousInferenceStream:
                 tool=chunk.get("tool"),
             )
 
-        # -------------------------------------------------------------
-        # WebStatusEvent: emitted by WebSearchMixin as type='web_status'.
-        # Maps all three payload fields — status, tool, message.
-        # -------------------------------------------------------------
         elif c_type == "web_status":
             return WebStatusEvent(
                 run_id=run_id,
@@ -368,9 +391,6 @@ class SynchronousInferenceStream:
                 message=chunk.get("message"),
             )
 
-        # -------------------------------------------------------------
-        # ✅ ADDED: EngineerStatusEvent: emitted by NetworkEngineerMixin
-        # -------------------------------------------------------------
         elif c_type == "engineer_status":
             return EngineerStatusEvent(
                 run_id=run_id,
@@ -379,10 +399,6 @@ class SynchronousInferenceStream:
                 message=chunk.get("message"),
             )
 
-        # -------------------------------------------------------------
-        # error events collapse to a WebStatusEvent with status='failed'
-        # so consumers have a single type to handle for terminal errors.
-        # -------------------------------------------------------------
         elif c_type == "error":
             return WebStatusEvent(
                 run_id=run_id,
