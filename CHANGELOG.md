@@ -1,3 +1,10 @@
+## [1.61.1](https://github.com/project-david-ai/projectdavid/compare/v1.61.0...v1.61.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* prevent thread-id bleed between concurrent requests ([8ef4b98](https://github.com/project-david-ai/projectdavid/commit/8ef4b98efc79b65ad561a7e220f2dd79256320dc))
+
 # [1.61.0](https://github.com/project-david-ai/projectdavid/compare/v1.60.3...v1.61.0) (2026-02-25)
 
 
