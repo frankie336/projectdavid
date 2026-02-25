@@ -280,6 +280,7 @@ class SynchronousInferenceStream:
                                 "scratchpad_status",
                                 "code_status",
                                 "engineer_status",
+                                "tool_intercept",
                                 "status",
                                 "error",
                             }
@@ -397,6 +398,18 @@ class SynchronousInferenceStream:
                 status=chunk.get("status", "running"),
                 tool=chunk.get("tool"),
                 message=chunk.get("message"),
+            )
+
+        elif c_type == "tool_intercept":
+            from projectdavid.events import ToolInterceptEvent
+
+            return ToolInterceptEvent(
+                run_id=run_id,
+                tool_name=chunk.get("tool_name", ""),
+                args=chunk.get("args", {}),
+                action_id=chunk.get("action_id"),
+                origin=chunk.get("origin"),
+                thread_id=chunk.get("thread_id"),
             )
 
         elif c_type == "error":
