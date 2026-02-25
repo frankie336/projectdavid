@@ -32,6 +32,7 @@ class StreamEvent:
             "CodeExecutionGeneratedFileEvent": "generated_file",
             "EngineerStatusEvent": "engineer_status",
             "ToolInterceptEvent": "tool_intercept",
+            "CodeStatusEvent": "code_status",  # <-- Added missing registry entry
         }
         return mapping.get(self.__class__.__name__, "unknown")
 
@@ -158,9 +159,12 @@ class WebStatusEvent(StreamEvent):
 class EngineerStatusEvent(StreamEvent):
     """Represents a lifecycle update from the Network Engineer tools."""
 
-    status: str
-    message: Optional[str] = None
+    activity: str
     tool: Optional[str] = None
+    state: str = "in_progress"
+
+    def __str__(self):
+        return self.activity
 
 
 @dataclass

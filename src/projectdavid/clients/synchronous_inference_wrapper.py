@@ -396,9 +396,9 @@ class SynchronousInferenceStream:
         elif c_type == "engineer_status":
             return EngineerStatusEvent(
                 run_id=run_id,
-                status=chunk.get("status", "running"),
+                activity=chunk.get("activity") or chunk.get("message", ""),
+                state=chunk.get("state") or chunk.get("status", "in_progress"),
                 tool=chunk.get("tool"),
-                message=chunk.get("message"),
             )
 
         elif c_type == "tool_intercept":
