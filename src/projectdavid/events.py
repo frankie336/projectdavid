@@ -165,19 +165,14 @@ class EngineerStatusEvent(StreamEvent):
 
 @dataclass
 class ToolInterceptEvent(StreamEvent):
-    """
-    Represents a tool call fired by a delegated worker (e.g. Junior Engineer).
-    Emitted by the delegation handler when it intercepts a ToolCallRequestEvent
-    from the worker's stream, allowing the frontend to observe and act on it
-    independently from lifecycle status events.
-    """
-
     tool_name: str
     args: Dict[str, Any]
     action_id: Optional[str] = None
-    origin: Optional[str] = None  # e.g. "junior_engineer"
-    thread_id: Optional[str] = None  # the worker's active thread
+    origin: Optional[str] = None
+    thread_id: Optional[str] = None
     tool_call_id: Optional[str] = None
+    origin_run_id: Optional[str] = None  # ← NEW: junior's ephemeral run_id
+    origin_assistant_id: Optional[str] = None  # ← NEW: junior's ephemeral assistant_id
 
     def execute_intercepted(
         self,
@@ -185,22 +180,24 @@ class ToolInterceptEvent(StreamEvent):
         runs_client: Any,
         actions_client: Any,
         messages_client: Any,
-        assistant_id: str,  # resolved from run retrieval using self.run_id
     ) -> bool:
         """
         Executes this intercepted worker tool call server-side.
-        Mirrors ToolCallRequestEvent.execute() but delegates to
-        execute_delegated_action, scoped to the worker's thread.
-
-        assistant_id should be resolved by the caller via run retrieval
-        using self.run_id before calling this method.
+        Mirrors ToolCallRequestEvent.execute() but scoped to the worker's
+        thread and assistant, both carried on the event itself.
         """
+        if not self.origin_assistant_id:
+            raise ValueError(
+                "ToolInterceptEvent is missing origin_assistant_id. "
+                "Ensure the delegation handler populates it before yielding."
+            )
+
         return runs_client.execute_delegated_action(
             tool_name=self.tool_name,
             args=self.args,
             action_id=self.action_id,
             thread_id=self.thread_id,
-            assistant_id=assistant_id,
+            assistant_id=self.origin_assistant_id,  # ← resolved from self, no external lookup
             tool_executor=tool_executor,
             actions_client=actions_client,
             messages_client=messages_client,

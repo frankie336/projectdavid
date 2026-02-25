@@ -402,6 +402,7 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "tool_intercept":
+
             return ToolInterceptEvent(
                 run_id=run_id,
                 tool_name=chunk.get("tool_name", ""),
@@ -410,6 +411,8 @@ class SynchronousInferenceStream:
                 origin=chunk.get("origin"),
                 thread_id=chunk.get("thread_id"),
                 tool_call_id=chunk.get("tool_call_id"),
+                origin_run_id=chunk.get("origin_run_id"),  # ← NEW
+                origin_assistant_id=chunk.get("origin_assistant_id"),  # ← NEW
             )
 
         elif c_type == "error":
