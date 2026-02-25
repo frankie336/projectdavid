@@ -1,3 +1,10 @@
+# [1.61.0](https://github.com/project-david-ai/projectdavid/compare/v1.60.3...v1.61.0) (2026-02-25)
+
+
+### Features
+
+* Update to projectdavid_common==0.30.0 ([d8344b2](https://github.com/project-david-ai/projectdavid/commit/d8344b297aa9c756a93a9445a9d88dcd80361f4e))
+
 ## [1.60.3](https://github.com/project-david-ai/projectdavid/compare/v1.60.2...v1.60.3) (2026-02-25)
 
 
