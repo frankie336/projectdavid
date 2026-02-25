@@ -589,6 +589,106 @@ class RunsClient(BaseAPIClient):
                 )
                 return False
 
+    def execute_delegated_action(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        action_id: str,
+        thread_id: str,
+        assistant_id: str,
+        tool_executor: Callable[[str, Dict[str, Any]], str],
+        actions_client: Any,
+        messages_client: Any,
+        tool_call_id: Optional[str] = None,
+    ) -> bool:
+        """
+        Executes a tool call on behalf of a delegated worker (e.g. Junior Engineer).
+
+        Mirrors execute_pending_action but operates on the worker's thread rather
+        than the main run's thread. Called server-side when the delegation handler
+        intercepts a ToolCallRequestEvent from the worker's stream — filling the
+        role that a consumer client would normally play.
+
+        After this returns True, the caller is responsible for triggering the
+        worker's next inference turn (e.g. by creating a new run on thread_id).
+        """
+        if not callable(tool_executor):
+            raise TypeError("tool_executor must be a callable function.")
+
+        if not action_id:
+            LOG.error(
+                f"[SDK] execute_delegated_action: Missing action_id. Cannot execute."
+            )
+            return False
+
+        LOG.info(
+            f"[SDK] Executing delegated '{tool_name}' "
+            f"(Action: {action_id} | Thread: {thread_id} | Call: {tool_call_id})"
+        )
+
+        try:
+            # 1. Mark Action as Processing
+            actions_client.update_action(action_id, status="processing")
+
+            # 2. Execute the tool
+            result_content = tool_executor(tool_name, args)
+
+            if not isinstance(result_content, str):
+                result_content = json.dumps(result_content)
+
+            # 3. Submit output to the worker's thread
+            messages_client.submit_tool_output(
+                thread_id=thread_id,
+                tool_id=action_id,
+                tool_call_id=tool_call_id,
+                content=result_content,
+                role="tool",
+                assistant_id=assistant_id,
+            )
+
+            # 4. Mark Action as Completed
+            actions_client.update_action(action_id, status=StatusEnum.completed.value)
+
+            LOG.info(f"[SDK] Delegated tool '{tool_name}' completed successfully.")
+            return True
+
+        except Exception as e:
+            raw_error = str(e)
+
+            instructional_hint = (
+                f"Tool Execution Error for '{tool_name}': {raw_error}. "
+                "Instructions: If this is a parameter error, correct your JSON arguments and retry. "
+                "If it is a system/network error, you may attempt to retry once or notify the user."
+            )
+
+            LOG.error(
+                f"[SDK] Delegated tool '{tool_name}' failed. Injecting instructional hint."
+            )
+
+            try:
+                messages_client.submit_tool_output(
+                    thread_id=thread_id,
+                    tool_id=action_id,
+                    tool_call_id=tool_call_id,
+                    content=json.dumps(
+                        {"error": instructional_hint, "retry_allowed": True}
+                    ),
+                    role="tool",
+                    assistant_id=assistant_id,
+                )
+
+                actions_client.update_action(action_id, status=StatusEnum.failed.value)
+
+                # Return True to allow the worker's correction turn to fire
+                LOG.info(f"[SDK] Delegated error feedback injected for '{tool_name}'.")
+                return True
+
+            except Exception as critical_e:
+                LOG.error(
+                    f"[SDK] Critical failure submitting delegated error feedback: {critical_e}"
+                )
+                return False
+
     # TODO: I think we need to decommission this, not used.
     def watch_run_events(
         self,

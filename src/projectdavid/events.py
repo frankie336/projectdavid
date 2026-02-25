@@ -177,6 +177,7 @@ class ToolInterceptEvent(StreamEvent):
     action_id: Optional[str] = None
     origin: Optional[str] = None  # e.g. "junior_engineer"
     thread_id: Optional[str] = None  # the worker's active thread
+    tool_call_id: Optional[str] = None
 
 
 @dataclass

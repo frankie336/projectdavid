@@ -22,6 +22,7 @@ from projectdavid.events import (
     ScratchpadEvent,
     StreamEvent,
     ToolCallRequestEvent,
+    ToolInterceptEvent,
     WebStatusEvent,
 )
 
@@ -401,8 +402,6 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "tool_intercept":
-            from projectdavid.events import ToolInterceptEvent
-
             return ToolInterceptEvent(
                 run_id=run_id,
                 tool_name=chunk.get("tool_name", ""),
@@ -410,6 +409,7 @@ class SynchronousInferenceStream:
                 action_id=chunk.get("action_id"),
                 origin=chunk.get("origin"),
                 thread_id=chunk.get("thread_id"),
+                tool_call_id=chunk.get("tool_call_id"),
             )
 
         elif c_type == "error":
