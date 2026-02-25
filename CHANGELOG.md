@@ -1,3 +1,10 @@
+## [1.62.1](https://github.com/project-david-ai/projectdavid/compare/v1.62.0...v1.62.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* wire ToolInterceptEvent through _map_chunk_to_event pipeline ([942dbef](https://github.com/project-david-ai/projectdavid/commit/942dbef919eb6b46732fc7f261cc3010855a96b0))
+
 # [1.62.0](https://github.com/project-david-ai/projectdavid/compare/v1.61.1...v1.62.0) (2026-02-25)
 
 
