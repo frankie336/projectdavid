@@ -1,3 +1,10 @@
+## [1.67.1](https://github.com/project-david-ai/projectdavid/compare/v1.67.0...v1.67.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* delete serializers.py ([5a57ace](https://github.com/project-david-ai/projectdavid/commit/5a57ace14293261f21f7e7016fe9039a17a893e4))
+
 # [1.67.0](https://github.com/project-david-ai/projectdavid/compare/v1.66.0...v1.67.0) (2026-02-26)
 
 
