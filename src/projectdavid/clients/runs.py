@@ -785,3 +785,42 @@ class RunsClient(BaseAPIClient):
             last_id=runs[-1].id if runs else None,
             has_more=False,
         )
+
+    def update_run_fields(self, run_id: str, **kwargs) -> ent_validator.Run:
+        """
+        Targeted mid-run lifecycle field update.
+
+        Passes kwargs directly to the PATCH /v1/runs/{run_id}/fields endpoint.
+        The server-side MUTABLE_RUN_FIELDS whitelist silently drops any keys
+        that are not safe to update mid-run.
+
+        Designed for use inside process_conversation via asyncio.to_thread:
+
+            await asyncio.to_thread(
+                self.project_david_client.runs.update_run_fields,
+                run_id,
+                started_at=int(time.time()),
+                current_turn=1,
+            )
+
+        Safe fields: started_at, completed_at, failed_at, last_error,
+                     incomplete_details, current_turn, usage, meta_data
+        """
+        logging_utility.info("Patching run %s fields: %s", run_id, list(kwargs.keys()))
+        try:
+            resp = self.client.patch(f"/v1/runs/{run_id}/fields", json=kwargs)
+            resp.raise_for_status()
+            return ent_validator.Run(**resp.json())
+        except ValidationError as e:
+            logging_utility.error("Validation error patching run fields: %s", e.json())
+            raise ValueError(f"Validation error: {e}") from e
+        except httpx.HTTPStatusError as e:
+            logging_utility.error(
+                "HTTP error patching run %s fields: %s", run_id, str(e)
+            )
+            raise
+        except Exception as e:
+            logging_utility.error(
+                "Unexpected error patching run %s fields: %s", run_id, str(e)
+            )
+            raise
