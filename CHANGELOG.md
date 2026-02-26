@@ -1,3 +1,10 @@
+# [1.67.0](https://github.com/project-david-ai/projectdavid/compare/v1.66.0...v1.67.0) (2026-02-26)
+
+
+### Features
+
+* add update_run_fields for targeted mid-run lifecycle writes ([e128ee6](https://github.com/project-david-ai/projectdavid/commit/e128ee6ede6c052648b36f02cda318da98f592a1))
+
 # [1.66.0](https://github.com/project-david-ai/projectdavid/compare/v1.65.0...v1.66.0) (2026-02-25)
 
 
