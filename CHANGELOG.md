@@ -1,3 +1,10 @@
+# [1.66.0](https://github.com/project-david-ai/projectdavid/compare/v1.65.0...v1.66.0) (2026-02-25)
+
+
+### Features
+
+* Finalize Engineering Event Mapping and Fix Missing Event Registrations ([e4c25a0](https://github.com/project-david-ai/projectdavid/commit/e4c25a0d3377e40a97198e57c92838df8b418d67))
+
 # [1.65.0](https://github.com/project-david-ai/projectdavid/compare/v1.64.0...v1.65.0) (2026-02-25)
 
 
