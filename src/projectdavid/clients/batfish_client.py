@@ -17,7 +17,7 @@ class BatfishClient(BaseAPIClient):
         super().__init__(base_url=base_url, api_key=api_key)
         logging_utility.info("BatfishClient initialised → %s", self.base_url)
 
-    # ── CREATE — new snapshot, 409 if name already exists ────────────────────
+    # ── SNAPSHOT MANAGEMENT ───────────────────────────────────────────────────
 
     def create_snapshot(
         self,
@@ -27,13 +27,7 @@ class BatfishClient(BaseAPIClient):
         """
         Create a new snapshot. Server generates and returns the opaque id.
         Store result.id — use it for all subsequent calls.
-
         Raises 409 if snapshot_name already exists for this user.
-        Use refresh_snapshot(id) to re-ingest an existing snapshot.
-
-        Args:
-            snapshot_name: Human label e.g. "incident_001"
-            configs_root:  Override config root (server-side path, optional)
         """
         params = {"snapshot_name": snapshot_name}
         if configs_root:
@@ -48,20 +42,14 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    # ── REFRESH — re-ingest existing snapshot by id ───────────────────────────
-
     def refresh_snapshot(
         self,
         snapshot_id: str,
         configs_root: Optional[str] = None,
     ) -> BatfishSnapshotRead:
         """
-        Re-ingest configs for an existing snapshot.
+        Re-ingest configs for an existing snapshot by id.
         Raises 404 if snapshot_id not found for this user.
-
-        Args:
-            snapshot_id:  The id returned by create_snapshot()
-            configs_root: Override config root (server-side path, optional)
         """
         params = {}
         if configs_root:
@@ -77,8 +65,6 @@ class BatfishClient(BaseAPIClient):
                 "refresh_snapshot HTTP %d: %s", e.response.status_code, e.response.text
             )
             raise
-
-    # ── READ / LIST / DELETE ──────────────────────────────────────────────────
 
     def get_snapshot(self, snapshot_id: str) -> Optional[BatfishSnapshotRead]:
         """Get a single snapshot record by its opaque id. Returns None if not found."""
@@ -124,10 +110,6 @@ class BatfishClient(BaseAPIClient):
         """
         Run a single named RCA tool against a loaded snapshot.
         This is what the LLM agent calls per function call.
-
-        Args:
-            snapshot_id: The id returned by create_snapshot()
-            tool_name:   One of the 8 RCA tools e.g. "get_bgp_failures"
         """
         try:
             r = self.client.post(
@@ -145,7 +127,11 @@ class BatfishClient(BaseAPIClient):
             raise
 
     def run_all_tools(self, snapshot_id: str) -> Dict[str, Any]:
-        """Run all RCA tools concurrently server-side. Returns dict keyed by tool name."""
+        """
+        Run all 9 RCA tools concurrently server-side.
+        Includes get_enriched_topology automatically.
+        Returns dict keyed by tool name.
+        """
         try:
             r = self.client.post(f"/v1/batfish/snapshots/{snapshot_id}/tools/all")
             r.raise_for_status()
@@ -153,6 +139,34 @@ class BatfishClient(BaseAPIClient):
         except httpx.HTTPStatusError as e:
             logging_utility.error(
                 "run_all_tools HTTP %d: %s", e.response.status_code, e.response.text
+            )
+            raise
+
+    def get_enriched_topology(self, snapshot_id: str) -> Dict[str, Any]:
+        """
+        Fused L3 topology view — protocol source, MTU, and OSPF/BGP session
+        state per subnet. Anomaly-first: healthy subnets suppressed.
+
+        Best used as the LLM's first topology call — replaces the need to
+        cross-reference get_logical_topology_with_mtu + get_ospf_failures.
+
+        Args:
+            snapshot_id: The id returned by create_snapshot()
+
+        Returns:
+            { "tool": "get_enriched_topology", "snapshot_id": ..., "result": ... }
+        """
+        try:
+            r = self.client.post(
+                f"/v1/batfish/snapshots/{snapshot_id}/tools/get_enriched_topology"
+            )
+            r.raise_for_status()
+            return r.json()
+        except httpx.HTTPStatusError as e:
+            logging_utility.error(
+                "get_enriched_topology HTTP %d: %s",
+                e.response.status_code,
+                e.response.text,
             )
             raise
 
