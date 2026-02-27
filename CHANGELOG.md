@@ -1,3 +1,10 @@
+## [1.69.2](https://github.com/project-david-ai/projectdavid/compare/v1.69.1...v1.69.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* prefix all client URLs with /v1/ to match api_router mount point ([aa5061d](https://github.com/project-david-ai/projectdavid/commit/aa5061de2b81bb4682d07fddba9acbe326a93d23))
+
 ## [1.69.1](https://github.com/project-david-ai/projectdavid/compare/v1.69.0...v1.69.1) (2026-02-27)
 
 
