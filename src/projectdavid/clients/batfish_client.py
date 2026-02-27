@@ -28,13 +28,20 @@ class BatfishClient(BaseAPIClient):
         Ingest configs and load snapshot into Batfish.
         The server generates the opaque ID — store `result.id` for all
         subsequent get/delete/tool calls.
+
+        Args:
+            snapshot_name: Human label e.g. "incident_001"
+            configs_root:  Override config root path (server-side path, optional)
+
+        Returns:
+            BatfishSnapshotRead — use .id for all subsequent calls
         """
         params = {"snapshot_name": snapshot_name}
         if configs_root:
             params["configs_root"] = configs_root
 
         try:
-            r = self.client.post("/batfish/snapshots", params=params)
+            r = self.client.post("/v1/batfish/snapshots", params=params)
             r.raise_for_status()
             return BatfishSnapshotRead.model_validate(r.json())
         except httpx.HTTPStatusError as e:
@@ -46,7 +53,7 @@ class BatfishClient(BaseAPIClient):
     def list_snapshots(self) -> List[BatfishSnapshotRead]:
         """List all snapshots owned by the authenticated caller."""
         try:
-            r = self.client.get("/batfish/snapshots")
+            r = self.client.get("/v1/batfish/snapshots")
             r.raise_for_status()
             return [BatfishSnapshotRead.model_validate(s) for s in r.json()]
         except httpx.HTTPStatusError as e:
@@ -58,7 +65,7 @@ class BatfishClient(BaseAPIClient):
     def get_snapshot(self, snapshot_id: str) -> Optional[BatfishSnapshotRead]:
         """Get a single snapshot record by its opaque ID. Returns None if not found."""
         try:
-            r = self.client.get(f"/batfish/snapshots/{snapshot_id}")
+            r = self.client.get(f"/v1/batfish/snapshots/{snapshot_id}")
             r.raise_for_status()
             return BatfishSnapshotRead.model_validate(r.json())
         except httpx.HTTPStatusError as e:
@@ -72,7 +79,7 @@ class BatfishClient(BaseAPIClient):
     def delete_snapshot(self, snapshot_id: str) -> bool:
         """Soft-delete a snapshot by its opaque ID."""
         try:
-            r = self.client.delete(f"/batfish/snapshots/{snapshot_id}")
+            r = self.client.delete(f"/v1/batfish/snapshots/{snapshot_id}")
             r.raise_for_status()
             return True
         except httpx.HTTPStatusError as e:
@@ -84,9 +91,18 @@ class BatfishClient(BaseAPIClient):
     # ── Tool calls ────────────────────────────────────────────────────────────
 
     def run_tool(self, snapshot_id: str, tool_name: str) -> Dict[str, Any]:
-        """Run a single named RCA tool against a loaded snapshot."""
+        """
+        Run a single named RCA tool against a loaded snapshot.
+        This is the endpoint the LLM agent hits per function call.
+
+        Args:
+            snapshot_id: The id returned by refresh_snapshot()
+            tool_name:   One of the 8 RCA tools e.g. "get_bgp_failures"
+        """
         try:
-            r = self.client.post(f"/batfish/snapshots/{snapshot_id}/tools/{tool_name}")
+            r = self.client.post(
+                f"/v1/batfish/snapshots/{snapshot_id}/tools/{tool_name}"
+            )
             r.raise_for_status()
             return r.json()
         except httpx.HTTPStatusError as e:
@@ -99,9 +115,12 @@ class BatfishClient(BaseAPIClient):
             raise
 
     def run_all_tools(self, snapshot_id: str) -> Dict[str, Any]:
-        """Run all RCA tools concurrently server-side."""
+        """
+        Run all RCA tools concurrently server-side.
+        Returns dict keyed by tool name.
+        """
         try:
-            r = self.client.post(f"/batfish/snapshots/{snapshot_id}/tools/all")
+            r = self.client.post(f"/v1/batfish/snapshots/{snapshot_id}/tools/all")
             r.raise_for_status()
             return r.json()
         except httpx.HTTPStatusError as e:
@@ -113,7 +132,7 @@ class BatfishClient(BaseAPIClient):
     def list_tools(self) -> List[str]:
         """Return the list of available RCA tool names."""
         try:
-            r = self.client.get("/batfish/tools")
+            r = self.client.get("/v1/batfish/tools")
             r.raise_for_status()
             return r.json().get("tools", [])
         except httpx.HTTPStatusError as e:
@@ -127,7 +146,7 @@ class BatfishClient(BaseAPIClient):
     def check_health(self) -> Dict[str, Any]:
         """Check if the Batfish backend is reachable."""
         try:
-            r = self.client.get("/batfish/health")
+            r = self.client.get("/v1/batfish/health")
             r.raise_for_status()
             return r.json()
         except httpx.HTTPStatusError as e:
