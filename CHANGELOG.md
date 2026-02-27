@@ -1,3 +1,10 @@
+# [1.71.0](https://github.com/project-david-ai/projectdavid/compare/v1.70.0...v1.71.0) (2026-02-27)
+
+
+### Features
+
+* get_enriched_topology ([72ab056](https://github.com/project-david-ai/projectdavid/commit/72ab0560b7b699e6fefcb918746e76284992fe78))
+
 # [1.70.0](https://github.com/project-david-ai/projectdavid/compare/v1.69.2...v1.70.0) (2026-02-27)
 
 
