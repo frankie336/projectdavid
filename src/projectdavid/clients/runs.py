@@ -689,7 +689,6 @@ class RunsClient(BaseAPIClient):
                 )
                 return False
 
-    # TODO: I think we need to decommission this, not used.
     def watch_run_events(
         self,
         run_id: str,
