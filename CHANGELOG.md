@@ -1,3 +1,10 @@
+# [1.68.0](https://github.com/project-david-ai/projectdavid/compare/v1.67.1...v1.68.0) (2026-02-27)
+
+
+### Features
+
+* add Batfish SDK client for network RCA pipeline ([9380b45](https://github.com/project-david-ai/projectdavid/commit/9380b4532c775fe9b1f6af2e6ebf817e8d47153b))
+
 ## [1.67.1](https://github.com/project-david-ai/projectdavid/compare/v1.67.0...v1.67.1) (2026-02-26)
 
 
