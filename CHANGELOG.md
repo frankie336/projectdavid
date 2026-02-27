@@ -1,3 +1,11 @@
+## [1.69.1](https://github.com/project-david-ai/projectdavid/compare/v1.69.0...v1.69.1) (2026-02-27)
+
+
+### Bug Fixes
+
+* Expose batfish ([7d32fdd](https://github.com/project-david-ai/projectdavid/commit/7d32fdd00ddb29b21a09a21b06f521ff6c3432c3))
+* update projectdavid-common to 0.34.0 ([01f796c](https://github.com/project-david-ai/projectdavid/commit/01f796c79afe492ed5249e11ee4c6367a9241898))
+
 # [1.69.0](https://github.com/project-david-ai/projectdavid/compare/v1.68.0...v1.69.0) (2026-02-27)
 
 
