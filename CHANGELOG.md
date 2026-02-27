@@ -1,3 +1,10 @@
+# [1.70.0](https://github.com/project-david-ai/projectdavid/compare/v1.69.2...v1.70.0) (2026-02-27)
+
+
+### Features
+
+* add BatfishClient with create/refresh split and typed responses ([a2e0a18](https://github.com/project-david-ai/projectdavid/commit/a2e0a1807cbc035770100a2cfd9637cdea76b9df))
+
 ## [1.69.2](https://github.com/project-david-ai/projectdavid/compare/v1.69.1...v1.69.2) (2026-02-27)
 
 
