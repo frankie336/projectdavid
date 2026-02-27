@@ -8,6 +8,7 @@ from projectdavid_common import UtilsInterface
 from .clients.actions_client import ActionsClient
 from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
+from .clients.batfish_client import BatfishClient
 from .clients.computer import ComputerClient
 from .clients.engineer import EngineerClient
 from .clients.files_client import FileClient
@@ -77,6 +78,7 @@ class Entity:
         self._inference_client: Optional[InferenceClient] = None
         self._file_client: Optional[FileClient] = None
         self._vectors_client: Optional[VectorStoreClient] = None
+        self._bat_fish_client: Optional[BatfishClient] = None
         self._api_key_client: Optional[ApiKeysClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
@@ -197,6 +199,16 @@ class Entity:
             )
 
         return self._vectors_client
+
+    @property
+    def batfish(self) -> BatfishClient:
+        if self._bat_fish_client is None:
+            self._bat_fish_client = BatfishClient(
+                base_url=self.base_url,
+                api_key=self.api_key,
+            )
+
+        return self._bat_fish_client
 
     @property
     def engineer(self) -> EngineerClient:
