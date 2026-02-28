@@ -1,3 +1,10 @@
+## [1.71.2](https://github.com/project-david-ai/projectdavid/compare/v1.71.1...v1.71.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* add user_id propagation to BatfishClient methods for admin override orchestration ([9c91f53](https://github.com/project-david-ai/projectdavid/commit/9c91f53d3bdc11d367cc4c53877fa1a904e806d2))
+
 ## [1.71.1](https://github.com/project-david-ai/projectdavid/compare/v1.71.0...v1.71.1) (2026-02-27)
 
 
