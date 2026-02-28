@@ -23,6 +23,7 @@ class BatfishClient(BaseAPIClient):
         self,
         snapshot_name: str,
         configs_root: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> BatfishSnapshotRead:
         """
         Create a new snapshot. Server generates and returns the opaque id.
@@ -32,6 +33,9 @@ class BatfishClient(BaseAPIClient):
         params = {"snapshot_name": snapshot_name}
         if configs_root:
             params["configs_root"] = configs_root
+        if user_id:
+            params["user_id"] = user_id
+
         try:
             r = self.client.post("/v1/batfish/snapshots", params=params)
             r.raise_for_status()
@@ -46,6 +50,7 @@ class BatfishClient(BaseAPIClient):
         self,
         snapshot_id: str,
         configs_root: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> BatfishSnapshotRead:
         """
         Re-ingest configs for an existing snapshot by id.
@@ -54,6 +59,9 @@ class BatfishClient(BaseAPIClient):
         params = {}
         if configs_root:
             params["configs_root"] = configs_root
+        if user_id:
+            params["user_id"] = user_id
+
         try:
             r = self.client.post(
                 f"/v1/batfish/snapshots/{snapshot_id}/refresh", params=params
@@ -66,10 +74,16 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    def get_snapshot(self, snapshot_id: str) -> Optional[BatfishSnapshotRead]:
+    def get_snapshot(
+        self, snapshot_id: str, user_id: Optional[str] = None
+    ) -> Optional[BatfishSnapshotRead]:
         """Get a single snapshot record by its opaque id. Returns None if not found."""
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
-            r = self.client.get(f"/v1/batfish/snapshots/{snapshot_id}")
+            r = self.client.get(f"/v1/batfish/snapshots/{snapshot_id}", params=params)
             r.raise_for_status()
             return BatfishSnapshotRead.model_validate(r.json())
         except httpx.HTTPStatusError as e:
@@ -80,10 +94,16 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    def list_snapshots(self) -> List[BatfishSnapshotRead]:
+    def list_snapshots(
+        self, user_id: Optional[str] = None
+    ) -> List[BatfishSnapshotRead]:
         """List all snapshots owned by the authenticated caller."""
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
-            r = self.client.get("/v1/batfish/snapshots")
+            r = self.client.get("/v1/batfish/snapshots", params=params)
             r.raise_for_status()
             return [BatfishSnapshotRead.model_validate(s) for s in r.json()]
         except httpx.HTTPStatusError as e:
@@ -92,10 +112,16 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    def delete_snapshot(self, snapshot_id: str) -> bool:
+    def delete_snapshot(self, snapshot_id: str, user_id: Optional[str] = None) -> bool:
         """Soft-delete a snapshot by its opaque id."""
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
-            r = self.client.delete(f"/v1/batfish/snapshots/{snapshot_id}")
+            r = self.client.delete(
+                f"/v1/batfish/snapshots/{snapshot_id}", params=params
+            )
             r.raise_for_status()
             return True
         except httpx.HTTPStatusError as e:
@@ -106,14 +132,20 @@ class BatfishClient(BaseAPIClient):
 
     # ── TOOL CALLS ────────────────────────────────────────────────────────────
 
-    def run_tool(self, snapshot_id: str, tool_name: str) -> Dict[str, Any]:
+    def run_tool(
+        self, snapshot_id: str, tool_name: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Run a single named RCA tool against a loaded snapshot.
         This is what the LLM agent calls per function call.
         """
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
             r = self.client.post(
-                f"/v1/batfish/snapshots/{snapshot_id}/tools/{tool_name}"
+                f"/v1/batfish/snapshots/{snapshot_id}/tools/{tool_name}", params=params
             )
             r.raise_for_status()
             return r.json()
@@ -126,14 +158,22 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    def run_all_tools(self, snapshot_id: str) -> Dict[str, Any]:
+    def run_all_tools(
+        self, snapshot_id: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Run all 9 RCA tools concurrently server-side.
         Includes get_enriched_topology automatically.
         Returns dict keyed by tool name.
         """
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
-            r = self.client.post(f"/v1/batfish/snapshots/{snapshot_id}/tools/all")
+            r = self.client.post(
+                f"/v1/batfish/snapshots/{snapshot_id}/tools/all", params=params
+            )
             r.raise_for_status()
             return r.json()
         except httpx.HTTPStatusError as e:
@@ -142,23 +182,21 @@ class BatfishClient(BaseAPIClient):
             )
             raise
 
-    def get_enriched_topology(self, snapshot_id: str) -> Dict[str, Any]:
+    def get_enriched_topology(
+        self, snapshot_id: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Fused L3 topology view — protocol source, MTU, and OSPF/BGP session
         state per subnet. Anomaly-first: healthy subnets suppressed.
-
-        Best used as the LLM's first topology call — replaces the need to
-        cross-reference get_logical_topology_with_mtu + get_ospf_failures.
-
-        Args:
-            snapshot_id: The id returned by create_snapshot()
-
-        Returns:
-            { "tool": "get_enriched_topology", "snapshot_id": ..., "result": ... }
         """
+        params = {}
+        if user_id:
+            params["user_id"] = user_id
+
         try:
             r = self.client.post(
-                f"/v1/batfish/snapshots/{snapshot_id}/tools/get_enriched_topology"
+                f"/v1/batfish/snapshots/{snapshot_id}/tools/get_enriched_topology",
+                params=params,
             )
             r.raise_for_status()
             return r.json()
