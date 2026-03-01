@@ -1,12 +1,11 @@
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from projectdavid_common.utilities.logging_service import LoggingUtility
 
 from projectdavid.clients.base_client import BaseAPIClient
 
-# [FIX] Instantiate the logger so we don't pass strings as 'self'
 LOG = LoggingUtility()
 
 
@@ -55,12 +54,10 @@ class ToolsClient(BaseAPIClient):
         retries = 3
         for attempt in range(retries):
             try:
-                # self.client is inherited from BaseAPIClient
                 resp = self.client.request(method, url, **kwargs)
                 resp.raise_for_status()
                 return resp
             except httpx.HTTPStatusError as exc:
-                # Retry on Server Errors (5xx)
                 if (
                     exc.response.status_code in {500, 502, 503, 504}
                     and attempt < retries - 1
@@ -71,7 +68,6 @@ class ToolsClient(BaseAPIClient):
                     )
                     time.sleep(2**attempt)
                 else:
-                    # Propagate Client Errors (4xx) or final 5xx
                     LOG.error(
                         "ToolsClient Request Failed: %s %s | Status: %s",
                         method,
@@ -124,8 +120,51 @@ class ToolsClient(BaseAPIClient):
         data = self._parse_response(resp)
         return data.get("content", "")
 
+    def web_serp(
+        self,
+        query: str,
+        count: int = 10,
+        engines: Optional[List[str]] = None,
+    ) -> str:
+        """
+        Performs a structured SERP search via the internal SearxNG container.
+
+        SearxNG fans out to multiple search engines simultaneously (DDG, Bing,
+        Google) and returns deduplicated results ranked by score — no browser
+        overhead, no markdown parsing.
+
+        Args:
+            query:   The search query string.
+            count:   Maximum number of results to return (default 10).
+            engines: Optional list to pin specific engines e.g.
+                     ["duckduckgo", "bing"]. None uses SearxNG defaults.
+
+        Returns:
+            str: Agent-ready formatted result string with titles, URLs,
+                 snippets, authority tags, and mandatory source guidance.
+
+        Example:
+            results = client.tools.web_serp("bgp route reflector design", count=5)
+            results = client.tools.web_serp("python async", engines=["duckduckgo"])
+        """
+        LOG.info(
+            "Tools: SERP search '%s' count=%d engines=%s",
+            query,
+            count,
+            engines or "default",
+        )
+
+        payload: Dict[str, Any] = {"query": query, "count": count}
+        if engines:
+            payload["engines"] = engines
+
+        resp = self._request_with_retries("POST", "/v1/tools/web/serp", json=payload)
+
+        data = self._parse_response(resp)
+        return data.get("content", "")
+
     # ------------------------------------------------------------------ #
-    #  SCRATCHPAD CAPABILITIES (New)
+    #  SCRATCHPAD CAPABILITIES
     # ------------------------------------------------------------------ #
     def scratchpad_read(self, thread_id: str) -> str:
         """
