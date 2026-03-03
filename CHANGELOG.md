@@ -1,3 +1,10 @@
+# [1.72.0](https://github.com/project-david-ai/projectdavid/compare/v1.71.2...v1.72.0) (2026-03-01)
+
+
+### Features
+
+* integrate SearxNG as internal SERP provider ([4eb7ed1](https://github.com/project-david-ai/projectdavid/commit/4eb7ed173a429aaf841beb218a17effc71b3f8cd))
+
 ## [1.71.2](https://github.com/project-david-ai/projectdavid/compare/v1.71.1...v1.71.2) (2026-02-28)
 
 
