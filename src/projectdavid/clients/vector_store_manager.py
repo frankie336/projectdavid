@@ -226,20 +226,6 @@ class VectorStoreManager(BaseVectorStore):
     def _dict_to_filter(filters: dict) -> Filter:
         """
         Converts a nested filter dict into a Qdrant-compatible Filter object.
-
-        Example input:
-        {
-            "must": [
-                {"key": "metadata.file_name", "match": {"value": "doc.txt"}},
-                {"key": "metadata.chunk_index", "range": {"gte": 10, "lte": 50}}
-            ],
-            "must_not": [
-                {"key": "metadata.chunk_index", "range": {"gte": 90}}
-            ],
-            "should": [
-                {"key": "metadata.author", "match": {"value": "Lord Atkin"}}
-            ]
-        }
         """
 
         def parse_condition(cond: dict) -> FieldCondition:
@@ -275,36 +261,52 @@ class VectorStoreManager(BaseVectorStore):
         """
         Run a similarity search against *store_name*.
 
-        • Works with any Qdrant-client ≥ 1.0
-        • `vector_field` lets you target a non-default vector column
-          (e.g. ``\"caption_vector\"`` for image stores).  Pass **None**
-          to use the collection’s default vector.
+        • Handles both modern Qdrant (v1.10+ using query_points) and legacy clients (using search).
+        • `vector_field` lets you target a non-default vector column.
         """
 
         limit = limit or top_k
         flt = self._dict_to_filter(filters) if filters else None
 
-        # ── shared kwargs ----------------------------------------------------
-        common: Dict[str, Any] = dict(
-            collection_name=store_name,
-            query_vector=query_vector,
-            limit=limit,
-            offset=offset,
-            score_threshold=score_threshold,
-            with_payload=True,
-            with_vectors=False,
-        )
-
-        # if vector_field:  # ← inject when requested
-        #    common["vector_name"] = vector_field
-
-        # ── call search (new client first, fallback to old) ------------------
         try:
-            res = self.client.search(**common, filter=flt)  # ≥ 1.6
-        except AssertionError as ae:
-            if "Unknown arguments" not in str(ae):
-                raise
-            res = self.client.search(**common, query_filter=flt)  # < 1.6
+            # ── 1. Try modern Qdrant v1.10+ API (query_points) ──
+            response = self.client.query_points(
+                collection_name=store_name,
+                query=query_vector,
+                query_filter=flt,
+                limit=limit,
+                offset=offset,
+                score_threshold=score_threshold,
+                with_payload=True,
+                with_vectors=False,
+                # using=vector_field  # Add this if multi-vector query support is needed in the future
+            )
+            res = response.points
+
+        except AttributeError:
+            # ── 2. Fallback for older Qdrant clients (e.g. local Anaconda env) ──
+            try:
+                res = self.client.search(
+                    collection_name=store_name,
+                    query_vector=query_vector,
+                    filter=flt,  # argument name changed in some versions
+                    limit=limit,
+                    offset=offset,
+                    score_threshold=score_threshold,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+            except TypeError:
+                res = self.client.search(
+                    collection_name=store_name,
+                    query_vector=query_vector,
+                    query_filter=flt,  # very old argument name
+                    limit=limit,
+                    offset=offset,
+                    score_threshold=score_threshold,
+                    with_payload=True,
+                    with_vectors=False,
+                )
         except Exception as e:
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
