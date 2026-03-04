@@ -1,3 +1,10 @@
+# [1.73.0](https://github.com/project-david-ai/projectdavid/compare/v1.72.0...v1.73.0) (2026-03-03)
+
+
+### Features
+
+* add cross-version Qdrant client compatibility ([b6919cd](https://github.com/project-david-ai/projectdavid/commit/b6919cd118dd9bf8257a2f9a8098dcd7297b0390))
+
 # [1.72.0](https://github.com/project-david-ai/projectdavid/compare/v1.71.2...v1.72.0) (2026-03-01)
 
 
