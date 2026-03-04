@@ -1,3 +1,10 @@
+## [1.73.1](https://github.com/project-david-ai/projectdavid/compare/v1.73.0...v1.73.1) (2026-03-04)
+
+
+### Bug Fixes
+
+* Update common utilities package to projectdavid_common==0.37.0 ([2527156](https://github.com/project-david-ai/projectdavid/commit/25271566d42755cca51cb41adb277e705e5a990c))
+
 # [1.73.0](https://github.com/project-david-ai/projectdavid/compare/v1.72.0...v1.73.0) (2026-03-03)
 
 
