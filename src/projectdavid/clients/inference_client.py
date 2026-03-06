@@ -94,7 +94,7 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
-        meta_data: Optional[Dict[str, Any]] = None,  # NEW
+        meta_data: Optional[Dict[str, Any]] = None,
         timeout: float = 600.0,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
@@ -104,10 +104,18 @@ class InferenceClient(BaseAPIClient):
         frequently invoked from SynchronousInferenceStream running in an
         ephemeral loop, so reusing self.async_client would trigger
         'Future attached to different loop' errors.
+
+        NOTE on api_key vs self.api_key:
+        - self.api_key  → platform API key; sent as Authorization: Bearer header
+                          so the server can authenticate the caller.
+        - api_key param → LLM provider key (Together, OpenAI, etc.); sent only
+                          in the JSON body payload, never in the Authorization
+                          header. Putting it in Authorization would override the
+                          platform key and cause a 401 on the completions endpoint.
         """
         payload: Dict[str, Any] = {
             "model": model,
-            "api_key": api_key,
+            "api_key": api_key,  # LLM provider key — body only
             "thread_id": thread_id,
             "message_id": message_id,
             "run_id": run_id,
@@ -117,7 +125,7 @@ class InferenceClient(BaseAPIClient):
         if user_content:
             payload["content"] = user_content
 
-        if meta_data:  # NEW — omit key entirely if not provided
+        if meta_data:
             payload["meta_data"] = meta_data
 
         try:
@@ -126,8 +134,9 @@ class InferenceClient(BaseAPIClient):
             logging_utility.error("Payload validation error: %s", e.json())
             raise
 
-        headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
-
+        # Platform key stays in Authorization header via client-level headers.
+        # Do NOT pass a separate headers= override here — that would clobber
+        # self.api_key with the LLM provider key and cause 401s.
         async with httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout, connect=10.0),
@@ -137,7 +146,7 @@ class InferenceClient(BaseAPIClient):
         ) as client:
             try:
                 async with client.stream(
-                    "POST", "/v1/completions", json=payload, headers=headers
+                    "POST", "/v1/completions", json=payload
                 ) as response:
                     response.raise_for_status()
 
@@ -156,7 +165,9 @@ class InferenceClient(BaseAPIClient):
                             continue
 
             except httpx.HTTPStatusError as e:
-                logging_utility.error(f"Inference Stream HTTP Error: {e.response.text}")
+                logging_utility.error(
+                    f"Inference Stream HTTP Error: {e.response.status_code} {e.request.url}"
+                )
                 raise
             except Exception as e:
                 logging_utility.error(f"Inference Stream Unexpected Error: {e}")
