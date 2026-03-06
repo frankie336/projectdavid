@@ -3,7 +3,7 @@ import asyncio
 import json
 import re
 from contextlib import suppress
-from typing import Any, Generator, Optional, Union
+from typing import Any, Dict, Generator, Optional, Union
 
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
@@ -50,7 +50,7 @@ class SynchronousInferenceStream:
             assistants_client=client.assistants,
         )
         sync_stream.setup(thread_id=..., assistant_id=..., message_id=...,
-                          run_id=..., api_key=...)
+                          run_id=..., api_key=..., meta_data=...)
         for event in sync_stream.stream_events(model=...):
             ...
     """
@@ -63,6 +63,7 @@ class SynchronousInferenceStream:
         self.message_id: Optional[str] = None
         self.run_id: Optional[str] = None
         self.api_key: Optional[str] = None
+        self.meta_data: Optional[Dict[str, Any]] = None  # NEW
 
         self.runs_client: Any = None
         self.actions_client: Any = None
@@ -102,13 +103,15 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key: str,
+        api_key: Optional[str] = None,  # NEW: now optional to match schema
+        meta_data: Optional[Dict[str, Any]] = None,  # NEW
     ) -> None:
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
         self.run_id = run_id
         self.api_key = api_key
+        self.meta_data = meta_data  # NEW
 
     def bind_clients(
         self,
@@ -127,10 +130,12 @@ class SynchronousInferenceStream:
         model: str,
         *,
         api_key: Optional[str] = None,
+        meta_data: Optional[Dict[str, Any]] = None,  # NEW
         timeout_per_chunk: float = 600.0,
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
         resolved_api_key = api_key or self.api_key
+        resolved_meta_data = meta_data or self.meta_data  # NEW
 
         # Capture instance fields into locals NOW so a concurrent .setup()
         # on a (mis-)shared instance cannot mutate them mid-stream.
@@ -147,6 +152,7 @@ class SynchronousInferenceStream:
                 message_id=message_id,
                 run_id=run_id,
                 assistant_id=assistant_id,
+                meta_data=resolved_meta_data,  # NEW
                 timeout=timeout_per_chunk,
             ):
                 yield chk
@@ -199,6 +205,7 @@ class SynchronousInferenceStream:
         self,
         model: str,
         *,
+        meta_data: Optional[Dict[str, Any]] = None,  # NEW
         timeout_per_chunk: float = 280.0,
         max_turns: int = 10,
     ) -> Generator[Union[StreamEvent, Any], None, None]:
@@ -225,6 +232,7 @@ class SynchronousInferenceStream:
 
             for chunk in self.stream_chunks(
                 model=model,
+                meta_data=meta_data or self.meta_data,  # NEW
                 timeout_per_chunk=timeout_per_chunk,
                 suppress_fc=True,
             ):
@@ -265,7 +273,7 @@ class SynchronousInferenceStream:
             break
 
     def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
-        """Maps raw API chunks to Typed Event instances."""
+        """Maps raw API chunks to typed Event instances."""
 
         # --- 1. ENFORCE CONTRACT: UNWRAP MIXIN JSON ---
         if chunk.get("type") == "content" and isinstance(chunk.get("content"), str):
@@ -403,7 +411,6 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "tool_intercept":
-
             return ToolInterceptEvent(
                 run_id=run_id,
                 tool_name=chunk.get("tool_name", ""),
@@ -412,8 +419,8 @@ class SynchronousInferenceStream:
                 origin=chunk.get("origin"),
                 thread_id=chunk.get("thread_id"),
                 tool_call_id=chunk.get("tool_call_id"),
-                origin_run_id=chunk.get("origin_run_id"),  # ← NEW
-                origin_assistant_id=chunk.get("origin_assistant_id"),  # ← NEW
+                origin_run_id=chunk.get("origin_run_id"),
+                origin_assistant_id=chunk.get("origin_assistant_id"),
             )
 
         elif c_type == "error":

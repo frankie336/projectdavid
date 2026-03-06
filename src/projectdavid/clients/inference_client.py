@@ -10,7 +10,6 @@ from projectdavid_common import UtilsInterface, ValidationInterface
 from projectdavid_common.validation import StreamRequest
 from pydantic import ValidationError
 
-# Assuming BaseAPIClient is imported here
 from projectdavid.clients.base_client import BaseAPIClient
 
 load_dotenv()
@@ -32,9 +31,6 @@ class InferenceClient(BaseAPIClient):
 
     @property
     def async_client(self) -> httpx.AsyncClient:
-        """
-        Lazily creates and returns a single shared AsyncClient for the MAIN loop.
-        """
         if self._async_client is None or self._async_client.is_closed:
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
@@ -46,14 +42,10 @@ class InferenceClient(BaseAPIClient):
         return self._async_client
 
     async def aclose(self):
-        """Cleanly close the async connection pool."""
         if self._async_client:
             await self._async_client.aclose()
 
     async def create_completion(self, **kwargs) -> Dict[str, Any]:
-        """
-        Native ASYNC version of completion creation.
-        """
         final_text = ""
         run_id = kwargs.get("run_id", "unknown")
 
@@ -76,9 +68,6 @@ class InferenceClient(BaseAPIClient):
         }
 
     def create_completion_sync(self, **kwargs) -> Dict[str, Any]:
-        """
-        Synchronous wrapper with safer loop detection.
-        """
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -86,7 +75,6 @@ class InferenceClient(BaseAPIClient):
             asyncio.set_event_loop(loop)
 
         if loop.is_running():
-            import threading
             from concurrent.futures import ThreadPoolExecutor
 
             with ThreadPoolExecutor() as executor:
@@ -99,7 +87,6 @@ class InferenceClient(BaseAPIClient):
 
     async def stream_inference_response(
         self,
-        # provider: str,
         model: str,
         thread_id: str,
         message_id: str,
@@ -107,18 +94,18 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
-        timeout: float = 600.0,  # <--- UPDATED: Accepts timeout arg (Default 600s)
+        meta_data: Optional[Dict[str, Any]] = None,  # NEW
+        timeout: float = 600.0,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Asynchronously streams inference.
 
-        CRITICAL UPDATE: This method now instantiates a fresh AsyncClient if called.
-        Because this is often called from 'SynchronousInferenceStream' running in
-        a separate thread/loop, we cannot reuse 'self.async_client' (which belongs
-        to the main loop) without triggering 'Future attached to different loop' errors.
+        CRITICAL: Instantiates a fresh AsyncClient per call — this method is
+        frequently invoked from SynchronousInferenceStream running in an
+        ephemeral loop, so reusing self.async_client would trigger
+        'Future attached to different loop' errors.
         """
-        payload = {
-            # "provider": provider,
+        payload: Dict[str, Any] = {
             "model": model,
             "api_key": api_key,
             "thread_id": thread_id,
@@ -126,26 +113,23 @@ class InferenceClient(BaseAPIClient):
             "run_id": run_id,
             "assistant_id": assistant_id,
         }
+
         if user_content:
             payload["content"] = user_content
 
+        if meta_data:  # NEW — omit key entirely if not provided
+            payload["meta_data"] = meta_data
+
         try:
-            # Pydantic validation
             StreamRequest(**payload)
         except ValidationError as e:
             logging_utility.error("Payload validation error: %s", e.json())
             raise
 
-        # Determine headers
-        headers = None
-        if api_key:
-            headers = {"Authorization": f"Bearer {api_key}"}
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
 
-        # We create a local client context to ensure it binds to the CURRENT loop.
-        # This is necessary because SynchronousInferenceStream creates ephemeral loops.
         async with httpx.AsyncClient(
             base_url=self.base_url,
-            # UPDATED: Now uses the passed 'timeout' variable instead of hardcoded 600.0
             timeout=httpx.Timeout(timeout, connect=10.0),
             headers=(
                 {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
@@ -179,7 +163,5 @@ class InferenceClient(BaseAPIClient):
                 raise
 
     def close(self):
-        """Closes the underlying synchronous client."""
-        # Note: If BaseAPIClient has a .client, close it here.
         if hasattr(self, "client") and self.client:
             self.client.close()
