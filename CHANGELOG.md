@@ -1,3 +1,10 @@
+# [1.74.0](https://github.com/project-david-ai/projectdavid/compare/v1.73.1...v1.74.0) (2026-03-06)
+
+
+### Features
+
+* propagate optional meta_data through inference stack (schema, wrapper, client) ([80d5bd9](https://github.com/project-david-ai/projectdavid/commit/80d5bd96a6f3a0e8bb1ee22e5baaa5cd0419d3ba))
+
 ## [1.73.1](https://github.com/project-david-ai/projectdavid/compare/v1.73.0...v1.73.1) (2026-03-04)
 
 
