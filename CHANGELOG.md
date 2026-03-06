@@ -1,3 +1,10 @@
+## [1.74.1](https://github.com/project-david-ai/projectdavid/compare/v1.74.0...v1.74.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* stop LLM provider key overriding platform Authorization header in inference client ([e2ce46f](https://github.com/project-david-ai/projectdavid/commit/e2ce46fb403f0b8c663f40b345b496fee71d6b19))
+
 # [1.74.0](https://github.com/project-david-ai/projectdavid/compare/v1.73.1...v1.74.0) (2026-03-06)
 
 
