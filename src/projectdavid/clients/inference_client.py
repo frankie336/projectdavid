@@ -35,7 +35,7 @@ class InferenceClient(BaseAPIClient):
                 base_url=self.base_url,
                 timeout=httpx.Timeout(280.0, connect=10.0),
                 headers=(
-                    {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+                    {"X-API-Key": self.api_key} if self.api_key else {}  # ← FIXED
                 ),
             )
         return self._async_client
@@ -93,7 +93,6 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
-        service_token: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
         timeout: float = 600.0,
     ) -> AsyncGenerator[Dict[str, Any], None]:
@@ -105,26 +104,20 @@ class InferenceClient(BaseAPIClient):
         ephemeral loop, so reusing self.async_client would trigger
         'Future attached to different loop' errors.
 
-        NOTE on keys:
-        - self.api_key    → platform API key; sent as Authorization: Bearer header
-                            so the server can authenticate the caller.
-        - api_key param   → LLM provider key (Together, OpenAI, Hyperbolic, etc.);
-                            sent only in the JSON body payload, never in the
-                            Authorization header.
-        - service_token   → internal service-to-service bypass; sent in body only,
-                            allows internal consumers to skip per-tenant DB key lookup.
+        NOTE on api_key vs self.api_key:
+        - self.api_key  → platform API key; sent as X-API-Key header
+                          so the server can authenticate the caller.
+        - api_key param → LLM provider key (Together, OpenAI, Hyperbolic etc.);
+                          sent only in the JSON body payload, never in headers.
         """
         payload: Dict[str, Any] = {
             "model": model,
-            "api_key": api_key,
+            "api_key": api_key,  # LLM provider key — body only
             "thread_id": thread_id,
             "message_id": message_id,
             "run_id": run_id,
             "assistant_id": assistant_id,
         }
-
-        if service_token:
-            payload["service_token"] = service_token
 
         if user_content:
             payload["content"] = user_content
@@ -138,15 +131,10 @@ class InferenceClient(BaseAPIClient):
             logging_utility.error("Payload validation error: %s", e.json())
             raise
 
-        # Platform key stays in Authorization header via client-level headers.
-        # Do NOT pass a separate headers= override here — that would clobber
-        # self.api_key with the LLM provider key and cause 401s.
         async with httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout, connect=10.0),
-            headers=(
-                {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-            ),
+            headers=({"X-API-Key": self.api_key} if self.api_key else {}),  # ← FIXED
         ) as client:
             try:
                 async with client.stream(

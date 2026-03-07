@@ -1,4 +1,3 @@
-# src/projectdavid/clients/synchronous_inference_wrapper.py
 import asyncio
 import json
 import re
@@ -63,7 +62,7 @@ class SynchronousInferenceStream:
         self.message_id: Optional[str] = None
         self.run_id: Optional[str] = None
         self.api_key: Optional[str] = None
-        self.meta_data: Optional[Dict[str, Any]] = None  # NEW
+        self.meta_data: Optional[Dict[str, Any]] = None
 
         self.runs_client: Any = None
         self.actions_client: Any = None
@@ -84,10 +83,6 @@ class SynchronousInferenceStream:
         messages_client: Any,
         assistants_client: Any,
     ) -> "SynchronousInferenceStream":
-        """
-        Create a fresh, fully-bound instance for a single request.
-        Avoids shared-state races between concurrent requests.
-        """
         instance = cls(inference)
         instance.bind_clients(
             runs_client=runs_client,
@@ -103,15 +98,15 @@ class SynchronousInferenceStream:
         assistant_id: str,
         message_id: str,
         run_id: str,
-        api_key: Optional[str] = None,  # NEW: now optional to match schema
-        meta_data: Optional[Dict[str, Any]] = None,  # NEW
+        api_key: Optional[str] = None,
+        meta_data: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.thread_id = thread_id
         self.assistant_id = assistant_id
         self.message_id = message_id
         self.run_id = run_id
         self.api_key = api_key
-        self.meta_data = meta_data  # NEW
+        self.meta_data = meta_data
 
     def bind_clients(
         self,
@@ -130,12 +125,12 @@ class SynchronousInferenceStream:
         model: str,
         *,
         api_key: Optional[str] = None,
-        meta_data: Optional[Dict[str, Any]] = None,  # NEW
+        meta_data: Optional[Dict[str, Any]] = None,
         timeout_per_chunk: float = 600.0,
         suppress_fc: bool = True,
     ) -> Generator[dict, None, None]:
         resolved_api_key = api_key or self.api_key
-        resolved_meta_data = meta_data or self.meta_data  # NEW
+        resolved_meta_data = meta_data or self.meta_data
 
         # Capture instance fields into locals NOW so a concurrent .setup()
         # on a (mis-)shared instance cannot mutate them mid-stream.
@@ -152,12 +147,13 @@ class SynchronousInferenceStream:
                 message_id=message_id,
                 run_id=run_id,
                 assistant_id=assistant_id,
-                meta_data=resolved_meta_data,  # NEW
+                meta_data=resolved_meta_data,
                 timeout=timeout_per_chunk,
             ):
                 yield chk
 
         agen = _stream_chunks_async().__aiter__()
+
         # ---------------------------------------------------------
         # LOOP DETECTION LOGIC
         # ---------------------------------------------------------
@@ -205,7 +201,7 @@ class SynchronousInferenceStream:
         self,
         model: str,
         *,
-        meta_data: Optional[Dict[str, Any]] = None,  # NEW
+        meta_data: Optional[Dict[str, Any]] = None,
         timeout_per_chunk: float = 280.0,
         max_turns: int = 10,
     ) -> Generator[Union[StreamEvent, Any], None, None]:
@@ -232,7 +228,7 @@ class SynchronousInferenceStream:
 
             for chunk in self.stream_chunks(
                 model=model,
-                meta_data=meta_data or self.meta_data,  # NEW
+                meta_data=meta_data or self.meta_data,
                 timeout_per_chunk=timeout_per_chunk,
                 suppress_fc=True,
             ):
