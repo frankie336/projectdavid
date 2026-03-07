@@ -1,3 +1,10 @@
+## [1.74.4](https://github.com/project-david-ai/projectdavid/compare/v1.74.3...v1.74.4) (2026-03-07)
+
+
+### Bug Fixes
+
+* update `projectdavid_common` to v0.40.1 and standardize header usage for API key handling ([8f6b50e](https://github.com/project-david-ai/projectdavid/commit/8f6b50eec63c125641af747c4ba5d3af56ebdb75))
+
 ## [1.74.3](https://github.com/project-david-ai/projectdavid/compare/v1.74.2...v1.74.3) (2026-03-07)
 
 
