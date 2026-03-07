@@ -50,10 +50,7 @@ dev = [
     "build",
     "twine"
 ]
-# --- ADD THIS BLOCK ---
-network = [
-    "netmiko>=4.3.0,<5.0.0"
-]
+
 
 [tool.isort]
 profile = "black"
