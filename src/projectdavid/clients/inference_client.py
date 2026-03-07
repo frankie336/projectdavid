@@ -1,4 +1,3 @@
-# src/projectdavid/clients/inference_client.py
 import asyncio
 import json
 import time
@@ -94,6 +93,7 @@ class InferenceClient(BaseAPIClient):
         assistant_id: str,
         user_content: Optional[str] = None,
         api_key: Optional[str] = None,
+        service_token: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
         timeout: float = 600.0,
     ) -> AsyncGenerator[Dict[str, Any], None]:
@@ -105,22 +105,26 @@ class InferenceClient(BaseAPIClient):
         ephemeral loop, so reusing self.async_client would trigger
         'Future attached to different loop' errors.
 
-        NOTE on api_key vs self.api_key:
-        - self.api_key  → platform API key; sent as Authorization: Bearer header
-                          so the server can authenticate the caller.
-        - api_key param → LLM provider key (Together, OpenAI, etc.); sent only
-                          in the JSON body payload, never in the Authorization
-                          header. Putting it in Authorization would override the
-                          platform key and cause a 401 on the completions endpoint.
+        NOTE on keys:
+        - self.api_key    → platform API key; sent as Authorization: Bearer header
+                            so the server can authenticate the caller.
+        - api_key param   → LLM provider key (Together, OpenAI, Hyperbolic, etc.);
+                            sent only in the JSON body payload, never in the
+                            Authorization header.
+        - service_token   → internal service-to-service bypass; sent in body only,
+                            allows internal consumers to skip per-tenant DB key lookup.
         """
         payload: Dict[str, Any] = {
             "model": model,
-            "api_key": api_key,  # LLM provider key — body only
+            "api_key": api_key,
             "thread_id": thread_id,
             "message_id": message_id,
             "run_id": run_id,
             "assistant_id": assistant_id,
         }
+
+        if service_token:
+            payload["service_token"] = service_token
 
         if user_content:
             payload["content"] = user_content
