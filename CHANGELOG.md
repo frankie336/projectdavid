@@ -1,3 +1,10 @@
+## [1.74.3](https://github.com/project-david-ai/projectdavid/compare/v1.74.2...v1.74.3) (2026-03-07)
+
+
+### Bug Fixes
+
+* add `service_token` support in inference client for internal bypass use ([3ead7a8](https://github.com/project-david-ai/projectdavid/commit/3ead7a873c8a237238265c83e109d0c84ad49c59))
+
 ## [1.74.2](https://github.com/project-david-ai/projectdavid/compare/v1.74.1...v1.74.2) (2026-03-06)
 
 
