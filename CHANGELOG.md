@@ -1,3 +1,10 @@
+## [1.74.7](https://github.com/project-david-ai/projectdavid/compare/v1.74.6...v1.74.7) (2026-03-08)
+
+
+### Bug Fixes
+
+* update `cancel_run` to return validated `Run` model ([25b60d6](https://github.com/project-david-ai/projectdavid/commit/25b60d6ae4af79c6dd8a47aec133798c22931051))
+
 ## [1.74.6](https://github.com/project-david-ai/projectdavid/compare/v1.74.5...v1.74.6) (2026-03-07)
 
 
