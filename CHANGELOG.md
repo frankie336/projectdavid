@@ -1,3 +1,11 @@
+## [1.74.6](https://github.com/project-david-ai/projectdavid/compare/v1.74.5...v1.74.6) (2026-03-07)
+
+
+### Bug Fixes
+
+* remove `NetworkDeviceHandler` and related imports ([10be103](https://github.com/project-david-ai/projectdavid/commit/10be10375eb344ef296dcaf5983e6224d6d4a017))
+* remove invalid `network` block from `pyproject.toml` ([2140814](https://github.com/project-david-ai/projectdavid/commit/21408147cf836f861c6ff368f16c727bef846143))
+
 ## [1.74.5](https://github.com/project-david-ai/projectdavid/compare/v1.74.4...v1.74.5) (2026-03-07)
 
 
