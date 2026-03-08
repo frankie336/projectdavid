@@ -122,7 +122,7 @@ class AssistantsClient(BaseAPIClient):
         agent_mode: bool = False,
         web_access: bool = False,
         deep_research: bool = False,
-        engineer: bool = False,  # <--- NEW: Engineering Mode Toggle
+        engineer: bool = False,
         decision_telemetry: bool = False,
         # ------------------------------
         assistant_id: Optional[str] = None,
@@ -145,12 +145,11 @@ class AssistantsClient(BaseAPIClient):
             "top_p": top_p,
             "temperature": temperature,
             "response_format": response_format,
-            # Add new fields to payload
             "max_turns": max_turns,
             "agent_mode": agent_mode,
             "web_access": web_access,
             "deep_research": deep_research,
-            "engineer": engineer,  # <--- NEW: Passed to Validator
+            "engineer": engineer,
             "decision_telemetry": decision_telemetry,
         }
 
@@ -217,9 +216,7 @@ class AssistantsClient(BaseAPIClient):
         updates.pop("id", None)
         updates.pop("assistant_id", None)
 
-        # Accept tool_resources in patch payload
         try:
-            # deep_research and other fields are validated here against AssistantUpdate schema
             validated_updates = ent_validator.AssistantUpdate(**updates)
             resp = self._request_with_retries(
                 "PUT",
@@ -231,6 +228,23 @@ class AssistantsClient(BaseAPIClient):
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise AssistantsClientError(f"Validation error: {e}") from e
+
+    # ------------------------------------------------------------------ #
+    #  LIST
+    # ------------------------------------------------------------------ #
+    def list(self) -> List[ent_validator.AssistantRead]:
+        """Return every assistant owned by *this* API key."""
+        logging_utility.info("Listing assistants")
+        resp = self._request_with_retries("GET", "/v1/assistants")
+        raw = self._parse_response(resp)
+        return [ent_validator.AssistantRead(**a) for a in raw]
+
+    def list_assistants(self) -> List[ent_validator.AssistantRead]:
+        """
+        Alias for :meth:`list` — mirrors the name expected by the
+        compliance test suite and any callers that use the explicit name.
+        """
+        return self.list()
 
     # ------------------------------------------------------------------ #
     #  USER ASSOCIATIONS
@@ -253,14 +267,6 @@ class AssistantsClient(BaseAPIClient):
         )
         return {"message": "Assistant disassociated from user successfully"}
 
-    def list(self) -> list[ent_validator.AssistantRead]:
-        """Return every assistant owned by *this* API key."""
-        logging_utility.info("Listing assistants")
-
-        resp = self._request_with_retries("GET", "/v1/assistants")
-        raw = self._parse_response(resp)
-        return [ent_validator.AssistantRead(**a) for a in raw]
-
     def delete_assistant(
         self, assistant_id: str, permanent: bool = False
     ) -> Dict[str, Any]:
@@ -275,14 +281,10 @@ class AssistantsClient(BaseAPIClient):
         action = "PERMANENTLY" if permanent else "soft"
         logging_utility.info("%s deleting assistant id=%s", action, assistant_id)
 
-        # Pass 'permanent' as a query parameter so FastAPI picks it up
         resp = self._request_with_retries(
             "DELETE", f"/v1/assistants/{assistant_id}", params={"permanent": permanent}
         )
 
-        # The API returns 204 No Content for successful deletes.
-        # Attempting to parse JSON on an empty body will raise an error,
-        # so we return a synthetic success response for the SDK user.
         if resp.status_code == 204:
             return {
                 "id": assistant_id,
