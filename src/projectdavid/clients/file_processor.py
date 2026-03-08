@@ -59,13 +59,22 @@ class FileProcessor:
                     self._requested_chunk_size, self._effective_max_length * 4
                 )
 
-            except ImportError:
-                log.error(
-                    "sentence-transformers not found. Ensure 'pip install \"projectdavid[embeddings]\"' is installed."
-                )
-                raise ImportError(
-                    "Model-based features require 'sentence-transformers'. Install with the [embeddings] extra."
-                )
+            except ImportError as e:
+                # Check if the missing module is exactly 'sentence_transformers'
+                if getattr(e, "name", "") in ("sentence_transformers", "sentence_transformers.SentenceTransformer"):
+                    msg = "Model-based features require 'sentence-transformers'. Ensure 'pip install \"projectdavid[embeddings]\"' is installed."
+                    log.error(msg)
+                    raise ImportError(msg) from None
+                else:
+                    # The library IS installed, but a core dependency like PyTorch/torchvision crashed
+                    msg = (
+                        f"sentence-transformers is installed, but a core dependency is broken or mismatched: {e}\n"
+                        "This frequently happens if PyTorch is corrupted. Try reinstalling it by running:\n"
+                        "pip uninstall torch torchvision torchaudio -y && pip install torch torchvision --upgrade"
+                    )
+                    log.error(msg)
+                    raise RuntimeError(msg) from e
+
         return self._embedding_model
 
     # Properties to maintain access to derived attributes
@@ -181,11 +190,11 @@ class FileProcessor:
     # ------------------------------------------------------------------ #
     async def _process_pdf(self, file_path: Path) -> Dict[str, Any]:
         page_chunks, doc_meta = await self._extract_text(file_path)
-        all_chunks, line_data = [], []
+        all_chunks, line_data = [],[]
 
         for page_text, page_num, line_nums in page_chunks:
             lines = page_text.split("\n")
-            buf, buf_lines, length = [], [], 0
+            buf, buf_lines, length = [],[], 0
             for line, ln in zip(lines, line_nums):
                 l = len(line) + 1
                 if length + l <= self.chunk_size:
@@ -196,7 +205,7 @@ class FileProcessor:
                     if buf:
                         all_chunks.append("\n".join(buf))
                         line_data.append({"page": page_num, "lines": buf_lines})
-                        buf, buf_lines, length = [], [], 0
+                        buf, buf_lines, length = [],[], 0
                     for piece in self._split_oversized_chunk(line):
                         all_chunks.append(piece)
                         line_data.append({"page": page_num, "lines": [ln]})
@@ -236,7 +245,7 @@ class FileProcessor:
                 "type": "text",
             },
             "chunks": chunks,
-            "vectors": [v.tolist() for v in vectors],
+            "vectors":[v.tolist() for v in vectors],
         }
 
     # ------------------------------------------------------------------ #
@@ -245,7 +254,7 @@ class FileProcessor:
     async def _process_csv(
         self, file_path: Path, text_field: str = "description"
     ) -> Dict[str, Any]:
-        texts, metas = [], []
+        texts, metas = [],[]
         with file_path.open(newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -327,10 +336,10 @@ class FileProcessor:
             text = await loop.run_in_executor(
                 self._executor, self._read_text_file, file_path
             )
-            return text, {}, []
+            return text, {},[]
 
     def _extract_pdf_text(self, file_path: Path):
-        page_chunks, meta = [], {}
+        page_chunks, meta =[], {}
         with pdfplumber.open(file_path) as pdf:
             meta.update(
                 {
@@ -342,7 +351,7 @@ class FileProcessor:
             for i, page in enumerate(pdf.pages, start=1):
                 lines = page.extract_text_lines()
                 sorted_lines = sorted(lines, key=lambda x: x["top"])
-                txts, nums = [], []
+                txts, nums = [],[]
                 for ln_idx, L in enumerate(sorted_lines, start=1):
                     t = L.get("text", "").strip()
                     if t:
@@ -366,7 +375,7 @@ class FileProcessor:
         prs = Presentation(path)
         slides = []
         for slide in prs.slides:
-            chunks = [sh.text for sh in slide.shapes if hasattr(sh, "text")]
+            chunks =[sh.text for sh in slide.shapes if hasattr(sh, "text")]
             slides.append("\n".join(filter(None, chunks)))
         return "\n\n".join(slides)
 
@@ -380,7 +389,7 @@ class FileProcessor:
     # ------------------------------------------------------------------ #
     def _chunk_text(self, text: str) -> List[str]:
         sentences = re.split(r"(?<=[\.!?])\s+", text)
-        chunks, buf, length = [], [], 0
+        chunks, buf, length = [],[], 0
         for sent in sentences:
             slen = len(sent) + 1
             if length + slen <= self.chunk_size:
@@ -389,7 +398,7 @@ class FileProcessor:
             else:
                 if buf:
                     chunks.append(" ".join(buf))
-                    buf, length = [], 0
+                    buf, length =[], 0
                 while len(sent) > self.chunk_size:
                     part, sent = sent[: self.chunk_size], sent[self.chunk_size :]
                     chunks.append(part)
@@ -402,7 +411,7 @@ class FileProcessor:
         model = self._ensure_model()  # Ensure model is loaded to access tokenizer
         if tokens is None:
             tokens = model.tokenizer.tokenize(chunk)
-        out = []
+        out =[]
         for i in range(0, len(tokens), self.effective_max_length):
             seg = tokens[i : i + self.effective_max_length]
             out.append(model.tokenizer.convert_tokens_to_string(seg))

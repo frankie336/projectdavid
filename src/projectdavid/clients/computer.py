@@ -4,9 +4,7 @@ import time
 from typing import Any, Dict, Optional
 
 import httpx
-from projectdavid_common import (
-    UtilsInterface,
-)
+from projectdavid_common import UtilsInterface
 
 from projectdavid.clients.base_client import BaseAPIClient
 
