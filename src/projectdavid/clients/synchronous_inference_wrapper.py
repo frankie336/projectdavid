@@ -7,14 +7,24 @@ from typing import Any, Dict, Generator, Optional, Union
 import nest_asyncio
 from projectdavid_common import ToolValidator, UtilsInterface
 
-from projectdavid.events import (CodeExecutionGeneratedFileEvent,
-                                 CodeExecutionOutputEvent, CodeStatusEvent,
-                                 ComputerExecutionOutputEvent, ContentEvent,
-                                 DecisionEvent, EngineerStatusEvent,
-                                 HotCodeEvent, PlanEvent, ReasoningEvent,
-                                 ResearchStatusEvent, ScratchpadEvent,
-                                 StreamEvent, ToolCallRequestEvent,
-                                 ToolInterceptEvent, WebStatusEvent)
+from projectdavid.events import (
+    CodeExecutionGeneratedFileEvent,
+    CodeExecutionOutputEvent,
+    CodeStatusEvent,
+    ComputerExecutionOutputEvent,
+    ContentEvent,
+    DecisionEvent,
+    EngineerStatusEvent,
+    HotCodeEvent,
+    PlanEvent,
+    ReasoningEvent,
+    ResearchStatusEvent,
+    ScratchpadEvent,
+    StreamEvent,
+    ToolCallRequestEvent,
+    ToolInterceptEvent,
+    WebStatusEvent,
+)
 
 LOG = UtilsInterface.LoggingUtility()
 
