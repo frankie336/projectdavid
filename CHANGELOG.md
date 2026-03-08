@@ -1,3 +1,11 @@
+## [1.74.10](https://github.com/project-david-ai/projectdavid/compare/v1.74.9...v1.74.10) (2026-03-08)
+
+
+### Bug Fixes
+
+* improve import formatting and clean up spacing inconsistencies ([852034c](https://github.com/project-david-ai/projectdavid/commit/852034c41ea8edeeb07f68aad408cef4cc0d9b47))
+* improve import formatting and consistency across modules ([ee30788](https://github.com/project-david-ai/projectdavid/commit/ee30788421a2180308a3d8f9e7e3869f99cbb09e))
+
 ## [1.74.9](https://github.com/project-david-ai/projectdavid/compare/v1.74.8...v1.74.9) (2026-03-08)
 
 
