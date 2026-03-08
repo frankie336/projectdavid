@@ -316,7 +316,7 @@ class RunsClient(BaseAPIClient):
             logging_utility.error("An error occurred during chat: %s", str(e))
             raise
 
-    def cancel_run(self, run_id: str) -> Dict[str, Any]:
+    def cancel_run(self, run_id: str) -> ent_validator.Run:  # ← return type updated
         """
         Cancel a run by its ID.
 
@@ -324,15 +324,20 @@ class RunsClient(BaseAPIClient):
             run_id (str): The run ID.
 
         Returns:
-            Dict[str, Any]: The cancellation result.
+            Run: The cancelled run as a validated Pydantic model.
         """
         logging_utility.info("Cancelling run with id: %s", run_id)
         try:
             response = self.client.post(f"/v1/runs/{run_id}/cancel")
             response.raise_for_status()
-            result = response.json()
+            cancelled_run = ent_validator.Run(
+                **response.json()
+            )  # ← FIXED: was `response.json()`
             logging_utility.info("Run %s cancelled successfully", run_id)
-            return result
+            return cancelled_run
+        except ValidationError as e:
+            logging_utility.error("Validation error: %s", e.json())
+            raise ValueError(f"Validation error: {e}") from e
         except httpx.HTTPStatusError as e:
             logging_utility.error(
                 "HTTP error occurred while cancelling run %s: %s", run_id, str(e)
