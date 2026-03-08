@@ -1,3 +1,10 @@
+## [1.74.8](https://github.com/project-david-ai/projectdavid/compare/v1.74.7...v1.74.8) (2026-03-08)
+
+
+### Bug Fixes
+
+* remove assistant-vector store orchestration, streamline vector store ops ([6c8897f](https://github.com/project-david-ai/projectdavid/commit/6c8897ff1dc025b8854a9a3a5605ee69574c5fe5))
+
 ## [1.74.7](https://github.com/project-david-ai/projectdavid/compare/v1.74.6...v1.74.7) (2026-03-08)
 
 
