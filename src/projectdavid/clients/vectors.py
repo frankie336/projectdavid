@@ -57,6 +57,8 @@ class VectorStoreClient:
 
     • All API requests scoped by X-API-Key.
     • create_vector_store() no longer takes user_id; ownership from token.
+    • Assistant ↔ vector-store attach/detach removed — orchestration is
+      handled exclusively via the tool_resources field.
     """
 
     # ------------------------------------------------------------------ #
@@ -68,7 +70,7 @@ class VectorStoreClient:
         api_key: Optional[str] = None,
         *,
         vector_store_host: str = "localhost",
-        file_processor_kwargs: Optional[dict] = None,  # 🔶 add arg
+        file_processor_kwargs: Optional[dict] = None,
     ):
         self.base_url = (base_url or os.getenv("BASE_URL", "")).rstrip("/")
         self.api_key = api_key or os.getenv("API_KEY")
@@ -89,9 +91,7 @@ class VectorStoreClient:
         self.vector_manager = VectorStoreManager(vector_store_host=vector_store_host)
         self.identifier_service = UtilsInterface.IdentifierService()
 
-        # 🔶 forward kwargs into the upgraded FileProcessor
-        # self.file_processor = FileProcessor(**(file_processor_kwargs or {}))
-        # Using Stripped down version for now until we move forward with multi-modal stores
+        # Using stripped-down version until we move forward with multi-modal stores
         self.file_processor = FileProcessor()
 
         log.info("VectorStoreClient → %s", self.base_url)
@@ -178,7 +178,8 @@ class VectorStoreClient:
                 raise VectorStoreClientError(str(exc)) from exc
         raise VectorStoreClientError("Request failed after retries")
 
-    # Internal async ops -------------------------------------------------- #
+    # ── Internal async ops ───────────────────────────────────────────────── #
+
     async def _create_vs_async(
         self,
         name: str,
@@ -192,7 +193,6 @@ class VectorStoreClient:
             vector_size=vector_size,
             distance=distance_metric.upper(),
         )
-
         payload = {
             "shared_id": shared_id,
             "name": name,
@@ -203,13 +203,6 @@ class VectorStoreClient:
         resp = await self._request("POST", "/v1/vector-stores", json=payload)
         return ValidationInterface.VectorStoreRead.model_validate(resp)
 
-    async def _list_my_vs_async(self) -> List[ValidationInterface.VectorStoreRead]:
-        resp = await self._request("GET", "/v1/vector-stores")
-        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
-
-    # ------------------------------------------------------------------ #
-    # NEW  admin‑aware creation helper
-    # ------------------------------------------------------------------ #
     async def _create_vs_for_user_async(
         self,
         owner_id: str,
@@ -231,7 +224,6 @@ class VectorStoreClient:
             "distance_metric": distance_metric.upper(),
             "config": config or {},
         }
-        # pass owner_id as query‑param (backend enforces admin‑only)
         resp = await self._request(
             "POST",
             "/v1/vector-stores",
@@ -239,6 +231,20 @@ class VectorStoreClient:
             params={"owner_id": owner_id},
         )
         return ValidationInterface.VectorStoreRead.model_validate(resp)
+
+    async def _list_my_vs_async(self) -> List[ValidationInterface.VectorStoreRead]:
+        resp = await self._request("GET", "/v1/vector-stores")
+        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
+
+    async def _list_vs_by_user_async(
+        self, user_id: str
+    ) -> List[ValidationInterface.VectorStoreRead]:
+        resp = await self._request(
+            "GET",
+            "/v1/vector-stores/admin/by-user",
+            params={"owner_id": user_id},
+        )
+        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
 
     async def _add_file_async(
         self, vector_store_id: str, p: Path, meta: Optional[Dict[str, Any]]
@@ -254,14 +260,12 @@ class VectorStoreClient:
         for i, txt in enumerate(texts):
             payload = {**base_md, "chunk_index": i, "file_id": file_record_id}
             if i < len(line_data):
-                payload.update(line_data[i])  # {'page':…, 'lines':…}
+                payload.update(line_data[i])
             chunk_md.append(payload)
 
-        # 🔑 1. look up the backend store to get its *collection* name
         store = self.retrieve_vector_store_sync(vector_store_id)
         collection_name = store.collection_name
 
-        # 🔑 2. upsert via VectorStoreManager (auto-detects vector field)
         self.vector_manager.add_to_store(
             store_name=collection_name,
             texts=texts,
@@ -269,7 +273,6 @@ class VectorStoreClient:
             metadata=chunk_md,
         )
 
-        # 3. register the file with the API
         resp = await self._request(
             "POST",
             f"/v1/vector-stores/{vector_store_id}/files",
@@ -291,23 +294,19 @@ class VectorStoreClient:
         filters: Optional[Dict] = None,
         vector_store_host: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-
-        # pick local vs. override host
         vector_manager = (
             VectorStoreManager(vector_store_host=vector_store_host)
             if vector_store_host
             else self.vector_manager
         )
-
         store = self.retrieve_vector_store_sync(vector_store_id)
 
-        # 🔶 choose encoder by vector_size
-        if store.vector_size == 1024:  # images collection
+        if store.vector_size == 1024:
             vec = self.file_processor.encode_clip_text(query_text).tolist()
-            vector_field = "caption_vector"  # field name in Qdrant
-        else:  # 384-D text collection
+            vector_field = "caption_vector"
+        else:
             vec = self.file_processor.encode_text(query_text).tolist()
-            vector_field = None  # default field
+            vector_field = None
 
         return vector_manager.query_store(
             store_name=store.collection_name,
@@ -318,7 +317,6 @@ class VectorStoreClient:
         )
 
     async def _delete_vs_async(self, vector_store_id: str, permanent: bool):
-        # collection deletion must use the *collection* name
         store = self.retrieve_vector_store_sync(vector_store_id)
         qres = self.vector_manager.delete_store(store.collection_name)
         await self._request(
@@ -376,31 +374,8 @@ class VectorStoreClient:
         )
         return ValidationInterface.VectorStoreFileRead.model_validate(resp)
 
-    async def _get_assistant_vs_async(
-        self, assistant_id: str
-    ) -> List[ValidationInterface.VectorStoreRead]:
-        resp = await self._request(
-            "GET", f"/v1/assistants/{assistant_id}/vector-stores"
-        )
-        return [
-            ValidationInterface.VectorStoreRead.model_validate(item) for item in resp
-        ]
+    # ── Sync facade ──────────────────────────────────────────────────────── #
 
-    async def _attach_vs_async(self, vector_store_id: str, assistant_id: str) -> bool:
-        await self._request(
-            "POST",
-            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/attach",
-        )
-        return True
-
-    async def _detach_vs_async(self, vector_store_id: str, assistant_id: str) -> bool:
-        await self._request(
-            "DELETE",
-            f"/v1/assistants/{assistant_id}/vector-stores/{vector_store_id}/detach",
-        )
-        return True
-
-    # Sync facade helpers ------------------------------------------------ #
     def _run_sync(self, coro):
         try:
             loop = asyncio.get_running_loop()
@@ -410,13 +385,12 @@ class VectorStoreClient:
             pass
         return asyncio.run(coro)
 
-    # ──────────────────────────────────────────────────────────────────
-    #  Helpers (private)
-    # ──────────────────────────────────────────────────────────────────
+    # ── Private helpers ──────────────────────────────────────────────────── #
+
     @staticmethod
     def _normalise_hits(raw_hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Ensure each hit dict contains a top‑level 'meta_data' key so that all
+        Ensure each hit dict contains a top-level 'meta_data' key so that all
         downstream components (reranker, synthesizer, envelope builder) can
         rely on a stable schema.
         """
@@ -434,7 +408,8 @@ class VectorStoreClient:
             )
         return normalised
 
-    # Public API ---------------------------------------------------------- #
+    # ── Public API ───────────────────────────────────────────────────────── #
+
     def create_vector_store(
         self,
         name: str,
@@ -458,10 +433,10 @@ class VectorStoreClient:
         config: Optional[Dict[str, Any]] = None,
     ) -> ValidationInterface.VectorStoreRead:
         """
-        **Admin‑only** helper → create a store on behalf of *owner_id*.
+        **Admin-only** helper → create a store on behalf of *owner_id*.
 
-        The caller’s API‑key must belong to an admin; otherwise the
-        request will be rejected by the server with HTTP 403.
+        The caller's API-key must belong to an admin; otherwise the
+        request will be rejected by the server with HTTP 403.
         """
         return self._run_sync(
             self._create_vs_for_user_async(
@@ -469,32 +444,16 @@ class VectorStoreClient:
             )
         )
 
-    # ───────────────────────────────────────────────────────────────
-    #  Convenience: ensure a per-user “file_search” store exists
-    # ───────────────────────────────────────────────────────────────
-    # unchanged … (get_or_create_file_search_store)
-
     def list_my_vector_stores(self) -> List[ValidationInterface.VectorStoreRead]:
-        """List all non-deleted stores owned by *this* API-key’s user."""
+        """List all non-deleted stores owned by *this* API-key's user."""
         return self._run_sync(self._list_my_vs_async())
-
-    # ───────────────────────────────────────────────────────────────
-    #  NEW: real per-user listing (admin-only)
-    # ───────────────────────────────────────────────────────────────
-    async def _list_vs_by_user_async(self, user_id: str):
-        resp = await self._request(
-            "GET",
-            "/v1/vector-stores/admin/by-user",
-            params={"owner_id": user_id},
-        )
-        return [ValidationInterface.VectorStoreRead.model_validate(r) for r in resp]
 
     def get_stores_by_user(
         self,
         _user_id: str,
-    ) -> List[ValidationInterface.VectorStoreRead]:  # noqa: ARG002
+    ) -> List[ValidationInterface.VectorStoreRead]:
         """
-        ⚠️ **Deprecated** – prefer impersonating the user’s API-key or using
+        ⚠️ **Deprecated** – prefer impersonating the user's API-key or using
         the newer RBAC endpoints, but keep working for legacy code.
         """
         warnings.warn(
@@ -505,9 +464,6 @@ class VectorStoreClient:
         )
         return self._run_sync(self._list_vs_by_user_async(_user_id))
 
-    # ───────────────────────────────────────────────────────────────
-    #  Convenience: ensure a per-user “file_search” store exists
-    # ───────────────────────────────────────────────────────────────
     def get_or_create_file_search_store(self, user_id: Optional[str] = None) -> str:
         """
         Return the *oldest* vector-store named **file_search** for ``user_id``;
@@ -516,31 +472,23 @@ class VectorStoreClient:
         Parameters
         ----------
         user_id : Optional[str]
-            • If **None**  → operate on *this* API-key’s stores
-            • If not None → *admin-only*  – look up / create on behalf of ``user_id``
+            • If **None**  → operate on *this* API-key's stores
+            • If not None → *admin-only* – look up / create on behalf of ``user_id``
 
         Returns
         -------
         str
             The vector-store **id**.
         """
-
-        # 1️⃣  Fetch candidate stores
         if user_id is None:
-            # Normal user context – only see caller-owned stores
             stores = self.list_my_vector_stores()
         else:
-            # Admin context – may inspect another user’s stores
             stores = self.get_stores_by_user(_user_id=user_id)
 
         file_search_stores = [s for s in stores if s.name == "file_search"]
 
         if file_search_stores:
-            # 2️⃣  Pick the *earliest* (oldest created_at) to keep things stable
-            chosen = min(
-                file_search_stores,
-                key=lambda s: (s.created_at or 0),
-            )
+            chosen = min(file_search_stores, key=lambda s: (s.created_at or 0))
             log.info(
                 "Re-using existing 'file_search' store %s for user %s",
                 chosen.id,
@@ -548,11 +496,9 @@ class VectorStoreClient:
             )
             return chosen.id
 
-        # 3️⃣  Nothing found → create a fresh store
         if user_id is None:
             new_store = self.create_vector_store(name="file_search")
         else:
-            # Requires admin API-key
             new_store = self.create_vector_store_for_user(
                 owner_id=user_id,
                 name="file_search",
@@ -608,26 +554,6 @@ class VectorStoreClient:
                 vector_store_id, file_id, status, error_message
             )
         )
-
-    def get_vector_stores_for_assistant(
-        self,
-        assistant_id: str,
-    ) -> List[ValidationInterface.VectorStoreRead]:
-        return self._run_sync(self._get_assistant_vs_async(assistant_id))
-
-    def attach_vector_store_to_assistant(
-        self,
-        vector_store_id: str,
-        assistant_id: str,
-    ) -> bool:
-        return self._run_sync(self._attach_vs_async(vector_store_id, assistant_id))
-
-    def detach_vector_store_from_assistant(
-        self,
-        vector_store_id: str,
-        assistant_id: str,
-    ) -> bool:
-        return self._run_sync(self._detach_vs_async(vector_store_id, assistant_id))
 
     def retrieve_vector_store_sync(
         self,
