@@ -1,3 +1,10 @@
+## [1.74.9](https://github.com/project-david-ai/projectdavid/compare/v1.74.8...v1.74.9) (2026-03-08)
+
+
+### Bug Fixes
+
+* refactor dependencies and extras in `pyproject.toml` ([db3000a](https://github.com/project-david-ai/projectdavid/commit/db3000ab87fd34fe752598d42617b63f9c08c220))
+
 ## [1.74.8](https://github.com/project-david-ai/projectdavid/compare/v1.74.7...v1.74.8) (2026-03-08)
 
 
