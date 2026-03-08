@@ -61,10 +61,10 @@ class FileProcessor:
 
             except ImportError:
                 log.error(
-                    "sentence-transformers not found. Ensure 'pip install projectdavid[vision]' is installed."
+                    "sentence-transformers not found. Ensure 'pip install \"projectdavid[embeddings]\"' is installed."
                 )
                 raise ImportError(
-                    "Model-based features require 'sentence-transformers'. Install with [vision] extra."
+                    "Model-based features require 'sentence-transformers'. Install with the [embeddings] extra."
                 )
         return self._embedding_model
 
