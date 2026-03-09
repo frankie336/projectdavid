@@ -1,3 +1,10 @@
+## [1.74.11](https://github.com/project-david-ai/projectdavid/compare/v1.74.10...v1.74.11) (2026-03-08)
+
+
+### Bug Fixes
+
+* add `list_assistants` alias and clean up comments in `assistants_client.py` ([b0a8660](https://github.com/project-david-ai/projectdavid/commit/b0a8660a76aae4404e981fdab925ae0b39d77e57))
+
 ## [1.74.10](https://github.com/project-david-ai/projectdavid/compare/v1.74.9...v1.74.10) (2026-03-08)
 
 
