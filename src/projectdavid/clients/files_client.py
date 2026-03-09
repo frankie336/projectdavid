@@ -293,6 +293,58 @@ class FileClient(BaseAPIClient):
             )
             raise
 
+    def soft_delete_file(self, file_id: str) -> bool:
+        """
+        Soft-delete a file by ID.  The file record and physical bytes are
+        preserved server-side; the file is simply hidden from normal queries.
+
+        Args:
+            file_id: The ID of the file to soft-delete.
+
+        Returns:
+            True if the server confirmed the soft-deletion, False if not found.
+        """
+        logging_utility.info("Soft-deleting file with ID: %s", file_id)
+        try:
+            response = self.client.patch(f"/v1/files/{file_id}/soft-delete")
+            response.raise_for_status()
+
+            result = response.json()
+            deleted = result.get("deleted", False)
+            if deleted:
+                logging_utility.info(
+                    "Server confirmed soft-deletion for file ID %s.", file_id
+                )
+            else:
+                logging_utility.warning(
+                    "Server did not confirm soft-deletion for file ID %s: %s",
+                    file_id,
+                    result,
+                )
+            return deleted
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                logging_utility.warning(
+                    "File not found (404) for soft-delete: %s", file_id
+                )
+                return False
+            logging_utility.error(
+                "HTTP error soft-deleting file '%s': %s — %s",
+                file_id,
+                str(e),
+                e.response.text,
+            )
+            raise
+        except Exception as e:
+            logging_utility.error(
+                "Unexpected error soft-deleting file '%s': %s",
+                file_id,
+                str(e),
+                exc_info=True,
+            )
+            raise
+
     def get_signed_url(
         self,
         file_id: str,
