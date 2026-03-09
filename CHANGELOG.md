@@ -1,3 +1,10 @@
+## [1.74.12](https://github.com/project-david-ai/projectdavid/compare/v1.74.11...v1.74.12) (2026-03-09)
+
+
+### Bug Fixes
+
+* add `soft_delete_file` method to `files_client` ([6437e60](https://github.com/project-david-ai/projectdavid/commit/6437e603e0415fe9f99aa30bd35b46a7481be52e))
+
 ## [1.74.11](https://github.com/project-david-ai/projectdavid/compare/v1.74.10...v1.74.11) (2026-03-08)
 
 
