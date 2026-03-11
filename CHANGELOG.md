@@ -1,3 +1,10 @@
+## [1.75.1](https://github.com/project-david-ai/projectdavid/compare/v1.75.0...v1.75.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* suppress redundant `shell` session PTY text from SSE stream ([f3cdac7](https://github.com/project-david-ai/projectdavid/commit/f3cdac78f4059220ae8f20f2cdf5e515a573ffef))
+
 # [1.75.0](https://github.com/project-david-ai/projectdavid/compare/v1.74.12...v1.75.0) (2026-03-11)
 
 
