@@ -1,9 +1,28 @@
-# projectdavid — Entity SDK
+# projectdavid — Python SDK
 
 [![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
+[![PyPI](https://img.shields.io/pypi/v/projectdavid)](https://pypi.org/project/projectdavid/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 
-Python SDK for the Entities API — build, run, and coordinate AI assistants across local and cloud inference providers.
+**The Python SDK for Project David — the open source, GDPR compliant successor to the OpenAI Assistants API.**
+
+Same primitives. Every model. Your infrastructure.
+
+---
+
+## What is Project David?
+
+Project David is a full-scale, containerized LLM orchestration platform built around the same primitives as the OpenAI Assistants API — **Assistants, Threads, Messages, Runs, and Tools** — but without the lock-in.
+
+- **Provider agnostic** — Hyperbolic, TogetherAI, Ollama, or any OpenAI-compatible endpoint. Point at any inference provider and the platform normalizes the stream.
+- **Every model** — hosted APIs today, raw local weights tomorrow. Bring your own model.
+- **Your infrastructure** — fully self-hostable, open source, GDPR compliant, security audited.
+- **Production grade** — sandboxed code execution (FireJail), multi-agent delegation, file serving with signed URLs, real-time streaming frontend.
+
+> **Project Uni5** — the next milestone. `transformers`, GGUF, and vLLM adapters that mean a model straight off a training run has a full orchestration platform in minutes. From the lab to enterprise grade orchestration — instantly.
+
+---
 
 ## Installation
 
@@ -11,16 +30,9 @@ Python SDK for the Entities API — build, run, and coordinate AI assistants acr
 pip install projectdavid
 ```
 
-## Requirements
+**Requirements:** Python 3.10+ · A running Project David platform instance
 
-- Python 3.10+
-- An Entities API key (`ENTITIES_API_KEY`)
-
-## Supported Inference Providers
-
-
-[Find supported Inference endpoints and providers here.](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/providers/providers.md) 
-
+---
 
 ## Quick Start
 
@@ -32,15 +44,17 @@ from projectdavid import Entity
 load_dotenv()
 
 client = Entity(
-    base_url=os.getenv("BASE_URL"),
+    base_url=os.getenv("BASE_URL"),        # default: http://localhost:9000
     api_key=os.getenv("ENTITIES_API_KEY"),
 )
 
+# Create an assistant
 assistant = client.assistants.create_assistant(
     name="my_assistant",
     instructions="You are a helpful AI assistant.",
 )
 
+# Create a thread and send a message
 thread = client.threads.create_thread()
 
 message = client.messages.create_message(
@@ -50,11 +64,13 @@ message = client.messages.create_message(
     assistant_id=assistant.id,
 )
 
+# Create a run
 run = client.runs.create_run(
     assistant_id=assistant.id,
     thread_id=thread.id,
 )
 
+# Stream the response
 stream = client.synchronous_inference_stream
 stream.setup(
     user_id=os.getenv("ENTITIES_USER_ID"),
@@ -74,7 +90,34 @@ for chunk in stream.stream_chunks(
         print(content, end="", flush=True)
 ```
 
-See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) for the event-driven interface and advanced usage.
+See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) for the event-driven interface, tool calling, and advanced usage.
+
+---
+
+## Why Project David?
+
+| | OpenAI Assistants API | LangChain | Project David |
+|---|---|---|---|
+| Assistants / Threads / Runs primitives | ✅ | ❌ | ✅ |
+| Provider agnostic | ❌ | Partial | ✅ |
+| Local model support | ❌ | Partial | ✅ |
+| Raw weights → orchestration | ❌ | ❌ | ✅ *(Uni5)* |
+| Sandboxed code execution | ✅ Black box | ❌ | ✅ FireJail PTY |
+| Multi-agent delegation | Limited | ❌ | ✅ |
+| Self-hostable | ❌ | ✅ | ✅ |
+| GDPR compliant | ❌ | N/A | ✅ |
+| Security audited | N/A | N/A | ✅ |
+| Open source | ❌ | ✅ | ✅ |
+
+---
+
+## Supported Inference Providers
+
+[Full list of supported providers and endpoints →](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/providers/providers.md)
+
+Works with any OpenAI-compatible endpoint out of the box — including Ollama for fully local inference.
+
+---
 
 ## Environment Variables
 
@@ -82,8 +125,10 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 |---|---|
 | `ENTITIES_API_KEY` | Your Entities API key |
 | `ENTITIES_USER_ID` | Your user ID |
-| `BASE_URL` | API base URL (default: `http://localhost:9000`) |
+| `BASE_URL` | Platform base URL (default: `http://localhost:9000`) |
 | `PROVIDER_API_KEY` | Your inference provider API key |
+
+---
 
 ## Documentation
 
@@ -101,8 +146,11 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 | Files | [sdk-files.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-files.md) |
 | Vector Store | [sdk-vector-store.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-vector-store.md) |
 
+[Full SDK documentation →](https://github.com/project-david-ai/projectdavid_docs/tree/master/src/pages/sdk)
 
-[Find all SDK documentation here.](https://github.com/project-david-ai/projectdavid_docs/tree/master/src/pages/sdk) 
+> Full hosted docs coming at `docs.projectdavid.co.uk`
+
+---
 
 ## Related Repositories
 
@@ -111,5 +159,27 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 | [platform](https://github.com/project-david-ai/platform) | Core orchestration engine |
 | [entities-common](https://github.com/project-david-ai/entities-common) | Shared utilities and validation |
 | [david-core](https://github.com/project-david-ai/david-core) | Docker orchestration layer |
+| [reference-frontend](https://github.com/project-david-ai/reference-frontend) | Reference streaming frontend |
+| [entities_cook_book](https://github.com/project-david-ai/entities_cook_book) | Minimal tested examples — streaming, tools, search, stateful logic |
 
-> When the hosted docs site is live, all documentation links will be updated to `docs.projectdavid.co.uk`.
+---
+
+## Project Uni5 — Roadmap
+
+The next major milestone extends Project David to every model deployment scenario:
+
+```
+Got freshly trained weights?     →  transformers adapter     (Phase 1)
+Got a quantized GGUF model?      →  GGUF / llama.cpp adapter (Phase 2)
+Got a GPU cluster?               →  vLLM adapter             (Phase 3)
+Want a hosted provider?          →  already works
+Running Ollama locally?          →  already works
+```
+
+Five scenarios. One platform. **From the lab to enterprise grade orchestration — instantly.**
+
+---
+
+## License
+
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
