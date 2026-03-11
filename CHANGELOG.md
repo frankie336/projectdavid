@@ -1,3 +1,10 @@
+# [1.75.0](https://github.com/project-david-ai/projectdavid/compare/v1.74.12...v1.75.0) (2026-03-11)
+
+
+### Features
+
+* expand event and chunk processing with new `shell` capabilities ([a661af5](https://github.com/project-david-ai/projectdavid/commit/a661af5bf7dbd7ddd9b08e22fd76ffbfd2381f56))
+
 ## [1.74.12](https://github.com/project-david-ai/projectdavid/compare/v1.74.11...v1.74.12) (2026-03-09)
 
 
