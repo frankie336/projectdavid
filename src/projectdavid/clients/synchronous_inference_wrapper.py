@@ -12,6 +12,7 @@ from projectdavid.events import (
     CodeExecutionOutputEvent,
     CodeStatusEvent,
     ComputerExecutionOutputEvent,
+    ComputerGeneratedFileEvent,
     ContentEvent,
     DecisionEvent,
     EngineerStatusEvent,
@@ -20,6 +21,7 @@ from projectdavid.events import (
     ReasoningEvent,
     ResearchStatusEvent,
     ScratchpadEvent,
+    ShellStatusEvent,
     StreamEvent,
     ToolCallRequestEvent,
     ToolInterceptEvent,
@@ -71,9 +73,8 @@ class SynchronousInferenceStream:
 
         self.validator = ToolValidator()
 
-    # ------------------------------------------------------------------
-    # Factory: preferred way to create a ready-to-use, isolated instance
-    # ------------------------------------------------------------------
+    # ── Factory ────────────────────────────────────────────────────────────────
+
     @classmethod
     def for_request(
         cls,
@@ -120,6 +121,8 @@ class SynchronousInferenceStream:
         self.messages_client = messages_client
         self.assistants_client = assistants_client
 
+    # ── Raw chunk streaming ────────────────────────────────────────────────────
+
     def stream_chunks(
         self,
         model: str,
@@ -154,9 +157,6 @@ class SynchronousInferenceStream:
 
         agen = _stream_chunks_async().__aiter__()
 
-        # ---------------------------------------------------------
-        # LOOP DETECTION LOGIC
-        # ---------------------------------------------------------
         active_loop = None
         is_new_loop = False
 
@@ -174,7 +174,6 @@ class SynchronousInferenceStream:
                     chunk = active_loop.run_until_complete(
                         asyncio.wait_for(agen.__anext__(), timeout=timeout_per_chunk)
                     )
-
                     chunk["run_id"] = run_id
                     if suppress_fc and chunk.get("type") == "call_arguments":
                         continue
@@ -196,6 +195,8 @@ class SynchronousInferenceStream:
                     active_loop.close()
                 except Exception as e:
                     LOG.error(f"[SyncStream] Error cleanup loop: {e}")
+
+    # ── Event streaming ────────────────────────────────────────────────────────
 
     def stream_events(
         self,
@@ -268,10 +269,24 @@ class SynchronousInferenceStream:
 
             break
 
-    def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
-        """Maps raw API chunks to typed Event instances."""
+    # ── Chunk → Event mapping ──────────────────────────────────────────────────
 
-        # --- 1. ENFORCE CONTRACT: UNWRAP MIXIN JSON ---
+    def _map_chunk_to_event(self, chunk: dict) -> Optional[StreamEvent]:
+        """
+        Maps raw API chunks to typed Event instances.
+
+        Unwrap order
+        ────────────
+        1. Unwrap mixin JSON encoded inside a content chunk (legacy path).
+        2. Unwrap nested payloads for stream_type envelopes:
+               code_execution      → inner chunk
+               computer_execution  → inner chunk
+               delegation          → inner chunk
+               shell               → inner chunk  ← NEW
+        3. Dispatch on c_type to produce a typed event.
+        """
+
+        # ── 1. Unwrap mixin JSON embedded in a content chunk ──────────────────
         if chunk.get("type") == "content" and isinstance(chunk.get("content"), str):
             text = chunk["content"].strip()
             if text.startswith("{") and text.endswith("}"):
@@ -285,6 +300,7 @@ class SynchronousInferenceStream:
                                 "research_status",
                                 "scratchpad_status",
                                 "code_status",
+                                "shell_status",  # ← NEW
                                 "engineer_status",
                                 "tool_intercept",
                                 "status",
@@ -294,9 +310,14 @@ class SynchronousInferenceStream:
                         ):
                             chunk = parsed
 
-        # --- 2. EXTRACT NESTED PAYLOADS ---
+        # ── 2. Unwrap stream_type envelopes ───────────────────────────────────
         stream_type = chunk.get("type", chunk.get("stream_type"))
-        if stream_type in {"code_execution", "computer_execution", "delegation"}:
+        if stream_type in {
+            "code_execution",
+            "computer_execution",
+            "delegation",
+            "shell",
+        }:
             payload = chunk.get("chunk", {})
             if isinstance(payload, dict):
                 payload.setdefault("run_id", chunk.get("run_id"))
@@ -304,6 +325,8 @@ class SynchronousInferenceStream:
 
         c_type = chunk.get("type")
         run_id = chunk.get("run_id")
+
+        # ── 3. Type dispatch ──────────────────────────────────────────────────
 
         if c_type == "tool_call_manifest":
             raw_args = chunk.get("args", {})
@@ -320,6 +343,7 @@ class SynchronousInferenceStream:
                 tool_name=chunk.get("tool", "unknown_tool"),
                 args=raw_args,
                 action_id=chunk.get("action_id"),
+                tool_call_id=chunk.get("tool_call_id"),
                 thread_id=self.thread_id,
                 assistant_id=self.assistant_id,
                 _runs_client=self.runs_client,
@@ -359,13 +383,25 @@ class SynchronousInferenceStream:
                 assistant_id=chunk.get("assistant_id"),
             )
 
-        elif c_type == "computer_output":
+        elif c_type in ("computer_output", "shell_output"):
+            # shell_output arrives after stream_type="shell" envelope unwrap.
+            # Map to the same event as computer_output so existing frontend
+            # consumers see no change.
             return ComputerExecutionOutputEvent(
                 run_id=run_id, content=chunk.get("content", "")
             )
 
         elif c_type == "code_status":
             return CodeStatusEvent(
+                run_id=run_id,
+                activity=chunk.get("activity", ""),
+                state=chunk.get("state", "in_progress"),
+                tool=chunk.get("tool"),
+            )
+
+        elif c_type == "shell_status":
+            # Shell/computer tool lifecycle — mirrors code_status routing.
+            return ShellStatusEvent(
                 run_id=run_id,
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
@@ -380,6 +416,21 @@ class SynchronousInferenceStream:
                 base64_data=chunk.get("base64"),
                 mime_type=chunk.get("mime_type", "application/octet-stream"),
                 url=chunk.get("url"),
+            )
+
+        elif c_type == "computer_file":
+            # Files harvested from the computer shell session.
+            # Arrives after stream_type="shell" envelope unwrap (see §2 above).
+            # The mixin always sets base64=None for shell files — files are
+            # served via signed URL only.
+            return ComputerGeneratedFileEvent(
+                run_id=run_id,
+                filename=chunk.get("filename", "unknown"),
+                file_id=chunk.get("file_id"),
+                mime_type=chunk.get("mime_type", "application/octet-stream"),
+                url=chunk.get("url"),
+                base64_data=chunk.get("base64"),
+                context=chunk.get("context"),
             )
 
         elif c_type == "research_status":
