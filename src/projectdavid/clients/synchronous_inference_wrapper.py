@@ -135,8 +135,6 @@ class SynchronousInferenceStream:
         resolved_api_key = api_key or self.api_key
         resolved_meta_data = meta_data or self.meta_data
 
-        # Capture instance fields into locals NOW so a concurrent .setup()
-        # on a (mis-)shared instance cannot mutate them mid-stream.
         thread_id = self.thread_id
         message_id = self.message_id
         run_id = self.run_id
@@ -278,12 +276,36 @@ class SynchronousInferenceStream:
         Unwrap order
         ────────────
         1. Unwrap mixin JSON encoded inside a content chunk (legacy path).
-        2. Unwrap nested payloads for stream_type envelopes:
-               code_execution      → inner chunk
-               computer_execution  → inner chunk
-               delegation          → inner chunk
-               shell               → inner chunk  ← NEW
-        3. Dispatch on c_type to produce a typed event.
+           Shell mixin yields JSON strings; the inference transport wraps them
+           in {"type":"content","content":"<json>"}.  Step 1 unwraps them when
+           the embedded JSON contains "stream_type" or a recognised type key.
+
+        2. Unwrap stream_type envelopes.
+           Sets _from_shell_envelope=True when stream_type=="shell" so step 3
+           can suppress PTY-text inner types that must NOT reach the SSE stream.
+
+        3. Dispatch on c_type → typed Event | None.
+
+        Shell envelope suppression
+        ──────────────────────────
+        The shell mixin wraps all PTY output as:
+            {"stream_type": "shell", "chunk": {"type": "shell_output", ...}}
+        and its final aggregated summary as:
+            {"stream_type": "shell", "chunk": {"type": "content", ...}}
+
+        After step 1+2 unwrap, these arrive with generic type names that
+        collide with top-level event types:
+
+            shell_output  → ComputerExecutionOutputEvent → Flask "computer_output"
+                          → useChat codeOutput.output → code-interpreter panel  ❌
+            content       → ContentEvent → Flask "content"
+                          → useChat updateBot(text) → "pwd" in main chat        ❌
+
+        xterm reads all PTY text directly from the sandbox WebSocket
+        (CollapsibleXtermTerminal) so suppressing these from SSE is both
+        correct and complete.  The only shell inner types that must survive are:
+            computer_file  — file download attachments for the UI
+            shell_status   — arrives bare (no envelope), routes normally
         """
 
         # ── 1. Unwrap mixin JSON embedded in a content chunk ──────────────────
@@ -300,7 +322,7 @@ class SynchronousInferenceStream:
                                 "research_status",
                                 "scratchpad_status",
                                 "code_status",
-                                "shell_status",  # ← NEW
+                                "shell_status",
                                 "engineer_status",
                                 "tool_intercept",
                                 "status",
@@ -311,6 +333,8 @@ class SynchronousInferenceStream:
                             chunk = parsed
 
         # ── 2. Unwrap stream_type envelopes ───────────────────────────────────
+        _from_shell_envelope = False
+
         stream_type = chunk.get("type", chunk.get("stream_type"))
         if stream_type in {
             "code_execution",
@@ -318,6 +342,8 @@ class SynchronousInferenceStream:
             "delegation",
             "shell",
         }:
+            if stream_type == "shell":
+                _from_shell_envelope = True
             payload = chunk.get("chunk", {})
             if isinstance(payload, dict):
                 payload.setdefault("run_id", chunk.get("run_id"))
@@ -352,6 +378,11 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "content":
+            if _from_shell_envelope:
+                # Shell mixin's final PTY summary. Suppressed — the LLM receives
+                # this via submit_tool_output; xterm has it via WebSocket.
+                LOG.debug("[SyncStream] Suppressing shell envelope 'content' chunk.")
+                return None
             return ContentEvent(run_id=run_id, content=chunk.get("content", ""))
 
         elif c_type == "reasoning":
@@ -383,10 +414,15 @@ class SynchronousInferenceStream:
                 assistant_id=chunk.get("assistant_id"),
             )
 
-        elif c_type in ("computer_output", "shell_output"):
-            # shell_output arrives after stream_type="shell" envelope unwrap.
-            # Map to the same event as computer_output so existing frontend
-            # consumers see no change.
+        elif c_type in ("computer_output", "shell_output", "shell_error"):
+            if _from_shell_envelope:
+                # PTY text from the shell session, arriving via stream_type="shell"
+                # envelope.  Suppressed — xterm receives these via WebSocket and
+                # does not need a second copy via SSE.  Forwarding causes output
+                # to appear in the code-interpreter execution panel.
+                LOG.debug("[SyncStream] Suppressing shell envelope '%s' chunk.", c_type)
+                return None
+            # Bare computer_output (non-shell path) still routes normally.
             return ComputerExecutionOutputEvent(
                 run_id=run_id, content=chunk.get("content", "")
             )
@@ -400,7 +436,8 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "shell_status":
-            # Shell/computer tool lifecycle — mirrors code_status routing.
+            # Always arrives bare (no stream_type wrapper) so
+            # _from_shell_envelope is always False here — routes normally.
             return ShellStatusEvent(
                 run_id=run_id,
                 activity=chunk.get("activity", ""),
@@ -419,10 +456,8 @@ class SynchronousInferenceStream:
             )
 
         elif c_type == "computer_file":
-            # Files harvested from the computer shell session.
-            # Arrives after stream_type="shell" envelope unwrap (see §2 above).
-            # The mixin always sets base64=None for shell files — files are
-            # served via signed URL only.
+            # The only shell inner type that MUST survive the envelope —
+            # provides file download links rendered in the frontend.
             return ComputerGeneratedFileEvent(
                 run_id=run_id,
                 filename=chunk.get("filename", "unknown"),
