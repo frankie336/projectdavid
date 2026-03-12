@@ -1,3 +1,10 @@
+## [1.77.1](https://github.com/project-david-ai/projectdavid/compare/v1.77.0...v1.77.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* correct import path for `FileClient` in `MessagesClient` ([0a3aecc](https://github.com/project-david-ai/projectdavid/commit/0a3aecc7dcde703c5c5c65cbfeefe4fd519e16c6))
+
 # [1.77.0](https://github.com/project-david-ai/projectdavid/compare/v1.76.2...v1.77.0) (2026-03-12)
 
 
