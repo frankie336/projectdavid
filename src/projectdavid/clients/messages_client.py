@@ -38,7 +38,7 @@ class MessagesClient(BaseAPIClient):
         """Lazy load the FileClient to prevent circular imports on startup."""
         if self._file_client is None:
             # Import FileClient locally here assuming it's in the same package
-            from projectdavid.clients.file_client import FileClient
+            from projectdavid.clients.files_client import FileClient
 
             self._file_client = FileClient(base_url=self.base_url, api_key=self.api_key)
         return self._file_client
