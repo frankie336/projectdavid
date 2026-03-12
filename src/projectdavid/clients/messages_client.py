@@ -37,7 +37,6 @@ class MessagesClient(BaseAPIClient):
     def file_client(self):
         """Lazy load the FileClient to prevent circular imports on startup."""
         if self._file_client is None:
-            # Import FileClient locally here assuming it's in the same package
             from projectdavid.clients.files_client import FileClient
 
             self._file_client = FileClient(base_url=self.base_url, api_key=self.api_key)
@@ -46,28 +45,41 @@ class MessagesClient(BaseAPIClient):
     def _process_and_upload_image(self, url: str, index: int) -> Dict[str, Any]:
         """
         Helper to download/decode a single image and upload it via FileClient.
+        Handles base64 data URIs, standard HTTP/S URLs (including redirects).
         """
         file_bytes = b""
         filename = f"upload_image_{index}.jpg"
 
         try:
             if url.startswith("data:image"):
-                # 1. Handle Base64
+                # 1. Handle Base64 data URIs
                 header, encoded = url.split(",", 1)
                 file_bytes = base64.b64decode(encoded)
                 if "image/png" in header:
                     filename = f"upload_image_{index}.png"
                 elif "image/webp" in header:
                     filename = f"upload_image_{index}.webp"
+
             elif url.startswith("http"):
-                # 2. Handle standard URLs
-                # Add a standard User-Agent so strict servers (like Wikipedia) don't block us with a 403
+                # 2. Handle standard HTTP/S URLs
+                # - User-Agent prevents 403s from strict hosts (e.g. Wikipedia)
+                # - follow_redirects=True handles CDN redirects (e.g. Picsum -> Fastly)
                 headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/122.0.0.0 Safari/537.36"
+                    )
                 }
-                response = httpx.get(url, headers=headers, timeout=30.0)
+                response = httpx.get(
+                    url,
+                    headers=headers,
+                    timeout=30.0,
+                    follow_redirects=True,  # <-- handles 302/301 CDN redirects
+                )
                 response.raise_for_status()
                 file_bytes = response.content
+
             else:
                 raise ValueError(f"Unsupported image URL format at index {index}")
 
@@ -125,7 +137,6 @@ class MessagesClient(BaseAPIClient):
                 "Batch uploading %d images for multimodal payload...", len(image_tasks)
             )
             with ThreadPoolExecutor(max_workers=min(len(image_tasks), 10)) as executor:
-                # Map futures to tasks
                 futures = [
                     executor.submit(self._process_and_upload_image, task[0], task[1])
                     for task in image_tasks
@@ -139,7 +150,7 @@ class MessagesClient(BaseAPIClient):
                         logging_utility.error("Batch image upload failed: %s", str(e))
                         raise
 
-        # 3. Compile the text blocks into a single string for your DB
+        # 3. Compile the text blocks into a single string for the DB
         final_text = "\n\n".join(text_blocks).strip()
 
         return final_text, attachments
@@ -147,7 +158,7 @@ class MessagesClient(BaseAPIClient):
     def create_message(
         self,
         thread_id: str,
-        content: Union[str, List[Dict[str, Any]]],  # <--- UPDATED TYPE
+        content: Union[str, List[Dict[str, Any]]],
         assistant_id: str,
         role: str = "user",
         meta_data: Optional[Dict[str, Any]] = None,
@@ -166,7 +177,7 @@ class MessagesClient(BaseAPIClient):
             "role": role,
             "assistant_id": assistant_id,
             "meta_data": meta_data,
-            "attachments": attachments,  # <--- INJECTED ATTACHMENTS
+            "attachments": attachments,
         }
 
         logging_utility.info(
