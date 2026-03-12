@@ -1,3 +1,10 @@
+## [1.77.2](https://github.com/project-david-ai/projectdavid/compare/v1.77.1...v1.77.2) (2026-03-12)
+
+
+### Bug Fixes
+
+* add User-Agent header to `httpx.get` in `MessagesClient` to prevent 403 errors from strict servers ([c9561f1](https://github.com/project-david-ai/projectdavid/commit/c9561f11df6c102741d96523246ee9c8e41fc823))
+
 ## [1.77.1](https://github.com/project-david-ai/projectdavid/compare/v1.77.0...v1.77.1) (2026-03-12)
 
 
