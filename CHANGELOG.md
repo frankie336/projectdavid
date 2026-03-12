@@ -1,3 +1,10 @@
+## [1.77.3](https://github.com/project-david-ai/projectdavid/compare/v1.77.2...v1.77.3) (2026-03-12)
+
+
+### Bug Fixes
+
+* enhance image processing in `MessagesClient` ([a786402](https://github.com/project-david-ai/projectdavid/commit/a786402c55b6aa71ed62b6076f3b01214c71f90a))
+
 ## [1.77.2](https://github.com/project-david-ai/projectdavid/compare/v1.77.1...v1.77.2) (2026-03-12)
 
 
