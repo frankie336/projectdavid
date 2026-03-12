@@ -1,3 +1,10 @@
+# [1.76.0](https://github.com/project-david-ai/projectdavid/compare/v1.75.2...v1.76.0) (2026-03-12)
+
+
+### Features
+
+* add multimodal message support and update `projectdavid_common` to v0.43.0 ([3eafade](https://github.com/project-david-ai/projectdavid/commit/3eafade96413b7c3aafbcfcd098be1ca34758d5e))
+
 ## [1.75.2](https://github.com/project-david-ai/projectdavid/compare/v1.75.1...v1.75.2) (2026-03-11)
 
 
