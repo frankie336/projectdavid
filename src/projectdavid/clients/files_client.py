@@ -458,4 +458,4 @@ class FileClient(BaseAPIClient):
                 str(e),
                 exc_info=True,
             )
-            return None  # Or raise
+            return None
