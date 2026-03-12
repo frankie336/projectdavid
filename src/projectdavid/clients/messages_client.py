@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional
+# projectdavid/clients/messages_client.py
+import base64
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from dotenv import load_dotenv
@@ -12,39 +14,101 @@ load_dotenv()
 
 logging_utility = UtilsInterface.LoggingUtility()
 
+# Mirrors ContentType in messages_schema.py
+ContentType = Union[str, List[Dict[str, Any]]]
+
 
 class MessagesClient(BaseAPIClient):
     def __init__(self, base_url: Optional[str] = None, api_key: Optional[str] = None):
-        """
-        MessagesClient for interacting with the /v1/messages API.
-
-        Inherits BaseAPIClient for consistent header injection,
-        timeout configuration, and error logging.
-        """
         super().__init__(base_url=base_url, api_key=api_key)
         self.message_chunks: Dict[str, List[str]] = {}
         logging_utility.info("MessagesClient initialized using BaseAPIClient.")
 
+    # ──────────────────────────────────────────────────────────────────────────
+    #  Multimodal builder
+    #
+    #  Developers NEVER construct content blocks by hand.
+    #  They call build_image_message() and pass the result to create_message().
+    #
+    #  Usage:
+    #
+    #      # Text only — unchanged from before
+    #      entity.messages.create_message(
+    #          thread_id=thread_id,
+    #          content="What is the weather?",
+    #          assistant_id=assistant_id,
+    #      )
+    #
+    #      # Multimodal — image from disk
+    #      content = entity.messages.build_image_message(
+    #          text="What is in this image?",
+    #          image_bytes=open("photo.jpg", "rb").read(),
+    #          mime_type="image/jpeg",
+    #      )
+    #      entity.messages.create_message(
+    #          thread_id=thread_id,
+    #          content=content,
+    #          assistant_id=assistant_id,
+    #      )
+    #
+    #      # Multimodal — image already in memory (e.g. from requests / httpx)
+    #      content = entity.messages.build_image_message(
+    #          text="Describe this chart.",
+    #          image_bytes=response.content,
+    #          mime_type="image/png",
+    #      )
+    # ──────────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def build_image_message(
+        text: str,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg",
+    ) -> List[Dict[str, Any]]:
+        """
+        Build a multimodal content list from raw image bytes.
+
+        Args:
+            text:        The text prompt to accompany the image.
+            image_bytes: Raw bytes of the image (JPEG, PNG, WEBP, GIF).
+            mime_type:   MIME type string, default "image/jpeg".
+                         Supported: "image/jpeg", "image/png",
+                                    "image/webp", "image/gif"
+
+        Returns:
+            A content list ready to pass directly to create_message(content=...).
+
+        Example:
+            content = MessagesClient.build_image_message(
+                text="What breed is this dog?",
+                image_bytes=open("dog.jpg", "rb").read(),
+                mime_type="image/jpeg",
+            )
+        """
+        encoded = base64.b64encode(image_bytes).decode("utf-8")
+        data_uri = f"data:{mime_type};base64,{encoded}"
+        return [
+            {"type": "text", "text": text},
+            {"type": "image_url", "image_url": {"url": data_uri}},
+        ]
+
+    # ──────────────────────────────────────────────────────────────────────────
+    #  Core message operations
+    # ──────────────────────────────────────────────────────────────────────────
+
     def create_message(
         self,
         thread_id: str,
-        content: str,
+        content: ContentType,  # ← str for text, or list from build_image_message()
         assistant_id: str,
         role: str = "user",
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.MessageRead:
         """
-        Create a new message and return it as a MessageRead model.
+        Create a new message.
 
-        Args:
-            thread_id (str): ID of the thread.
-            content (str): Message content.
-            assistant_id (str): Assistant's ID.
-            role (str): Message role, default 'user'.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            MessageRead: The created message.
+        For plain text pass content as a string (unchanged from before).
+        For vision messages pass the list returned by build_image_message().
         """
         meta_data = meta_data or {}
         message_data = {
@@ -56,14 +120,16 @@ class MessagesClient(BaseAPIClient):
         }
 
         logging_utility.info(
-            "Creating message for thread_id: %s, role: %s", thread_id, role
+            "Creating message for thread_id: %s, role: %s, content_type: %s",
+            thread_id,
+            role,
+            "multimodal" if isinstance(content, list) else "text",
         )
 
         try:
             validated_data = ent_validator.MessageCreate(**message_data)
             response = self.client.post("/v1/messages", json=validated_data.dict())
             response.raise_for_status()
-
             created_message = response.json()
             logging_utility.info(
                 "Message created successfully with id: %s", created_message.get("id")
@@ -85,22 +151,11 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def retrieve_message(self, message_id: str) -> ent_validator.MessageRead:
-        """
-        Retrieve a message by its ID.
-
-        Args:
-            message_id (str): The ID of the message.
-
-        Returns:
-            MessageRead: The retrieved message.
-        """
         logging_utility.info("Retrieving message with id: %s", message_id)
         try:
             response = self.client.get(f"/v1/messages/{message_id}")
             response.raise_for_status()
-            message = response.json()
-            logging_utility.info("Message retrieved successfully")
-            return ent_validator.MessageRead(**message)
+            return ent_validator.MessageRead(**response.json())
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
@@ -116,16 +171,6 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def update_message(self, message_id: str, **updates) -> ent_validator.MessageRead:
-        """
-        Update an existing message with provided fields.
-
-        Args:
-            message_id (str): The ID of the message.
-            **updates: Fields to update.
-
-        Returns:
-            MessageRead: The updated message.
-        """
         logging_utility.info("Updating message with id: %s", message_id)
         try:
             validated_data = ent_validator.MessageUpdate(**updates)
@@ -134,9 +179,8 @@ class MessagesClient(BaseAPIClient):
                 json=validated_data.dict(exclude_unset=True),
             )
             response.raise_for_status()
-            updated_message = response.json()
             logging_utility.info("Message updated successfully")
-            return ent_validator.MessageRead(**updated_message)
+            return ent_validator.MessageRead(**response.json())
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
@@ -152,39 +196,23 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def list_messages(
-        self,
-        thread_id: str,
-        limit: int = 20,
-        order: str = "asc",
+        self, thread_id: str, limit: int = 20, order: str = "asc"
     ) -> ent_validator.MessagesList:
-        """
-        Fetch messages for a thread and return an OpenAI-style envelope.
-
-        Args:
-            thread_id (str): Target thread ID.
-            limit (int): Max messages to fetch.
-            order (str): 'asc' or 'desc'.
-
-        Returns:
-            MessagesList: Wrapper containing .data[], .first_id, .last_id, .has_more …
-        """
         logging_utility.info(
             "Listing messages for thread_id: %s, limit: %d, order: %s",
             thread_id,
             limit,
             order,
         )
-        params = {"limit": limit, "order": order}
         try:
             response = self.client.get(
-                f"/v1/threads/{thread_id}/messages", params=params
+                f"/v1/threads/{thread_id}/messages",
+                params={"limit": limit, "order": order},
             )
             response.raise_for_status()
-
             envelope = ent_validator.MessagesList(**response.json())
             logging_utility.info("Retrieved %d messages", len(envelope.data))
             return envelope
-
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}") from e
@@ -198,25 +226,13 @@ class MessagesClient(BaseAPIClient):
     def get_formatted_messages(
         self, thread_id: str, system_message: str = ""
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve and format messages for a thread, inserting or replacing the system message.
-
-        Args:
-            thread_id (str): The thread ID.
-            system_message (str): The system message to use.
-
-        Returns:
-            List[Dict[str, Any]]: The formatted list of messages.
-        """
         logging_utility.info("Getting formatted messages for thread_id: %s", thread_id)
-        logging_utility.info("Using system message: %s", system_message)
         try:
             response = self.client.get(f"/v1/threads/{thread_id}/formatted_messages")
             response.raise_for_status()
             formatted_messages = response.json()
             if not isinstance(formatted_messages, list):
                 raise ValueError("Expected a list of messages")
-            logging_utility.debug("Initial formatted messages: %s", formatted_messages)
             for msg in formatted_messages:
                 if msg.get("role") == "tool":
                     if "tool_call_id" not in msg or "content" not in msg:
@@ -226,44 +242,24 @@ class MessagesClient(BaseAPIClient):
                         raise ValueError(f"Malformed tool message: {msg}")
             if formatted_messages and formatted_messages[0].get("role") == "system":
                 formatted_messages[0]["content"] = system_message
-                logging_utility.debug(
-                    "Replaced existing system message with: %s", system_message
-                )
             else:
                 formatted_messages.insert(
                     0, {"role": "system", "content": system_message}
                 )
-                logging_utility.debug("Inserted new system message: %s", system_message)
-            logging_utility.info(
-                "Formatted messages after insertion: %s", formatted_messages
-            )
             logging_utility.info(
                 "Retrieved %d formatted messages", len(formatted_messages)
             )
             return formatted_messages
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                logging_utility.error("Thread not found: %s", thread_id)
                 raise ValueError(f"Thread not found: {thread_id}")
-            else:
-                logging_utility.error("HTTP error occurred: %s", str(e))
-                raise RuntimeError(f"HTTP error occurred: {e}")
+            raise RuntimeError(f"HTTP error occurred: {e}")
         except Exception as e:
-            logging_utility.error("An error occurred: %s", str(e))
             raise RuntimeError(f"An error occurred: {str(e)}")
 
     def get_messages_without_system_message(
         self, thread_id: str
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve formatted messages for a thread without modifying the system message.
-
-        Args:
-            thread_id (str): The thread ID.
-
-        Returns:
-            List[Dict[str, Any]]: The list of formatted messages.
-        """
         logging_utility.info(
             "Getting messages without system message for thread_id: %s", thread_id
         )
@@ -273,32 +269,20 @@ class MessagesClient(BaseAPIClient):
             formatted_messages = response.json()
             if not isinstance(formatted_messages, list):
                 raise ValueError("Expected a list of messages")
-            logging_utility.debug(
-                "Retrieved formatted messages: %s", formatted_messages
-            )
-            logging_utility.info(
-                "Retrieved %d formatted messages", len(formatted_messages)
-            )
             return formatted_messages
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                logging_utility.error("Thread not found: %s", thread_id)
                 raise ValueError(f"Thread not found: {thread_id}")
-            else:
-                logging_utility.error("HTTP error occurred: %s", str(e))
-                raise RuntimeError(f"HTTP error occurred: {e}")
+            raise RuntimeError(f"HTTP error occurred: {e}")
         except Exception as e:
-            logging_utility.error("An error occurred: %s", str(e))
             raise RuntimeError(f"An error occurred: {str(e)}")
 
     def delete_message(self, message_id: str) -> ent_validator.MessageDeleted:
-        """Delete a message and return deletion envelope."""
         logging_utility.info("Deleting message with id: %s", message_id)
         try:
             response = self.client.delete(f"/v1/messages/{message_id}")
             response.raise_for_status()
             return ent_validator.MessageDeleted(**response.json())
-
         except httpx.HTTPStatusError as e:
             logging_utility.error("HTTP error while deleting message: %s", str(e))
             raise
@@ -316,21 +300,6 @@ class MessagesClient(BaseAPIClient):
         is_last_chunk: bool = False,
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> Optional[ent_validator.MessageRead]:
-        """
-        Save a message chunk from the assistant, with support for streaming and dynamic roles.
-
-        Args:
-            thread_id (str): The thread ID.
-            role (str): The role (e.g., 'assistant', 'user', 'system').
-            content (str): The message content.
-            assistant_id (str): The assistant's ID.
-            sender_id (str): The ID of the sender.
-            is_last_chunk (bool): Whether this is the final chunk.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            Optional[MessageRead]: The final saved message for final chunks, None otherwise.
-        """
         logging_utility.info(
             "Saving assistant message chunk for thread_id: %s, role: %s, is_last_chunk: %s",
             thread_id,
@@ -356,11 +325,10 @@ class MessagesClient(BaseAPIClient):
                     message_read.id,
                 )
                 return message_read
-            else:
-                logging_utility.info(
-                    "Non-final assistant message chunk saved successfully."
-                )
-                return None
+            logging_utility.info(
+                "Non-final assistant message chunk saved successfully."
+            )
+            return None
         except httpx.HTTPStatusError as e:
             logging_utility.error(
                 "HTTP error while saving assistant message chunk: %s (Status: %d)",
@@ -380,27 +348,11 @@ class MessagesClient(BaseAPIClient):
         content: str,
         assistant_id: str,
         tool_id: str,
-        tool_call_id: Optional[str] = None,  # <--- NEW PARAMETER
+        tool_call_id: Optional[str] = None,
         role: str = "tool",
         sender_id: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """
-        Submit tool output as a message.
-
-        Args:
-            thread_id (str): The thread ID.
-            content (str): The message content (JSON stringified result).
-            assistant_id (str): The assistant's ID.
-            tool_id (str): The internal Action/Tool DB ID (e.g., 'act_...').
-            tool_call_id (Optional[str]): The specific LLM generation ID (e.g., 'call_...') for dialogue binding.
-            role (str): The role, default 'tool'.
-            sender_id (Optional[str]): Optional sender ID.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            Dict[str, Any]: The created message data.
-        """
         meta_data = meta_data or {}
         message_data = {
             "thread_id": thread_id,
@@ -410,11 +362,8 @@ class MessagesClient(BaseAPIClient):
             "tool_id": tool_id,
             "meta_data": meta_data,
         }
-
-        # Inject the Dialogue Binding ID if provided
         if tool_call_id:
             message_data["tool_call_id"] = tool_call_id
-
         if sender_id is not None:
             message_data["sender_id"] = sender_id
 
@@ -426,21 +375,17 @@ class MessagesClient(BaseAPIClient):
         )
 
         try:
-            # Ensure your ent_validator.MessageCreate schema also has tool_call_id added!
             validated_data = ent_validator.MessageCreate(**message_data)
-
             response = self.client.post(
                 "/v1/messages/tools", json=validated_data.dict()
             )
             response.raise_for_status()
             created_message = response.json()
-
             logging_utility.info(
                 "Tool message created successfully with id: %s",
                 created_message.get("id"),
             )
             return created_message
-
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}")
