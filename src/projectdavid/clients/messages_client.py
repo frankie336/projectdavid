@@ -1,12 +1,16 @@
-from typing import Any, Dict, List, Optional
+import base64
+import io
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import httpx
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface, ValidationInterface
 from pydantic import ValidationError
 
-ent_validator = ValidationInterface()
 from projectdavid.clients.base_client import BaseAPIClient
+
+ent_validator = ValidationInterface()
 
 load_dotenv()
 
@@ -23,40 +27,150 @@ class MessagesClient(BaseAPIClient):
         """
         super().__init__(base_url=base_url, api_key=api_key)
         self.message_chunks: Dict[str, List[str]] = {}
+
+        # Lazy-loaded FileClient so we only instantiate it if multimodal content is passed
+        self._file_client = None
+
         logging_utility.info("MessagesClient initialized using BaseAPIClient.")
+
+    @property
+    def file_client(self):
+        """Lazy load the FileClient to prevent circular imports on startup."""
+        if self._file_client is None:
+            # Import FileClient locally here assuming it's in the same package
+            from projectdavid.clients.file_client import FileClient
+
+            self._file_client = FileClient(base_url=self.base_url, api_key=self.api_key)
+        return self._file_client
+
+    def _process_and_upload_image(self, url: str, index: int) -> Dict[str, Any]:
+        """
+        Helper to download/decode a single image and upload it via FileClient.
+        """
+        file_bytes = b""
+        filename = f"upload_image_{index}.jpg"
+
+        try:
+            if url.startswith("data:image"):
+                # 1. Handle Base64
+                header, encoded = url.split(",", 1)
+                file_bytes = base64.b64decode(encoded)
+                # Quick extension check from header
+                if "image/png" in header:
+                    filename = f"upload_image_{index}.png"
+                elif "image/webp" in header:
+                    filename = f"upload_image_{index}.webp"
+            elif url.startswith("http"):
+                # 2. Handle standard URLs
+                response = httpx.get(url, timeout=30.0)
+                response.raise_for_status()
+                file_bytes = response.content
+            else:
+                raise ValueError(f"Unsupported image URL format at index {index}")
+
+            # 3. Upload to File Server via FileClient
+            file_obj = io.BytesIO(file_bytes)
+            file_response = self.file_client.upload_file_object(
+                file_object=file_obj, file_name=filename, purpose="vision"
+            )
+
+            # 4. Return the standard attachment format
+            return {"type": "image", "file_id": file_response.id}
+
+        except Exception as e:
+            logging_utility.error("Failed to process image %d: %s", index, str(e))
+            raise RuntimeError(f"Failed to process image {index}: {str(e)}")
+
+    def prepare_multimodal_payload(
+        self, content: Union[str, List[Dict[str, Any]]]
+    ) -> Tuple[str, List[Dict[str, Any]]]:
+        """
+        Pre-parses the array, batch-uploads images synchronously via threads,
+        and returns a DB-safe text string & attachments list.
+        """
+        # If it's already a plain string, no work needed.
+        if isinstance(content, str):
+            return content, []
+
+        text_blocks = []
+        image_tasks = []
+        attachments = []
+
+        # 1. Parse the array and separate Text vs Images
+        for i, block in enumerate(content):
+            block_type = block.get("type")
+
+            if block_type in ("text", "input_text"):
+                text_blocks.append(block.get("text", ""))
+
+            elif block_type in ("image_url", "input_image"):
+                img_data = block.get("image_url")
+                url = img_data.get("url") if isinstance(img_data, dict) else img_data
+
+                # Queue the upload task for concurrent batching
+                image_tasks.append((url, i))
+
+            elif block_type == "image_file":
+                # If the user already uploaded it and passed a file_id directly
+                file_id = block.get("image_file", {}).get("file_id")
+                if file_id:
+                    attachments.append({"type": "image", "file_id": file_id})
+
+        # 2. Execute all uploads concurrently using ThreadPoolExecutor
+        if image_tasks:
+            logging_utility.info(
+                "Batch uploading %d images for multimodal payload...", len(image_tasks)
+            )
+            with ThreadPoolExecutor(max_workers=min(len(image_tasks), 10)) as executor:
+                # Map futures to tasks
+                futures = [
+                    executor.submit(self._process_and_upload_image, task[0], task[1])
+                    for task in image_tasks
+                ]
+
+                for future in as_completed(futures):
+                    try:
+                        uploaded_attachment = future.result()
+                        attachments.append(uploaded_attachment)
+                    except Exception as e:
+                        logging_utility.error("Batch image upload failed: %s", str(e))
+                        raise
+
+        # 3. Compile the text blocks into a single string for your DB
+        final_text = "\n\n".join(text_blocks).strip()
+
+        return final_text, attachments
 
     def create_message(
         self,
         thread_id: str,
-        content: str,
+        content: Union[str, List[Dict[str, Any]]],  # <--- UPDATED TYPE
         assistant_id: str,
         role: str = "user",
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> ent_validator.MessageRead:
         """
         Create a new message and return it as a MessageRead model.
-
-        Args:
-            thread_id (str): ID of the thread.
-            content (str): Message content.
-            assistant_id (str): Assistant's ID.
-            role (str): Message role, default 'user'.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            MessageRead: The created message.
+        Automatically intercepts multimodal arrays, uploads files, and cleanly formats DB payload.
         """
+        # 1. Clean up SDK side: Download, upload, and extract
+        clean_content, attachments = self.prepare_multimodal_payload(content)
+
         meta_data = meta_data or {}
         message_data = {
             "thread_id": thread_id,
-            "content": content,
+            "content": clean_content,
             "role": role,
             "assistant_id": assistant_id,
             "meta_data": meta_data,
+            "attachments": attachments,  # <--- INJECTED ATTACHMENTS
         }
 
         logging_utility.info(
-            "Creating message for thread_id: %s, role: %s", thread_id, role
+            "Creating message for thread_id: %s, role: %s, attachments: %d",
+            thread_id,
+            role,
+            len(attachments),
         )
 
         try:
@@ -85,15 +199,6 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def retrieve_message(self, message_id: str) -> ent_validator.MessageRead:
-        """
-        Retrieve a message by its ID.
-
-        Args:
-            message_id (str): The ID of the message.
-
-        Returns:
-            MessageRead: The retrieved message.
-        """
         logging_utility.info("Retrieving message with id: %s", message_id)
         try:
             response = self.client.get(f"/v1/messages/{message_id}")
@@ -116,16 +221,6 @@ class MessagesClient(BaseAPIClient):
             raise
 
     def update_message(self, message_id: str, **updates) -> ent_validator.MessageRead:
-        """
-        Update an existing message with provided fields.
-
-        Args:
-            message_id (str): The ID of the message.
-            **updates: Fields to update.
-
-        Returns:
-            MessageRead: The updated message.
-        """
         logging_utility.info("Updating message with id: %s", message_id)
         try:
             validated_data = ent_validator.MessageUpdate(**updates)
@@ -157,17 +252,6 @@ class MessagesClient(BaseAPIClient):
         limit: int = 20,
         order: str = "asc",
     ) -> ent_validator.MessagesList:
-        """
-        Fetch messages for a thread and return an OpenAI-style envelope.
-
-        Args:
-            thread_id (str): Target thread ID.
-            limit (int): Max messages to fetch.
-            order (str): 'asc' or 'desc'.
-
-        Returns:
-            MessagesList: Wrapper containing .data[], .first_id, .last_id, .has_more …
-        """
         logging_utility.info(
             "Listing messages for thread_id: %s, limit: %d, order: %s",
             thread_id,
@@ -198,16 +282,6 @@ class MessagesClient(BaseAPIClient):
     def get_formatted_messages(
         self, thread_id: str, system_message: str = ""
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve and format messages for a thread, inserting or replacing the system message.
-
-        Args:
-            thread_id (str): The thread ID.
-            system_message (str): The system message to use.
-
-        Returns:
-            List[Dict[str, Any]]: The formatted list of messages.
-        """
         logging_utility.info("Getting formatted messages for thread_id: %s", thread_id)
         logging_utility.info("Using system message: %s", system_message)
         try:
@@ -255,15 +329,6 @@ class MessagesClient(BaseAPIClient):
     def get_messages_without_system_message(
         self, thread_id: str
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieve formatted messages for a thread without modifying the system message.
-
-        Args:
-            thread_id (str): The thread ID.
-
-        Returns:
-            List[Dict[str, Any]]: The list of formatted messages.
-        """
         logging_utility.info(
             "Getting messages without system message for thread_id: %s", thread_id
         )
@@ -292,13 +357,11 @@ class MessagesClient(BaseAPIClient):
             raise RuntimeError(f"An error occurred: {str(e)}")
 
     def delete_message(self, message_id: str) -> ent_validator.MessageDeleted:
-        """Delete a message and return deletion envelope."""
         logging_utility.info("Deleting message with id: %s", message_id)
         try:
             response = self.client.delete(f"/v1/messages/{message_id}")
             response.raise_for_status()
             return ent_validator.MessageDeleted(**response.json())
-
         except httpx.HTTPStatusError as e:
             logging_utility.error("HTTP error while deleting message: %s", str(e))
             raise
@@ -316,21 +379,6 @@ class MessagesClient(BaseAPIClient):
         is_last_chunk: bool = False,
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> Optional[ent_validator.MessageRead]:
-        """
-        Save a message chunk from the assistant, with support for streaming and dynamic roles.
-
-        Args:
-            thread_id (str): The thread ID.
-            role (str): The role (e.g., 'assistant', 'user', 'system').
-            content (str): The message content.
-            assistant_id (str): The assistant's ID.
-            sender_id (str): The ID of the sender.
-            is_last_chunk (bool): Whether this is the final chunk.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            Optional[MessageRead]: The final saved message for final chunks, None otherwise.
-        """
         logging_utility.info(
             "Saving assistant message chunk for thread_id: %s, role: %s, is_last_chunk: %s",
             thread_id,
@@ -380,27 +428,11 @@ class MessagesClient(BaseAPIClient):
         content: str,
         assistant_id: str,
         tool_id: str,
-        tool_call_id: Optional[str] = None,  # <--- NEW PARAMETER
+        tool_call_id: Optional[str] = None,
         role: str = "tool",
         sender_id: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """
-        Submit tool output as a message.
-
-        Args:
-            thread_id (str): The thread ID.
-            content (str): The message content (JSON stringified result).
-            assistant_id (str): The assistant's ID.
-            tool_id (str): The internal Action/Tool DB ID (e.g., 'act_...').
-            tool_call_id (Optional[str]): The specific LLM generation ID (e.g., 'call_...') for dialogue binding.
-            role (str): The role, default 'tool'.
-            sender_id (Optional[str]): Optional sender ID.
-            meta_data (Optional[Dict[str, Any]]): Additional metadata.
-
-        Returns:
-            Dict[str, Any]: The created message data.
-        """
         meta_data = meta_data or {}
         message_data = {
             "thread_id": thread_id,
@@ -411,7 +443,6 @@ class MessagesClient(BaseAPIClient):
             "meta_data": meta_data,
         }
 
-        # Inject the Dialogue Binding ID if provided
         if tool_call_id:
             message_data["tool_call_id"] = tool_call_id
 
@@ -426,9 +457,7 @@ class MessagesClient(BaseAPIClient):
         )
 
         try:
-            # Ensure your ent_validator.MessageCreate schema also has tool_call_id added!
             validated_data = ent_validator.MessageCreate(**message_data)
-
             response = self.client.post(
                 "/v1/messages/tools", json=validated_data.dict()
             )
