@@ -55,14 +55,17 @@ class MessagesClient(BaseAPIClient):
                 # 1. Handle Base64
                 header, encoded = url.split(",", 1)
                 file_bytes = base64.b64decode(encoded)
-                # Quick extension check from header
                 if "image/png" in header:
                     filename = f"upload_image_{index}.png"
                 elif "image/webp" in header:
                     filename = f"upload_image_{index}.webp"
             elif url.startswith("http"):
                 # 2. Handle standard URLs
-                response = httpx.get(url, timeout=30.0)
+                # Add a standard User-Agent so strict servers (like Wikipedia) don't block us with a 403
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                }
+                response = httpx.get(url, headers=headers, timeout=30.0)
                 response.raise_for_status()
                 file_bytes = response.content
             else:
