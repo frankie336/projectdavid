@@ -1,3 +1,10 @@
+## [1.76.2](https://github.com/project-david-ai/projectdavid/compare/v1.76.1...v1.76.2) (2026-03-12)
+
+
+### Bug Fixes
+
+* simplify `MessagesClient` by removing multimodal support ([add6061](https://github.com/project-david-ai/projectdavid/commit/add6061c743dc84e49cd99ab6b8d4e562b440cf6))
+
 ## [1.76.1](https://github.com/project-david-ai/projectdavid/compare/v1.76.0...v1.76.1) (2026-03-12)
 
 
