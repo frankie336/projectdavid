@@ -28,7 +28,7 @@ class ApiKeysClient:
         Initializes the ApiKeysClient.
 
         Args:
-            base_url: The base URL of the Entities API (e.g., "http://localhost:9000").
+            base_url: The base URL of the Entities API (e.g., "http://localhost:80").
             api_key: The API key to use for authenticating requests.
                      For self-service methods, this key must belong to the user_id being acted upon.
                      For admin methods, this key must belong to a user with admin privileges.

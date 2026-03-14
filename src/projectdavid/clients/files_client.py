@@ -29,8 +29,7 @@ class FileClient(BaseAPIClient):
         Handles X-API-Key auth and timeout config via shared client logic.
         """
         super().__init__(
-            base_url=base_url
-            or os.getenv("ENTITIES_BASE_URL", "http://localhost:9000"),
+            base_url=base_url or os.getenv("ENTITIES_BASE_URL", "http://localhost:80"),
             api_key=api_key or os.getenv("ENTITIES_API_KEY"),
             timeout=timeout,
             connect_timeout=connect_timeout,

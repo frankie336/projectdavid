@@ -14,7 +14,7 @@ load_dotenv()
 
 # --- Configuration ---
 # Get configuration from environment variables, falling back to defaults if needed
-BASE_URL = os.getenv("PROJECTDAVID_BASE_URL", "http://localhost:9000")
+BASE_URL = os.getenv("PROJECTDAVID_BASE_URL", "http://localhost:80")
 ENTITIES_API_KEY = os.getenv("ENTITIES_API_KEY")
 HYPERBOLIC_API_KEY = os.getenv("HYPERBOLIC_API_KEY")
 # Use a default or environment variable for user_id

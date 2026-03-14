@@ -57,7 +57,7 @@ class Entity:
             )
 
         self.base_url = base_url or os.getenv(
-            "ENTITIES_BASE_URL", "http://localhost:9000/"
+            "ENTITIES_BASE_URL", "http://localhost:80/"
         )
 
         logging_utility.info("Entity initialized with base_url: %s", self.base_url)

@@ -44,7 +44,7 @@ from projectdavid import Entity
 load_dotenv()
 
 client = Entity(
-    base_url=os.getenv("BASE_URL"),        # default: http://localhost:9000
+    base_url=os.getenv("BASE_URL"),        # default: http://localhost:80
     api_key=os.getenv("ENTITIES_API_KEY"),
 )
 
@@ -121,12 +121,12 @@ Works with any OpenAI-compatible endpoint out of the box — including Ollama fo
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| `ENTITIES_API_KEY` | Your Entities API key |
-| `ENTITIES_USER_ID` | Your user ID |
-| `BASE_URL` | Platform base URL (default: `http://localhost:9000`) |
-| `PROVIDER_API_KEY` | Your inference provider API key |
+| Variable | Description                                        |
+|---|----------------------------------------------------|
+| `ENTITIES_API_KEY` | Your Entities API key                              |
+| `ENTITIES_USER_ID` | Your user ID                                       |
+| `BASE_URL` | Platform base URL (default: `http://localhost:80`) |
+| `PROVIDER_API_KEY` | Your inference provider API key                    |
 
 ---
 

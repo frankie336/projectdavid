@@ -13,7 +13,7 @@ env:
   # URLs are primarily for the PUBLISH step now, not general installs
   TEST_PYPI_URL: https://test.pypi.org/simple/
   PROD_PYPI_URL: https://upload.pypi.org/legacy/
-  BASE_URL: http://localhost:9000/  # Your base URL if needed by tests/lint
+  BASE_URL: http://localhost:80/  # Your base URL if needed by tests/lint
 
 jobs:
   lint:
