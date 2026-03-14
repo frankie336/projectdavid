@@ -1,3 +1,11 @@
+## [1.77.6](https://github.com/project-david-ai/projectdavid/compare/v1.77.5...v1.77.6) (2026-03-13)
+
+
+### Bug Fixes
+
+* bump `projectdavid_common` to v0.47.0 in dependencies ([cea5532](https://github.com/project-david-ai/projectdavid/commit/cea5532989714b5dceafb48efc3dade68c52c821))
+* remove unused `embeddings` requirement from pyproject.toml ([0e212d3](https://github.com/project-david-ai/projectdavid/commit/0e212d34d32ab05e2cac7500a2eba105dc81257e))
+
 ## [1.77.5](https://github.com/project-david-ai/projectdavid/compare/v1.77.4...v1.77.5) (2026-03-13)
 
 
