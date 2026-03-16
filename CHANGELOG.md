@@ -1,3 +1,10 @@
+## [1.77.8](https://github.com/project-david-ai/projectdavid/compare/v1.77.7...v1.77.8) (2026-03-16)
+
+
+### Bug Fixes
+
+* clean up unused import in vectors.py and update pyproject.toml formatting and dependencies ([afa3dd0](https://github.com/project-david-ai/projectdavid/commit/afa3dd0a0d26f328c33a63d09ba47a79a3f556eb))
+
 ## [1.77.7](https://github.com/project-david-ai/projectdavid/compare/v1.77.6...v1.77.7) (2026-03-14)
 
 
