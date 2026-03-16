@@ -1,3 +1,10 @@
+## [1.77.7](https://github.com/project-david-ai/projectdavid/compare/v1.77.6...v1.77.7) (2026-03-14)
+
+
+### Bug Fixes
+
+* update default `BASE_URL` to `http://localhost:80` across all files ([af5aefa](https://github.com/project-david-ai/projectdavid/commit/af5aefa622f33d3075759422239afe914a8c9541))
+
 ## [1.77.6](https://github.com/project-david-ai/projectdavid/compare/v1.77.5...v1.77.6) (2026-03-13)
 
 
