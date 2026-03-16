@@ -18,7 +18,6 @@ from pydantic import BaseModel, Field
 
 from projectdavid.clients.file_processor import FileProcessor
 from projectdavid.clients.vector_store_manager import VectorStoreManager
-from projectdavid.utils.vector_search_formatter import make_envelope
 
 load_dotenv()
 log = UtilsInterface.LoggingUtility()
