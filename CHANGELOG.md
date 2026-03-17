@@ -1,3 +1,10 @@
+## [1.77.9](https://github.com/project-david-ai/projectdavid/compare/v1.77.8...v1.77.9) (2026-03-17)
+
+
+### Bug Fixes
+
+* bump `projectdavid_common` to v0.48.0 in dependencies ([0eec49f](https://github.com/project-david-ai/projectdavid/commit/0eec49f37f7b00412385010c8f48ef199faafa11))
+
 ## [1.77.8](https://github.com/project-david-ai/projectdavid/compare/v1.77.7...v1.77.8) (2026-03-16)
 
 
