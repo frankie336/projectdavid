@@ -9,6 +9,7 @@ from .clients.actions_client import ActionsClient
 from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
 from .clients.computer import ComputerClient
+from .clients.datasets_client import DatasetsClient
 from .clients.engineer import EngineerClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
@@ -78,6 +79,7 @@ class Entity:
         self._file_client: Optional[FileClient] = None
         self._vectors_client: Optional[VectorStoreClient] = None
         self._api_key_client: Optional[ApiKeysClient] = None
+        self._datasets_client: Optional[DatasetsClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
 
@@ -199,14 +201,14 @@ class Entity:
         return self._vectors_client
 
     @property
-    def engineer(self) -> EngineerClient:
-        if self._engineer_client is None:
-            self._engineer_client = EngineerClient(
+    def datasets(self) -> DatasetsClient:
+        if self._datasets_client is None:
+            self._datasets_client = DatasetsClient(
                 base_url=self.base_url,
                 api_key=self.api_key,
             )
 
-        return self._engineer_client
+        return self._datasets_client
 
     @property
     def keys(self) -> ApiKeysClient:
