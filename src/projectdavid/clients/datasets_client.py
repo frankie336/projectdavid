@@ -19,7 +19,7 @@ class DatasetsClient(BaseAPIClient):
 
     Upload is a two-step process transparent to the caller:
       1. File bytes → core API  (POST /v1/uploads)
-      2. file_id + metadata → training API  (POST /v1/datasets)
+      2. file_id + metadata → training API  (POST /v1/datasets/)
     """
 
     def __init__(
@@ -33,6 +33,9 @@ class DatasetsClient(BaseAPIClient):
             "TRAINING_BASE_URL", "http://localhost:9001"
         )
         self._file_client = FileClient(base_url=base_url, api_key=api_key)
+
+    def _auth_headers(self) -> dict:
+        return {"Authorization": f"Bearer {self.api_key}"}
 
     # ------------------------------------------------------------------
     # CREATE — upload file then register dataset
@@ -71,11 +74,11 @@ class DatasetsClient(BaseAPIClient):
             "filename": file_path.split("/")[-1].split("\\")[-1],
         }
 
-        with httpx.Client(base_url=self.training_url) as client:
+        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
             response = client.post(
-                "/v1/datasets",
+                "/v1/datasets/",
                 json=payload,
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._auth_headers(),
                 timeout=30.0,
             )
             response.raise_for_status()
@@ -89,10 +92,10 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def prepare(self, dataset_id: str) -> dict:
-        with httpx.Client(base_url=self.training_url) as client:
+        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
             response = client.post(
                 f"/v1/datasets/{dataset_id}/prepare",
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._auth_headers(),
                 timeout=30.0,
             )
             response.raise_for_status()
@@ -103,10 +106,10 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def retrieve(self, dataset_id: str) -> validator.DatasetRead:
-        with httpx.Client(base_url=self.training_url) as client:
+        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
             response = client.get(
                 f"/v1/datasets/{dataset_id}",
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._auth_headers(),
                 timeout=30.0,
             )
             response.raise_for_status()
@@ -122,11 +125,11 @@ class DatasetsClient(BaseAPIClient):
         params = {"limit": limit}
         if status:
             params["status"] = status
-        with httpx.Client(base_url=self.training_url) as client:
+        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
             response = client.get(
-                "/v1/datasets",
+                "/v1/datasets/",
                 params=params,
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._auth_headers(),
                 timeout=30.0,
             )
             response.raise_for_status()
@@ -137,10 +140,10 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def delete(self, dataset_id: str) -> validator.DatasetDeleted:
-        with httpx.Client(base_url=self.training_url) as client:
+        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
             response = client.delete(
                 f"/v1/datasets/{dataset_id}",
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._auth_headers(),
                 timeout=30.0,
             )
             response.raise_for_status()
