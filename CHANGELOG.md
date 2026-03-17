@@ -1,3 +1,10 @@
+# [1.78.0](https://github.com/project-david-ai/projectdavid/compare/v1.77.10...v1.78.0) (2026-03-17)
+
+
+### Features
+
+* add `DatasetsClient` and integrate it into `entity.py`, bump `projectdavid_common` to v0.50.0 in dependencies ([e63e0cc](https://github.com/project-david-ai/projectdavid/commit/e63e0cc658b1692b49bea7c576e51e07866917ca))
+
 ## [1.77.10](https://github.com/project-david-ai/projectdavid/compare/v1.77.9...v1.77.10) (2026-03-17)
 
 
