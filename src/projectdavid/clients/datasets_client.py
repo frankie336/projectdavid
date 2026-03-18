@@ -1,9 +1,6 @@
-# projectdavid/clients/datasets_client.py
-
 import os
 from typing import Optional
 
-import httpx
 from projectdavid_common import UtilsInterface, ValidationInterface
 
 from projectdavid.clients.base_client import BaseAPIClient
@@ -17,9 +14,8 @@ class DatasetsClient(BaseAPIClient):
     """
     Client for the training service /v1/datasets endpoints.
 
-    Upload is a two-step process transparent to the caller:
-      1. File bytes → core API  (POST /v1/uploads)
-      2. file_id + metadata → training API  (POST /v1/datasets/)
+    Inherits from BaseAPIClient to ensure consistent authentication
+    and session management.
     """
 
     def __init__(
@@ -29,13 +25,17 @@ class DatasetsClient(BaseAPIClient):
         training_url: Optional[str] = None,
     ):
         super().__init__(base_url=base_url, api_key=api_key)
-        self.training_url = training_url or os.getenv(
+        # Ensure training_url is stripped of trailing slashes for clean joining
+        raw_training_url = training_url or os.getenv(
             "TRAINING_BASE_URL", "http://localhost:9001"
         )
+        self.training_url = raw_training_url.rstrip("/")
+
         self._file_client = FileClient(base_url=base_url, api_key=api_key)
 
-    def _auth_headers(self) -> dict:
-        return {"Authorization": f"Bearer {self.api_key}"}
+    def _get_url(self, path: str) -> str:
+        """Helper to construct the full training service URL."""
+        return f"{self.training_url}{path}"
 
     # ------------------------------------------------------------------
     # CREATE — upload file then register dataset
@@ -50,15 +50,6 @@ class DatasetsClient(BaseAPIClient):
     ) -> validator.DatasetRead:
         """
         Upload a dataset file and register it with the training service.
-
-        Args:
-            file_path: Local path to the JSONL/chatml/alpaca/sharegpt file.
-            name:      Human-readable dataset name.
-            fmt:       One of: chatml | alpaca | sharegpt | jsonl
-            description: Optional description.
-
-        Returns:
-            DatasetRead schema.
         """
         # Step 1 — upload to core API
         logging_utility.info("Uploading dataset file: %s", file_path)
@@ -74,14 +65,9 @@ class DatasetsClient(BaseAPIClient):
             "filename": file_path.split("/")[-1].split("\\")[-1],
         }
 
-        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
-            response = client.post(
-                "/v1/datasets/",
-                json=payload,
-                headers=self._auth_headers(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
+        # Use self.client which already contains the auth headers and timeout config
+        response = self.client.post(self._get_url("/v1/datasets/"), json=payload)
+        response.raise_for_status()
 
         dataset = validator.DatasetRead.model_validate(response.json())
         logging_utility.info("Dataset registered — id=%s", dataset.id)
@@ -92,13 +78,8 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def prepare(self, dataset_id: str) -> dict:
-        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
-            response = client.post(
-                f"/v1/datasets/{dataset_id}/prepare",
-                headers=self._auth_headers(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
+        response = self.client.post(self._get_url(f"/v1/datasets/{dataset_id}/prepare"))
+        response.raise_for_status()
         return response.json()
 
     # ------------------------------------------------------------------
@@ -106,13 +87,8 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def retrieve(self, dataset_id: str) -> validator.DatasetRead:
-        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
-            response = client.get(
-                f"/v1/datasets/{dataset_id}",
-                headers=self._auth_headers(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
+        response = self.client.get(self._get_url(f"/v1/datasets/{dataset_id}"))
+        response.raise_for_status()
         return validator.DatasetRead.model_validate(response.json())
 
     # ------------------------------------------------------------------
@@ -125,14 +101,9 @@ class DatasetsClient(BaseAPIClient):
         params = {"limit": limit}
         if status:
             params["status"] = status
-        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
-            response = client.get(
-                "/v1/datasets/",
-                params=params,
-                headers=self._auth_headers(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
+
+        response = self.client.get(self._get_url("/v1/datasets/"), params=params)
+        response.raise_for_status()
         return validator.DatasetList.model_validate(response.json())
 
     # ------------------------------------------------------------------
@@ -140,11 +111,6 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def delete(self, dataset_id: str) -> validator.DatasetDeleted:
-        with httpx.Client(base_url=self.training_url, follow_redirects=True) as client:
-            response = client.delete(
-                f"/v1/datasets/{dataset_id}",
-                headers=self._auth_headers(),
-                timeout=30.0,
-            )
-            response.raise_for_status()
+        response = self.client.delete(self._get_url(f"/v1/datasets/{dataset_id}"))
+        response.raise_for_status()
         return validator.DatasetDeleted.model_validate(response.json())
