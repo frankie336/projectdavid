@@ -1,3 +1,10 @@
+# [1.80.0](https://github.com/project-david-ai/projectdavid/compare/v1.79.0...v1.80.0) (2026-03-18)
+
+
+### Features
+
+* Resolve API key bug in datasets_client.py ([722f311](https://github.com/project-david-ai/projectdavid/commit/722f3119b124101d026b3c0a5729d52e15ee4b4b))
+
 # [1.79.0](https://github.com/project-david-ai/projectdavid/compare/v1.78.0...v1.79.0) (2026-03-17)
 
 
