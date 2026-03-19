@@ -1,3 +1,13 @@
+## [1.82.2](https://github.com/project-david-ai/projectdavid/compare/v1.82.1...v1.82.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* add `_version.py` file ([22823c7](https://github.com/project-david-ai/projectdavid/commit/22823c7fddb4ad5b91ec9f2607ac19f5c59e00a6))
+* bump `projectdavid_common` to v0.51.0 in dependencies ([e6d25d8](https://github.com/project-david-ai/projectdavid/commit/e6d25d8e8be2507326e261f3760afc3ada0abc78))
+* bump `projectdavid_common` to v0.52.0 in dependencies ([78c9a02](https://github.com/project-david-ai/projectdavid/commit/78c9a02f38e84466b40db0b1908f4b35cb8c3a8a))
+* bump `projectdavid_common` to v0.53.0 in dependencies ([804ffb3](https://github.com/project-david-ai/projectdavid/commit/804ffb312f8386412b4ca6dd9c487010f5836e83))
+
 ## [1.82.1](https://github.com/project-david-ai/projectdavid/compare/v1.82.0...v1.82.1) (2026-03-19)
 
 
