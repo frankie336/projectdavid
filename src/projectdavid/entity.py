@@ -18,6 +18,7 @@ from .clients.runs import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
 from .clients.tools import ToolsClient
+from .clients.training_client import TrainingClient
 from .clients.users_client import UsersClient
 from .clients.vectors import VectorStoreClient
 from .utils.run_monitor import HttpRunMonitor
@@ -80,6 +81,7 @@ class Entity:
         self._vectors_client: Optional[VectorStoreClient] = None
         self._api_key_client: Optional[ApiKeysClient] = None
         self._datasets_client: Optional[DatasetsClient] = None
+        self._training_client: Optional[TrainingClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
 
@@ -209,6 +211,16 @@ class Entity:
             )
 
         return self._datasets_client
+
+    @property
+    def training(self) -> TrainingClient:
+        if self._training_client is None:
+            self._training_client = TrainingClient(
+                base_url=self.base_url,
+                api_key=self.api_key,
+            )
+
+        return self._training_client
 
     @property
     def keys(self) -> ApiKeysClient:
