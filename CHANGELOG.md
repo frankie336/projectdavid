@@ -1,3 +1,10 @@
+# [1.81.0](https://github.com/project-david-ai/projectdavid/compare/v1.80.0...v1.81.0) (2026-03-19)
+
+
+### Features
+
+* add `TrainingClient` for managing training jobs ([feab38e](https://github.com/project-david-ai/projectdavid/commit/feab38e199cb62a6741abd60014c4503eae2e67d))
+
 # [1.80.0](https://github.com/project-david-ai/projectdavid/compare/v1.79.0...v1.80.0) (2026-03-18)
 
 
