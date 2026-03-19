@@ -1,3 +1,10 @@
+# [1.82.0](https://github.com/project-david-ai/projectdavid/compare/v1.81.0...v1.82.0) (2026-03-19)
+
+
+### Features
+
+* integrate `TrainingClient` into `entity.py` ([7287c9e](https://github.com/project-david-ai/projectdavid/commit/7287c9ede719b4d49dc7aaa5cbfc9e391de299ed))
+
 # [1.81.0](https://github.com/project-david-ai/projectdavid/compare/v1.80.0...v1.81.0) (2026-03-19)
 
 
