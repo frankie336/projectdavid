@@ -44,3 +44,16 @@ class TrainingClient(BaseAPIClient):
         response = self.client.get(f"{self.training_url}/v1/training-jobs/{job_id}")
         response.raise_for_status()
         return validator.TrainingJobRead.model_validate(response.json())
+
+    # ------------------------------------------------------------------
+    # DIAGNOSTIC PEEK (Secure Multi-tenant Gateway)
+    # ------------------------------------------------------------------
+
+    def peek_queue(self) -> validator.TrainingQueueList:
+        """
+        Securely check the remote Redis queue via the Training API to see
+        pending jobs belonging only to the current user.
+        """
+        response = self.client.get(f"{self.training_url}/v1/training-jobs/queue/peek")
+        response.raise_for_status()
+        return validator.TrainingQueueList.model_validate(response.json())
