@@ -1,3 +1,10 @@
+# [1.85.0](https://github.com/project-david-ai/projectdavid/compare/v1.84.2...v1.85.0) (2026-03-20)
+
+
+### Features
+
+* add `deactivate_all` method to `ModelsClient` for deactivating fine-tuned models ([257b6a2](https://github.com/project-david-ai/projectdavid/commit/257b6a27685065289dcdef9064db6d37c05a4606))
+
 ## [1.84.2](https://github.com/project-david-ai/projectdavid/compare/v1.84.1...v1.84.2) (2026-03-20)
 
 
