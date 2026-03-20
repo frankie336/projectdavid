@@ -1,3 +1,10 @@
+# [1.84.0](https://github.com/project-david-ai/projectdavid/compare/v1.83.0...v1.84.0) (2026-03-20)
+
+
+### Features
+
+* add `activate` method to `ModelsClient` for activating fine-tuned models ([e87e103](https://github.com/project-david-ai/projectdavid/commit/e87e103a215093d778b86273cd85340f3f2e5b45))
+
 # [1.83.0](https://github.com/project-david-ai/projectdavid/compare/v1.82.5...v1.83.0) (2026-03-20)
 
 
