@@ -43,3 +43,14 @@ class ModelsClient(BaseAPIClient):
         )
         response.raise_for_status()
         return validator.FineTunedModelDeleted.model_validate(response.json())
+
+    def activate(self, model_id: str) -> validator.ActivateModelResponse:
+        """
+        Set this fine-tuned model as the active instance for inference.
+        """
+        logging_utility.info("Activating fine-tuned model: %s", model_id)
+        response = self.client.post(
+            f"{self.training_url}/v1/fine-tuned-models/{model_id}/activate"
+        )
+        response.raise_for_status()
+        return validator.ActivateModelResponse.model_validate(response.json())
