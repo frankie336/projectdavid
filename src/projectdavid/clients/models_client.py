@@ -54,3 +54,14 @@ class ModelsClient(BaseAPIClient):
         )
         response.raise_for_status()
         return validator.ActivateModelResponse.model_validate(response.json())
+
+    def deactivate_all(self) -> dict:
+        """
+        Deactivate any currently active fine-tuned model.
+        Returns the system to its base model state.
+        """
+        response = self.client.post(
+            f"{self.training_url}/v1/fine-tuned-models/deactivate-all"
+        )
+        response.raise_for_status()
+        return response.json()
