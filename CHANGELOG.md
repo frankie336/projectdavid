@@ -1,3 +1,10 @@
+# [1.83.0](https://github.com/project-david-ai/projectdavid/compare/v1.82.5...v1.83.0) (2026-03-20)
+
+
+### Features
+
+* add `ModelsClient` with fine-tuning support and integrate into `entity.py` ([bc6c1ab](https://github.com/project-david-ai/projectdavid/commit/bc6c1ab79dda4f01d2d42bda87830814086169cb))
+
 ## [1.82.5](https://github.com/project-david-ai/projectdavid/compare/v1.82.4...v1.82.5) (2026-03-20)
 
 
