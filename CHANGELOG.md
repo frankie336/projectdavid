@@ -1,3 +1,11 @@
+# [1.87.0](https://github.com/project-david-ai/projectdavid/compare/v1.86.0...v1.87.0) (2026-03-21)
+
+
+### Features
+
+* add activate_base ([5c11bfd](https://github.com/project-david-ai/projectdavid/commit/5c11bfd728218d038065e9fe4aef50723472d653))
+* add activate_base ([0301844](https://github.com/project-david-ai/projectdavid/commit/030184435565065a59d4271d474a62a7985433c5))
+
 # [1.86.0](https://github.com/project-david-ai/projectdavid/compare/v1.85.0...v1.86.0) (2026-03-21)
 
 
