@@ -101,7 +101,6 @@ class ModelsClient(BaseAPIClient):
     # ──────────────────────────────────────────────────────────────────────────
     # BASE MODEL LIFECYCLE (Factory Backbones)
     # ──────────────────────────────────────────────────────────────────────────
-
     def activate_base(self, base_model_id: str, node_id: Optional[str] = None) -> dict:
         """
         Deploy a standard backbone model (no LoRA) to the mesh.
