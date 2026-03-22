@@ -1,3 +1,10 @@
+# [1.88.0](https://github.com/project-david-ai/projectdavid/compare/v1.87.0...v1.88.0) (2026-03-22)
+
+
+### Features
+
+* bump projectdavid_common==0.58.0 ([5bb91ea](https://github.com/project-david-ai/projectdavid/commit/5bb91ea9158e3267819f0ed76bc3fdf9d86590da))
+
 # [1.87.0](https://github.com/project-david-ai/projectdavid/compare/v1.86.0...v1.87.0) (2026-03-21)
 
 
