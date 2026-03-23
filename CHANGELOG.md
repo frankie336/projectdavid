@@ -1,3 +1,10 @@
+## [1.89.1](https://github.com/project-david-ai/projectdavid/compare/v1.89.0...v1.89.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* bump projectdavid_common version to 0.60.0 ([028cbc9](https://github.com/project-david-ai/projectdavid/commit/028cbc9743fdb3022b21e9e0b7c79bae1c6a33d0))
+
 # [1.89.0](https://github.com/project-david-ai/projectdavid/compare/v1.88.0...v1.89.0) (2026-03-23)
 
 
