@@ -19,6 +19,7 @@ class ModelsClient(BaseAPIClient):
       - Base Model Activation (Standard Backbone)
       - Surgical and Global Deactivation
       - Hardware Node Pinning
+      - Tensor Parallel Inference Sharding
     """
 
     def __init__(
@@ -67,17 +68,25 @@ class ModelsClient(BaseAPIClient):
     # ──────────────────────────────────────────────────────────────────────────
 
     def activate(
-        self, model_id: str, node_id: Optional[str] = None
+        self,
+        model_id: str,
+        node_id: Optional[str] = None,
+        tensor_parallel_size: int = 1,
     ) -> validator.ActivateModelResponse:
         """
         Promote a fine-tuned model to 'Active' status on the cluster.
 
         Args:
             model_id: The ftm_... ID of the model.
-            node_id: Optional. The ID of a specific GPU node to pin this model to.
+            node_id: Optional. Pin to a specific GPU node in the mesh.
+            tensor_parallel_size: Number of GPUs to shard the model across
+                using vLLM tensor parallelism. Default 1 = single GPU.
+                Pass N > 1 for models that exceed single-GPU VRAM capacity.
         """
         logging_utility.info("🚀 Requesting activation for model: %s", model_id)
-        params = {"node_id": node_id} if node_id else {}
+        params: Dict[str, Any] = {"tensor_parallel_size": tensor_parallel_size}
+        if node_id:
+            params["node_id"] = node_id
 
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/{model_id}/activate",
@@ -89,7 +98,7 @@ class ModelsClient(BaseAPIClient):
     def deactivate(self, model_id: str) -> dict:
         """
         Surgically shut down a specific fine-tuned model deployment.
-        This releases the VRAM on the hosting node.
+        Releases VRAM on the hosting node.
         """
         logging_utility.info("🛑 Deactivating fine-tuned model: %s", model_id)
         response = self.client.post(
@@ -101,16 +110,27 @@ class ModelsClient(BaseAPIClient):
     # ──────────────────────────────────────────────────────────────────────────
     # BASE MODEL LIFECYCLE (Factory Backbones)
     # ──────────────────────────────────────────────────────────────────────────
-    def activate_base(self, base_model_id: str, node_id: Optional[str] = None) -> dict:
+
+    def activate_base(
+        self,
+        base_model_id: str,
+        node_id: Optional[str] = None,
+        tensor_parallel_size: int = 1,
+    ) -> dict:
         """
         Deploy a standard backbone model (no LoRA) to the mesh.
 
         Args:
             base_model_id: e.g. 'unsloth/Llama-3.2-1B-Instruct-bnb-4bit'
             node_id: Optional. Target a specific machine in the mesh.
+            tensor_parallel_size: Number of GPUs to shard the model across
+                using vLLM tensor parallelism. Default 1 = single GPU.
+                Pass N > 1 for models that exceed single-GPU VRAM capacity.
         """
         logging_utility.info("🚀 Requesting base model deployment: %s", base_model_id)
-        params = {"node_id": node_id} if node_id else {}
+        params: Dict[str, Any] = {"tensor_parallel_size": tensor_parallel_size}
+        if node_id:
+            params["node_id"] = node_id
 
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/base/{base_model_id}/activate",
