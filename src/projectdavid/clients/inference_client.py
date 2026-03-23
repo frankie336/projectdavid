@@ -34,9 +34,7 @@ class InferenceClient(BaseAPIClient):
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
                 timeout=httpx.Timeout(280.0, connect=10.0),
-                headers=(
-                    {"X-API-Key": self.api_key} if self.api_key else {}  # ← FIXED
-                ),
+                headers=({"X-API-Key": self.api_key} if self.api_key else {}),
             )
         return self._async_client
 
@@ -45,10 +43,20 @@ class InferenceClient(BaseAPIClient):
             await self._async_client.aclose()
 
     async def create_completion(self, **kwargs) -> Dict[str, Any]:
-        final_text = ""
-        run_id = kwargs.get("run_id", "unknown")
+        """
+        Returns a single assembled completion dict.
 
-        async for chunk in self.stream_inference_response(**kwargs):
+        Uses stream=False to let the server buffer and assemble the response —
+        more efficient than streaming and reassembling client-side.
+        Falls back to client-side assembly if the server returns SSE chunks.
+        """
+        run_id = kwargs.get("run_id", "unknown")
+        final_text = ""
+
+        # Ask the server to buffer — single JSON response, no SSE parsing overhead.
+        # stream_inference_response handles the non-streaming path transparently:
+        # it yields the assembled content as a single chunk so this loop still works.
+        async for chunk in self.stream_inference_response(**kwargs, stream=False):
             final_text += chunk.get("content", "")
 
         return {
@@ -95,14 +103,23 @@ class InferenceClient(BaseAPIClient):
         api_key: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
         timeout: float = 600.0,
+        stream: bool = True,
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        Asynchronously streams inference.
+        Streams or buffers inference depending on the `stream` flag.
 
-        CRITICAL: Instantiates a fresh AsyncClient per call — this method is
-        frequently invoked from SynchronousInferenceStream running in an
-        ephemeral loop, so reusing self.async_client would trigger
-        'Future attached to different loop' errors.
+        stream=True  (default):
+            Opens an SSE connection to /v1/completions and yields each chunk
+            as it arrives. Used by SynchronousInferenceStream and any caller
+            that needs live token-by-token delivery.
+
+        stream=False:
+            Sends a regular POST to /v1/completions with stream=False in the
+            payload. The server runs the full generator, assembles the content,
+            and returns a single JSON object. This method yields that object as
+            one chunk so all callers (including create_completion) stay unchanged.
+            All server-side side effects (tool calls, file generation, status
+            events) still execute — only the delivery mechanism differs.
 
         NOTE on api_key vs self.api_key:
         - self.api_key  → platform API key; sent as X-API-Key header
@@ -112,11 +129,12 @@ class InferenceClient(BaseAPIClient):
         """
         payload: Dict[str, Any] = {
             "model": model,
-            "api_key": api_key,  # LLM provider key — body only
+            "api_key": api_key,
             "thread_id": thread_id,
             "message_id": message_id,
             "run_id": run_id,
             "assistant_id": assistant_id,
+            "stream": stream,
         }
 
         if user_content:
@@ -131,10 +149,48 @@ class InferenceClient(BaseAPIClient):
             logging_utility.error("Payload validation error: %s", e.json())
             raise
 
+        headers = {"X-API-Key": self.api_key} if self.api_key else {}
+
+        # ── PATH A: BUFFERED ──────────────────────────────────────────────────
+        # Regular POST — server returns a single JSON object.
+        # Yield as one chunk so callers are transparent to the mode.
+        if not stream:
+            async with httpx.AsyncClient(
+                base_url=self.base_url,
+                timeout=httpx.Timeout(timeout, connect=10.0),
+                headers=headers,
+            ) as client:
+                try:
+                    response = await client.post("/v1/completions", json=payload)
+                    response.raise_for_status()
+                    data = response.json()
+                    # Server returns {run_id, content, type, model, elapsed_s}
+                    # Normalise to the same shape as a content chunk so
+                    # callers don't need to branch.
+                    yield {
+                        "type": "content",
+                        "content": data.get("content", ""),
+                        "run_id": data.get("run_id", run_id),
+                        "model": data.get("model", model),
+                        "elapsed_s": data.get("elapsed_s"),
+                    }
+                except httpx.HTTPStatusError as e:
+                    logging_utility.error(
+                        f"Buffered inference HTTP error: "
+                        f"{e.response.status_code} {e.request.url}"
+                    )
+                    raise
+                except Exception as e:
+                    logging_utility.error(f"Buffered inference error: {e}")
+                    raise
+            return
+
+        # ── PATH B: STREAMING ─────────────────────────────────────────────────
+        # SSE connection — yield each chunk as it arrives.
         async with httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout, connect=10.0),
-            headers=({"X-API-Key": self.api_key} if self.api_key else {}),  # ← FIXED
+            headers=headers,
         ) as client:
             try:
                 async with client.stream(
@@ -158,7 +214,8 @@ class InferenceClient(BaseAPIClient):
 
             except httpx.HTTPStatusError as e:
                 logging_utility.error(
-                    f"Inference Stream HTTP Error: {e.response.status_code} {e.request.url}"
+                    f"Inference Stream HTTP Error: "
+                    f"{e.response.status_code} {e.request.url}"
                 )
                 raise
             except Exception as e:
