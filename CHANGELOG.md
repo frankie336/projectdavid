@@ -1,3 +1,10 @@
+# [1.90.0](https://github.com/project-david-ai/projectdavid/compare/v1.89.1...v1.90.0) (2026-03-23)
+
+
+### Features
+
+* Add stream bool ([152c90b](https://github.com/project-david-ai/projectdavid/commit/152c90be3acbf0629443fba811e603fd307326d7))
+
 ## [1.89.1](https://github.com/project-david-ai/projectdavid/compare/v1.89.0...v1.89.1) (2026-03-23)
 
 
