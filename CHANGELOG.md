@@ -1,3 +1,10 @@
+# [1.89.0](https://github.com/project-david-ai/projectdavid/compare/v1.88.0...v1.89.0) (2026-03-23)
+
+
+### Features
+
+* wire tensor_parallel_size into activation endpoints ([3b31fc5](https://github.com/project-david-ai/projectdavid/commit/3b31fc5d066b07c41b5b9dae174e025778853cbb))
+
 # [1.88.0](https://github.com/project-david-ai/projectdavid/compare/v1.87.0...v1.88.0) (2026-03-22)
 
 
