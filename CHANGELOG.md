@@ -1,3 +1,11 @@
+## [1.90.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.0...v1.90.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* add [@property](https://github.com/property) decorator and missing return to Entity.registry ([ac19bcb](https://github.com/project-david-ai/projectdavid/commit/ac19bcb1ab895e5b56ff7f854829b2fb79559af1))
+* bump projectdavid_common version to 0.60.0 ([3278c97](https://github.com/project-david-ai/projectdavid/commit/3278c97a8641e616c65c0ba364e6e2ab000f3cc3))
+
 # [1.90.0](https://github.com/project-david-ai/projectdavid/compare/v1.89.1...v1.90.0) (2026-03-23)
 
 
