@@ -15,6 +15,7 @@ from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
 from .clients.messages_client import MessagesClient
 from .clients.models_client import ModelsClient
+from .clients.registry_client import RegistryClient
 from .clients.runs import RunsClient
 from .clients.synchronous_inference_wrapper import SynchronousInferenceStream
 from .clients.threads_client import ThreadsClient
@@ -83,6 +84,7 @@ class Entity:
         self._api_key_client: Optional[ApiKeysClient] = None
         self._datasets_client: Optional[DatasetsClient] = None
         self._training_client: Optional[TrainingClient] = None
+        self._registry_client: Optional[RegistryClient] = None
         self._models_client: Optional[ModelsClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
@@ -226,6 +228,15 @@ class Entity:
             )
 
         return self._training_client
+
+    @property
+    def registry(self) -> RegistryClient:
+        if self._registry_client is None:
+            self._registry_client = RegistryClient(
+                base_url=self.base_url,
+                api_key=self.api_key,
+            )
+        return self._registry_client
 
     @property
     def models(self) -> ModelsClient:
