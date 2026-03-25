@@ -90,6 +90,8 @@ class ToolsClient(BaseAPIClient):
                 else:
                     raise ToolsClientError(f"Network error: {exc}") from exc
 
+        raise ToolsClientError(f"Request failed after {retries} retries")
+
     # ------------------------------------------------------------------ #
     #  WEB BROWSING CAPABILITIES
     # ------------------------------------------------------------------ #

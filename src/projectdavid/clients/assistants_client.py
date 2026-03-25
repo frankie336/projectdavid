@@ -105,6 +105,8 @@ class AssistantsClient(BaseAPIClient):
                 else:
                     raise
 
+        raise AssistantsClientError(f"Request failed after {retries} retries")
+
     # ------------------------------------------------------------------ #
     #  CRUD
     # ------------------------------------------------------------------ #

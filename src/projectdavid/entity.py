@@ -8,7 +8,7 @@ from projectdavid_common import UtilsInterface
 from .clients.actions_client import ActionsClient
 from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
-from .clients.computer import ComputerClient
+from .clients.computer_client import ComputerClient
 from .clients.datasets_client import DatasetsClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient

@@ -90,9 +90,9 @@ class VectorStoreManager(BaseVectorStore):
 
             # ── bookkeeping ───────────────────────────────────────────────────
             if isinstance(config, dict):
-                fields = list(config.keys())
-            else:  # unnamed field
-                fields = [None]
+                fields: List[Optional[str]] = list(config.keys())
+            else:  # unnamed field — no vector field name to record
+                fields = []
 
             self.active_stores[store_name] = {
                 "created_at": int(time.time()),
@@ -252,7 +252,7 @@ class VectorStoreManager(BaseVectorStore):
         top_k: int = 5,
         filters: Optional[dict] = None,
         *,
-        vector_field: Optional[str] = None,  # ← NEW
+        vector_field: Optional[str] = None,
         score_threshold: float = 0.0,
         offset: int = 0,
         limit: Optional[int] = None,
@@ -278,17 +278,16 @@ class VectorStoreManager(BaseVectorStore):
                 score_threshold=score_threshold,
                 with_payload=True,
                 with_vectors=False,
-                # using=vector_field  # Add this if multi-vector query support is needed in the future
             )
             res = response.points
 
         except AttributeError:
-            # ── 2. Fallback for older Qdrant clients (e.g. local Anaconda env) ──
+            # ── 2. Fallback for older Qdrant clients ──
             try:
                 res = self.client.search(
                     collection_name=store_name,
                     query_vector=query_vector,
-                    filter=flt,  # argument name changed in some versions
+                    filter=flt,
                     limit=limit,
                     offset=offset,
                     score_threshold=score_threshold,
@@ -299,7 +298,7 @@ class VectorStoreManager(BaseVectorStore):
                 res = self.client.search(
                     collection_name=store_name,
                     query_vector=query_vector,
-                    query_filter=flt,  # very old argument name
+                    query_filter=flt,
                     limit=limit,
                     offset=offset,
                     score_threshold=score_threshold,
@@ -310,7 +309,6 @@ class VectorStoreManager(BaseVectorStore):
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
 
-        # ── normalise result -------------------------------------------------
         return [
             {
                 "id": p.id,
@@ -379,7 +377,6 @@ class VectorStoreManager(BaseVectorStore):
             if not pts:
                 raise VectorStoreError(f"Point '{point_id}' not found")
             pt = pts[0]
-            # Convert the qdrant Record object to a plain dict
             return {
                 "id": pt.id,
                 "payload": pt.payload if pt.payload is not None else {},
@@ -396,6 +393,5 @@ class VectorStoreManager(BaseVectorStore):
         except Exception:
             return False
 
-    # expose raw client if needed
     def get_client(self) -> QdrantClient:
         return self.client

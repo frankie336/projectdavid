@@ -178,7 +178,9 @@ class FileProcessor:
         self.validate_file(file_path)
         ftype = self._detect_file_type(file_path)
 
-        dispatch_map = {
+        from typing import Awaitable, Callable
+
+        dispatch_map: Dict[str, Callable[[Path], Awaitable[Dict[str, Any]]]] = {
             "pdf": self._process_pdf,
             "text": self._process_text,
             "csv": self._process_csv,

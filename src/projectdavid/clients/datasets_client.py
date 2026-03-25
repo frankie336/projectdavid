@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Dict, Optional, Union
 
 from projectdavid_common import UtilsInterface, ValidationInterface
 
@@ -95,11 +95,10 @@ class DatasetsClient(BaseAPIClient):
     # ------------------------------------------------------------------
     # LIST
     # ------------------------------------------------------------------
-
     def list(
         self, status: Optional[str] = None, limit: int = 50
     ) -> validator.DatasetList:
-        params = {"limit": limit}
+        params: Dict[str, Union[str, int]] = {"limit": limit}
         if status:
             params["status"] = status
 
