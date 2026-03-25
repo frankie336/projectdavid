@@ -2,7 +2,7 @@
 import json
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import httpx
 import requests
@@ -45,29 +45,22 @@ class RunsClient(BaseAPIClient):
         instructions: str = "",
         meta_data: Optional[Dict[str, Any]] = None,
         *,
-        # new optional knobs; keep backwards compatible
         model: Optional[str] = None,
         response_format: str = "text",
-        tool_choice: Optional[str] = None,  # allow None in signature, fix below
+        tool_choice: Optional[str] = None,
         temperature: float = 1.0,
         top_p: float = 1.0,
-        # ↓ NEW: optional; only sent if provided
-        truncation_strategy: Optional[ent_validator.TruncationStrategy] = None,
-    ) -> ent_validator.Run:
-        """
-        Create a run. The server injects user_id from the API key.
-        We normalize all timestamp fields to epoch ints (or None).
-        """
-        # ── Coerce client-friendly Nones into schema-acceptable values ─────────
-        meta_data = meta_data or {}  # schema expects Dict
-        tool_choice = tool_choice or "none"  # schema expects str
-        model = model or "gpt-4"  # defer to schema default or override at callsite
+        truncation_strategy: Optional[TruncationStrategy] = None,
+    ) -> Any:  # Returns ent_validator.Run
+        meta_data = meta_data or {}
+        tool_choice = tool_choice or "none"
+        model = model or "gpt-4"
 
         now = int(time.time())
 
         run_payload = ent_validator.RunCreate(
             id=UtilsInterface.IdentifierService.generate_run_id(),
-            user_id=None,  # server fills this
+            user_id=None,
             assistant_id=assistant_id,
             thread_id=thread_id,
             instructions=instructions,
@@ -94,156 +87,68 @@ class RunsClient(BaseAPIClient):
             temperature=temperature,
             top_p=top_p,
             tool_resources={},
-            # Directly pass the truncation_strategy. It will be None if not provided.
             truncation_strategy=truncation_strategy,
         )
 
         logging_utility.info(
             "Creating run for assistant_id=%s, thread_id=%s", assistant_id, thread_id
         )
-        logging_utility.debug("Run payload: %s", run_payload.model_dump())
 
         try:
-            # Build dict from the Pydantic model. `exclude_none=True` will
-            # automatically omit `truncation_strategy` if it is None, allowing
-            # the server-side database default to apply.
             payload_dict = run_payload.model_dump(exclude_none=True)
-
             resp = self.client.post("/v1/runs", json=payload_dict)
             resp.raise_for_status()
             run_out = ent_validator.Run(**resp.json())
             logging_utility.info("Run created successfully: %s", run_out.id)
             return run_out
-
         except ValidationError as e:
             logging_utility.error("Validation error: %s", e.json())
             raise ValueError(f"Validation error: {e}") from e
-        except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error during run creation: %s", str(e))
+        except httpx.HTTPStatusError:
+            logging_utility.error("HTTP error during run creation")
             raise
         except Exception as e:
             logging_utility.error("Unexpected error during run creation: %s", str(e))
             raise
 
-    def retrieve_run(self, run_id: str) -> ent_validator.RunReadDetailed:
-        """
-        Retrieve a run by its ID and return it as a RunReadDetailed Pydantic model.
-
-        Args:
-            run_id (str): The run ID.
-
-        Returns:
-            RunReadDetailed: The retrieved run details.
-        """
+    def retrieve_run(self, run_id: str) -> Any:  # Returns RunReadDetailed
         logging_utility.info("Retrieving run with id: %s", run_id)
         try:
             response = self.client.get(f"/v1/runs/{run_id}")
             response.raise_for_status()
             run_data = response.json()
             validated_run = ent_validator.RunReadDetailed(**run_data)
-            logging_utility.info(
-                "Run with id %s retrieved and validated successfully", run_id
-            )
             return validated_run
-
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Data validation failed: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while retrieving run: %s", str(e)
-            )
-            raise
-        except Exception as e:
-            logging_utility.error(
-                "An unexpected error occurred while retrieving run: %s", str(e)
-            )
+        except (ValidationError, httpx.HTTPStatusError, Exception):
             raise
 
-    def update_run_status(self, run_id: str, new_status: str) -> ent_validator.Run:
-        """
-        Update the status of a run.
-
-        Args:
-            run_id (str): The run ID.
-            new_status (str): The new status to set.
-
-        Returns:
-            Run: The updated run.
-        """
+    def update_run_status(self, run_id: str, new_status: str) -> Any:
         logging_utility.info(
             "Updating run status for run_id: %s to %s", run_id, new_status
         )
         update_data = {"status": new_status}
-
         try:
             validated_data = ent_validator.RunStatusUpdate(**update_data)
             response = self.client.put(
                 f"/v1/runs/{run_id}/status", json=validated_data.dict()
             )
             response.raise_for_status()
-
-            updated_run = response.json()
-            validated_run = ent_validator.Run(**updated_run)
-            logging_utility.info("Run status updated successfully")
-            return validated_run
-
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}")
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while updating run status: %s", str(e)
-            )
-            raise
-        except Exception as e:
-            logging_utility.error(
-                "An error occurred while updating run status: %s", str(e)
-            )
+            return ent_validator.Run(**response.json())
+        except Exception:
             raise
 
     def delete_run(self, run_id: str) -> Dict[str, Any]:
-        """
-        Delete a run by its ID.
-
-        Args:
-            run_id (str): The run ID.
-
-        Returns:
-            Dict[str, Any]: The deletion result.
-        """
         logging_utility.info("Deleting run with id: %s", run_id)
         try:
             response = self.client.delete(f"/v1/runs/{run_id}")
             response.raise_for_status()
-            result = response.json()
-            logging_utility.info("Run deleted successfully")
-            return result
-        except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred while deleting run: %s", str(e))
-            raise
-        except Exception as e:
-            logging_utility.error("An error occurred while deleting run: %s", str(e))
+            return response.json()
+        except Exception:
             raise
 
     def generate(
         self, run_id: str, model: str, prompt: str, stream: bool = False
     ) -> Dict[str, Any]:
-        """
-        Generate content for a run based on the provided model and prompt.
-
-        Args:
-            run_id (str): The run ID.
-            model (str): The model to use.
-            prompt (str): The prompt text.
-            stream (bool): Whether to stream the response.
-
-        Returns:
-            Dict[str, Any]: The generated content.
-        """
-        logging_utility.info(
-            "Generating content for run_id: %s, model: %s", run_id, model
-        )
         try:
             run = self.retrieve_run(run_id)
             response = self.client.post(
@@ -258,18 +163,8 @@ class RunsClient(BaseAPIClient):
                 },
             )
             response.raise_for_status()
-            result = response.json()
-            logging_utility.info("Content generated successfully")
-            return result
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while generating content: %s", str(e)
-            )
-            raise
-        except Exception as e:
-            logging_utility.error(
-                "An error occurred while generating content: %s", str(e)
-            )
+            return response.json()
+        except Exception:
             raise
 
     def chat(
@@ -279,19 +174,6 @@ class RunsClient(BaseAPIClient):
         messages: List[Dict[str, Any]],
         stream: bool = False,
     ) -> Dict[str, Any]:
-        """
-        Chat using a run, model, and provided messages.
-
-        Args:
-            run_id (str): The run ID.
-            model (str): The model to use.
-            messages (List[Dict[str, Any]]): The messages for context.
-            stream (bool): Whether to stream the response.
-
-        Returns:
-            Dict[str, Any]: The chat response.
-        """
-        logging_utility.info("Chatting for run_id: %s, model: %s", run_id, model)
         try:
             run = self.retrieve_run(run_id)
             response = self.client.post(
@@ -306,50 +188,19 @@ class RunsClient(BaseAPIClient):
                 },
             )
             response.raise_for_status()
-            result = response.json()
-            logging_utility.info("Chat completed successfully")
-            return result
-        except httpx.HTTPStatusError as e:
-            logging_utility.error("HTTP error occurred during chat: %s", str(e))
-            raise
-        except Exception as e:
-            logging_utility.error("An error occurred during chat: %s", str(e))
+            return response.json()
+        except Exception:
             raise
 
-    def cancel_run(self, run_id: str) -> ent_validator.Run:  # ← return type updated
-        """
-        Cancel a run by its ID.
-
-        Args:
-            run_id (str): The run ID.
-
-        Returns:
-            Run: The cancelled run as a validated Pydantic model.
-        """
+    def cancel_run(self, run_id: str) -> Any:
         logging_utility.info("Cancelling run with id: %s", run_id)
         try:
             response = self.client.post(f"/v1/runs/{run_id}/cancel")
             response.raise_for_status()
-            cancelled_run = ent_validator.Run(
-                **response.json()
-            )  # ← FIXED: was `response.json()`
-            logging_utility.info("Run %s cancelled successfully", run_id)
-            return cancelled_run
-        except ValidationError as e:
-            logging_utility.error("Validation error: %s", e.json())
-            raise ValueError(f"Validation error: {e}") from e
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error occurred while cancelling run %s: %s", run_id, str(e)
-            )
-            raise
-        except Exception as e:
-            logging_utility.error(
-                "An error occurred while cancelling run %s: %s", run_id, str(e)
-            )
+            return ent_validator.Run(**response.json())
+        except Exception:
             raise
 
-    # --- NEW POLLING AND EXECUTION HELPER METHOD ---
     def poll_and_execute_action(
         self,
         run_id: str,
@@ -361,10 +212,6 @@ class RunsClient(BaseAPIClient):
         timeout: float = 60.0,
         interval: float = 1.0,
     ) -> bool:
-        """
-        Polls for a required action, executes it, and explicitly updates
-        the Action state to 'completed' or 'failed'.
-        """
         if timeout <= 0 or interval <= 0:
             raise ValueError("Timeout and interval must be positive numbers.")
         if not callable(tool_executor):
@@ -380,14 +227,12 @@ class RunsClient(BaseAPIClient):
             StatusEnum.cancelled.value,
             StatusEnum.expired.value,
         }
-
         target_run_state = StatusEnum.pending_action.value
 
         while (time.time() - start_time) < timeout:
-            action_to_handle = None
+            action_to_handle: Optional[Dict[str, Any]] = None
 
             try:
-                # 1. Check Run Status
                 current_run = self.retrieve_run(run_id)
                 status_str = (
                     current_run.status.value
@@ -396,51 +241,40 @@ class RunsClient(BaseAPIClient):
                 )
 
                 if status_str in terminal_run_states:
-                    logging_utility.info(
-                        f"[SDK Helper] Run {run_id} terminated externally ({status_str})."
-                    )
                     return False
 
                 if status_str == target_run_state:
-                    # 2. Get the specific Action details
                     pending_actions = actions_client.get_pending_actions(run_id=run_id)
                     if pending_actions:
                         action_to_handle = pending_actions[0]
-                    else:
-                        logging_utility.warning(
-                            f"[SDK Helper] Run is {target_run_state} but no actions found."
-                        )
 
             except Exception as e:
                 logging_utility.error(f"[SDK Helper] Error polling run status: {e}")
                 return False
 
-            # 3. Process the Action if found
             if action_to_handle:
                 action_id = action_to_handle.get("action_id")
                 tool_name = action_to_handle.get("tool_name")
                 tool_call_id = action_to_handle.get("tool_call_id")
                 arguments = action_to_handle.get("function_arguments")
 
-                logging_utility.info(
-                    f"[SDK Helper] Executing Tool: '{tool_name}' (ID: {action_id})"
-                )
+                # Validate required fields before calling tool_executor
+                if not isinstance(tool_name, str):
+                    logging_utility.error(
+                        "[SDK Helper] action missing valid tool_name: %r", tool_name
+                    )
+                    break
+                if not isinstance(arguments, dict):
+                    arguments = {}
 
                 try:
-                    # --- Step A: Mark Action as Processing ---
-                    # This signals the UI and prevents other workers from picking it up
                     actions_client.update_action(
                         action_id, status=StatusEnum.processing.value
                     )
-
-                    # --- Step B: Execute the Tool ---
                     result_content = tool_executor(tool_name, arguments)
-
                     if not isinstance(result_content, str):
                         result_content = json.dumps(result_content)
 
-                    # --- Step C: Submit Success ---
-                    # Our backend 'submit_tool_output' now marks the action 'completed' automatically
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action_id,
@@ -449,50 +283,20 @@ class RunsClient(BaseAPIClient):
                         role="tool",
                         assistant_id=assistant_id,
                     )
-                    logging_utility.info(
-                        f"[SDK Helper] Action {action_id} completed successfully."
-                    )
                     action_handled_successfully = True
                     break
-
                 except Exception as tool_exc:
-                    # --- Step D: Submit Failure ---
-                    # IMPORTANT: We must submit the error so the backend stops polling
-                    # and the AI can potentially see what went wrong.
-                    logging_utility.error(
-                        f"[SDK Helper] Tool execution failed: {tool_exc}"
+                    error_payload = json.dumps({"error": str(tool_exc)})
+                    messages_client.submit_tool_output(
+                        thread_id=thread_id,
+                        tool_id=action_id,
+                        tool_call_id=tool_call_id,
+                        content=error_payload,
+                        role="tool",
+                        assistant_id=assistant_id,
                     )
-
-                    error_payload = json.dumps(
-                        {"error": "ToolExecutionError", "message": str(tool_exc)}
-                    )
-
-                    try:
-                        # Passing is_error=True (if supported) or just the payload
-                        # The backend 'submit_tool_output' will mark the action 'failed'
-                        messages_client.submit_tool_output(
-                            thread_id=thread_id,
-                            tool_id=action_id,
-                            tool_call_id=tool_call_id,
-                            content=error_payload,
-                            role="tool",
-                            assistant_id=assistant_id,
-                        )
-                    except Exception as submit_exc:
-                        logging_utility.error(
-                            f"[SDK Helper] Critical: Failed to report tool error: {submit_exc}"
-                        )
-
-                    action_handled_successfully = False
                     break
-
             time.sleep(interval)
-
-        # 4. Handle Timeout
-        if not action_handled_successfully and (time.time() - start_time) >= timeout:
-            logging_utility.warning(
-                f"[SDK Helper] Timeout waiting for action on run {run_id}."
-            )
 
         return action_handled_successfully
 
@@ -507,92 +311,36 @@ class RunsClient(BaseAPIClient):
         streamed_args: Dict[str, Any],
         action_id: str,
         tool_name: str,
-        tool_call_id: Optional[str] = None,  # [L3] Mandatory for Parallel ID-Parity
+        tool_call_id: Optional[str] = None,
     ) -> bool:
-        """
-        Executes a tool call and submits results.
-        Level 3 Update: Propagates tool_call_id to the message history to link
-        responses to requests, preventing duplicate execution loops.
-        """
-        if not callable(tool_executor):
-            raise TypeError("tool_executor must be a callable function.")
-
-        if not action_id:
-            LOG.error(f"[SDK] Missing action_id for run {run_id}. Cannot execute.")
-            return False
-
-        LOG.info(
-            f"[SDK] Executing '{tool_name}' (Action: {action_id} | Call: {tool_call_id})"
-        )
-
         try:
-            # 1. Mark Action as Processing in the database
             actions_client.update_action(action_id, status="processing")
-
-            # 2. Execute the local function provided by the developer
             result_content = tool_executor(tool_name, streamed_args)
-
-            # Ensure output is a string (API requirement)
             if not isinstance(result_content, str):
                 result_content = json.dumps(result_content)
 
-            # 3. Submit Tool Output (The Success Path)
-            # Level 3: tool_call_id ensures the LLM can map this result to its Turn 1 plan.
             messages_client.submit_tool_output(
                 thread_id=thread_id,
                 tool_id=action_id,
-                tool_call_id=tool_call_id,  # [L3] Propagated ID
+                tool_call_id=tool_call_id,
                 content=result_content,
                 role="tool",
                 assistant_id=assistant_id,
             )
-
-            # 4. Mark Action as Completed
             actions_client.update_action(action_id, status=StatusEnum.completed.value)
-
-            LOG.info(f"[SDK] Tool '{tool_name}' completed successfully.")
             return True
-
         except Exception as e:
-            # --- LEVEL 2 INSTRUCTIONAL ERROR WRAPPER ---
-            raw_error = str(e)
-
-            instructional_hint = (
-                f"Tool Execution Error for '{tool_name}': {raw_error}. "
-                "Instructions: If this is a parameter error, please correct your JSON arguments and retry. "
-                "If it is a system/network error, you may attempt to retry once or notify the user of the delay."
+            instructional_hint = f"Error for '{tool_name}': {str(e)}"
+            messages_client.submit_tool_output(
+                thread_id=thread_id,
+                tool_id=action_id,
+                tool_call_id=tool_call_id,
+                content=json.dumps({"error": instructional_hint}),
+                role="tool",
+                assistant_id=assistant_id,
             )
-
-            LOG.error(
-                f"[SDK] Tool '{tool_name}' failed. Sending instructional hint to model."
-            )
-
-            try:
-                # Submit the INSTRUCTIONAL HINT as the tool output
-                # Level 3: Even error hints must be linked to the tool_call_id
-                messages_client.submit_tool_output(
-                    thread_id=thread_id,
-                    tool_id=action_id,
-                    tool_call_id=tool_call_id,  # [L3] Propagated ID
-                    content=json.dumps(
-                        {"error": instructional_hint, "retry_allowed": True}
-                    ),
-                    role="tool",
-                    assistant_id=assistant_id,
-                )
-
-                # Mark the action as failed in the DB
-                actions_client.update_action(action_id, status=StatusEnum.failed.value)
-
-                # CRITICAL: Return True to trigger the recursive Turn 2 (Correction turn)
-                LOG.info(f"[SDK] Error feedback successfully linked and injected.")
-                return True
-
-            except Exception as critical_e:
-                LOG.error(
-                    f"[SDK] Critical failure submitting error feedback to API: {critical_e}"
-                )
-                return False
+            actions_client.update_action(action_id, status=StatusEnum.failed.value)
+            return True
 
     def execute_delegated_action(
         self,
@@ -606,42 +354,12 @@ class RunsClient(BaseAPIClient):
         messages_client: Any,
         tool_call_id: Optional[str] = None,
     ) -> bool:
-        """
-        Executes a tool call on behalf of a delegated worker (e.g. Junior Engineer).
-
-        Mirrors execute_pending_action but operates on the worker's thread rather
-        than the main run's thread. Called server-side when the delegation handler
-        intercepts a ToolCallRequestEvent from the worker's stream — filling the
-        role that a consumer client would normally play.
-
-        After this returns True, the caller is responsible for triggering the
-        worker's next inference turn (e.g. by creating a new run on thread_id).
-        """
-        if not callable(tool_executor):
-            raise TypeError("tool_executor must be a callable function.")
-
-        if not action_id:
-            LOG.error(
-                f"[SDK] execute_delegated_action: Missing action_id. Cannot execute."
-            )
-            return False
-
-        LOG.info(
-            f"[SDK] Executing delegated '{tool_name}' "
-            f"(Action: {action_id} | Thread: {thread_id} | Call: {tool_call_id})"
-        )
-
         try:
-            # 1. Mark Action as Processing
             actions_client.update_action(action_id, status="processing")
-
-            # 2. Execute the tool
             result_content = tool_executor(tool_name, args)
-
             if not isinstance(result_content, str):
                 result_content = json.dumps(result_content)
 
-            # 3. Submit output to the worker's thread
             messages_client.submit_tool_output(
                 thread_id=thread_id,
                 tool_id=action_id,
@@ -650,49 +368,19 @@ class RunsClient(BaseAPIClient):
                 role="tool",
                 assistant_id=assistant_id,
             )
-
-            # 4. Mark Action as Completed
             actions_client.update_action(action_id, status=StatusEnum.completed.value)
-
-            LOG.info(f"[SDK] Delegated tool '{tool_name}' completed successfully.")
             return True
-
         except Exception as e:
-            raw_error = str(e)
-
-            instructional_hint = (
-                f"Tool Execution Error for '{tool_name}': {raw_error}. "
-                "Instructions: If this is a parameter error, correct your JSON arguments and retry. "
-                "If it is a system/network error, you may attempt to retry once or notify the user."
+            messages_client.submit_tool_output(
+                thread_id=thread_id,
+                tool_id=action_id,
+                tool_call_id=tool_call_id,
+                content=json.dumps({"error": str(e)}),
+                role="tool",
+                assistant_id=assistant_id,
             )
-
-            LOG.error(
-                f"[SDK] Delegated tool '{tool_name}' failed. Injecting instructional hint."
-            )
-
-            try:
-                messages_client.submit_tool_output(
-                    thread_id=thread_id,
-                    tool_id=action_id,
-                    tool_call_id=tool_call_id,
-                    content=json.dumps(
-                        {"error": instructional_hint, "retry_allowed": True}
-                    ),
-                    role="tool",
-                    assistant_id=assistant_id,
-                )
-
-                actions_client.update_action(action_id, status=StatusEnum.failed.value)
-
-                # Return True to allow the worker's correction turn to fire
-                LOG.info(f"[SDK] Delegated error feedback injected for '{tool_name}'.")
-                return True
-
-            except Exception as critical_e:
-                LOG.error(
-                    f"[SDK] Critical failure submitting delegated error feedback: {critical_e}"
-                )
-                return False
+            actions_client.update_action(action_id, status=StatusEnum.failed.value)
+            return True
 
     def watch_run_events(
         self,
@@ -703,39 +391,22 @@ class RunsClient(BaseAPIClient):
         assistant_id: str,
         thread_id: str,
     ) -> None:
-        """
-        Opens an SSE connection to /v1/runs/{run_id}/events, waits for
-        'action_required', runs the executor, and submits the result.
-        Blocks until the action is handled.
-
-        Requires 'sseclient': pip install sseclient-py
-        """
-
         url = f"{self.base_url}/v1/runs/{run_id}/events"
         headers = self.client.headers
 
         def _listen_and_handle():
-
+            # BANDIT FIX: Timeout added here
             resp = requests.get(url, headers=headers, stream=True, timeout=(10, 60))
-
             resp.raise_for_status()
-
-            # Wrap the line‑iterator in SSEClient
             client = SSEClient(resp.iter_lines())
-
-            # Iterate over the parsed events
             for event in client.events():
                 if event.event == "action_required":
                     action = json.loads(event.data)
-                    tool_name = action.get("tool_name")
-                    args = action.get("function_arguments", {})
-
-                    # execute
-                    result = tool_executor(tool_name, args)
+                    result = tool_executor(
+                        action.get("tool_name"), action.get("function_arguments", {})
+                    )
                     if not isinstance(result, str):
                         result = json.dumps(result)
-
-                    # submit
                     messages_client.submit_tool_output(
                         thread_id=thread_id,
                         tool_id=action.get("action_id"),
@@ -749,84 +420,37 @@ class RunsClient(BaseAPIClient):
         t.start()
         t.join()
 
-    # ------------------------------------------------------------
-    # List all runs by thread_id
-    # ------------------------------------------------------------
-    def list_runs(
-        self, thread_id: str, limit: int = 20, order: str = "asc"
-    ) -> ent_validator.RunListResponse:
-        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+    def list_runs(self, thread_id: str, limit: int = 20, order: str = "asc") -> Any:
+        params: Dict[str, Union[str, int]] = {
+            "limit": limit,
+            "order": order if order in ("asc", "desc") else "asc",
+        }
         resp = self.client.get(f"/v1/threads/{thread_id}/runs", params=params)
         resp.raise_for_status()
         payload = resp.json()
         if isinstance(payload, dict) and "data" in payload:
             return ent_validator.RunListResponse(**payload)
         runs = [ent_validator.Run(**item) for item in payload]
-        return ent_validator.RunListResponse(
-            object="list",
-            data=runs,
-            first_id=runs[0].id if runs else None,
-            last_id=runs[-1].id if runs else None,
-            has_more=False,
-        )
+        return ent_validator.RunListResponse(object="list", data=runs, has_more=False)
 
-    # ------------------------------------------------------------
-    # List all runs by user
-    # ------------------------------------------------------------
-    def list_all_runs(
-        self, limit: int = 20, order: str = "asc"
-    ) -> ent_validator.RunListResponse:
-        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+    def list_all_runs(self, limit: int = 20, order: str = "asc") -> Any:
+        params: Dict[str, Union[str, int]] = {
+            "limit": limit,
+            "order": order if order in ("asc", "desc") else "asc",
+        }
         resp = self.client.get("/v1/runs", params=params)
         resp.raise_for_status()
         payload = resp.json()
         if isinstance(payload, dict) and "data" in payload:
             return ent_validator.RunListResponse(**payload)
-        # legacy fallback: wrap raw list
         runs = [ent_validator.Run(**item) for item in payload]
-        return ent_validator.RunListResponse(
-            object="list",
-            data=runs,
-            first_id=runs[0].id if runs else None,
-            last_id=runs[-1].id if runs else None,
-            has_more=False,
-        )
+        return ent_validator.RunListResponse(object="list", data=runs, has_more=False)
 
-    def update_run_fields(self, run_id: str, **kwargs) -> ent_validator.Run:
-        """
-        Targeted mid-run lifecycle field update.
-
-        Passes kwargs directly to the PATCH /v1/runs/{run_id}/fields endpoint.
-        The server-side MUTABLE_RUN_FIELDS whitelist silently drops any keys
-        that are not safe to update mid-run.
-
-        Designed for use inside process_conversation via asyncio.to_thread:
-
-            await asyncio.to_thread(
-                self.project_david_client.runs.update_run_fields,
-                run_id,
-                started_at=int(time.time()),
-                current_turn=1,
-            )
-
-        Safe fields: started_at, completed_at, failed_at, last_error,
-                     incomplete_details, current_turn, usage, meta_data
-        """
+    def update_run_fields(self, run_id: str, **kwargs) -> Any:
         logging_utility.info("Patching run %s fields: %s", run_id, list(kwargs.keys()))
         try:
             resp = self.client.patch(f"/v1/runs/{run_id}/fields", json=kwargs)
             resp.raise_for_status()
             return ent_validator.Run(**resp.json())
-        except ValidationError as e:
-            logging_utility.error("Validation error patching run fields: %s", e.json())
-            raise ValueError(f"Validation error: {e}") from e
-        except httpx.HTTPStatusError as e:
-            logging_utility.error(
-                "HTTP error patching run %s fields: %s", run_id, str(e)
-            )
-            raise
-        except Exception as e:
-            logging_utility.error(
-                "Unexpected error patching run %s fields: %s", run_id, str(e)
-            )
+        except Exception:
             raise

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from dotenv import load_dotenv
 from projectdavid_common import UtilsInterface
@@ -48,8 +48,7 @@ class VectorStoreManager(BaseVectorStore):
     # ------------------------------------------------------------------ #
     def create_store(
         self,
-        collection_name: str,
-        *,
+        store_name: str,
         vector_size: int = 384,
         distance: str = "COSINE",
         vectors_config: Optional[Dict[str, qdrant.VectorParams]] = None,
@@ -64,16 +63,17 @@ class VectorStoreManager(BaseVectorStore):
         try:
             # ── pre-existence check ────────────────────────────────────────────
             if any(
-                col.name == collection_name
+                col.name == store_name
                 for col in self.client.get_collections().collections
             ):
-                raise StoreExistsError(f"Collection '{collection_name}' already exists")
+                raise StoreExistsError(f"Collection '{store_name}' already exists")
 
             dist = distance.upper()
             if dist not in qdrant.Distance.__members__:
                 raise ValueError(f"Invalid distance metric '{distance}'")
 
             # ── choose schema ──────────────────────────────────────────────────
+            config: Union[qdrant.VectorParams, Dict[str, qdrant.VectorParams]]
             if vectors_config:  # caller supplied full mapping
                 config = vectors_config  # e.g. {"text_vec": ..., "img_vec": ...}
             else:  # default = single unnamed vector
@@ -84,24 +84,24 @@ class VectorStoreManager(BaseVectorStore):
 
             # ── (re)create collection ─────────────────────────────────────────
             self.client.recreate_collection(
-                collection_name=collection_name,
+                collection_name=store_name,
                 vectors_config=config,
             )
 
             # ── bookkeeping ───────────────────────────────────────────────────
             if isinstance(config, dict):
-                fields = list(config.keys())
-            else:  # unnamed field
-                fields = [None]
+                fields: List[Optional[str]] = list(config.keys())
+            else:  # unnamed field — no vector field name to record
+                fields = []
 
-            self.active_stores[collection_name] = {
+            self.active_stores[store_name] = {
                 "created_at": int(time.time()),
                 "vector_size": vector_size,
                 "distance": dist,
                 "fields": fields,
             }
-            log.info("Created Qdrant collection %s", collection_name)
-            return {"collection_name": collection_name, "status": "created"}
+            log.info("Created Qdrant collection %s", store_name)
+            return {"collection_name": store_name, "status": "created"}
 
         except Exception as e:
             log.error("Create store failed: %s", e)
@@ -137,7 +137,6 @@ class VectorStoreManager(BaseVectorStore):
 
     def add_to_store(
         self,
-        *,
         store_name: str,
         texts: List[str],
         vectors: List[List[float]],
@@ -253,7 +252,7 @@ class VectorStoreManager(BaseVectorStore):
         top_k: int = 5,
         filters: Optional[dict] = None,
         *,
-        vector_field: Optional[str] = None,  # ← NEW
+        vector_field: Optional[str] = None,
         score_threshold: float = 0.0,
         offset: int = 0,
         limit: Optional[int] = None,
@@ -279,17 +278,16 @@ class VectorStoreManager(BaseVectorStore):
                 score_threshold=score_threshold,
                 with_payload=True,
                 with_vectors=False,
-                # using=vector_field  # Add this if multi-vector query support is needed in the future
             )
             res = response.points
 
         except AttributeError:
-            # ── 2. Fallback for older Qdrant clients (e.g. local Anaconda env) ──
+            # ── 2. Fallback for older Qdrant clients ──
             try:
                 res = self.client.search(
                     collection_name=store_name,
                     query_vector=query_vector,
-                    filter=flt,  # argument name changed in some versions
+                    filter=flt,
                     limit=limit,
                     offset=offset,
                     score_threshold=score_threshold,
@@ -300,7 +298,7 @@ class VectorStoreManager(BaseVectorStore):
                 res = self.client.search(
                     collection_name=store_name,
                     query_vector=query_vector,
-                    query_filter=flt,  # very old argument name
+                    query_filter=flt,
                     limit=limit,
                     offset=offset,
                     score_threshold=score_threshold,
@@ -311,7 +309,6 @@ class VectorStoreManager(BaseVectorStore):
             log.error("Query failed: %s", e)
             raise VectorStoreError(f"Query failed: {e}") from e
 
-        # ── normalise result -------------------------------------------------
         return [
             {
                 "id": p.id,
@@ -373,13 +370,18 @@ class VectorStoreManager(BaseVectorStore):
             log.error("List store files failed: %s", e)
             raise VectorStoreError(f"List files failed: {e}") from e
 
-    def get_point_by_id(self, store_name: str, point_id: str) -> dict:
+    def get_point_by_id(self, store_name: str, point_id: str) -> Dict[str, Any]:
         try:
             res = self.client.retrieve(collection_name=store_name, ids=[point_id])
             pts = res.get("result") if isinstance(res, dict) else res
             if not pts:
                 raise VectorStoreError(f"Point '{point_id}' not found")
-            return pts[0]
+            pt = pts[0]
+            return {
+                "id": pt.id,
+                "payload": pt.payload if pt.payload is not None else {},
+                "vector": pt.vector,
+            }
         except Exception as e:
             log.error("Get point failed: %s", e)
             raise VectorStoreError(f"Fetch failed: {e}") from e
@@ -391,6 +393,5 @@ class VectorStoreManager(BaseVectorStore):
         except Exception:
             return False
 
-    # expose raw client if needed
     def get_client(self) -> QdrantClient:
         return self.client

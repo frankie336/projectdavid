@@ -1,4 +1,4 @@
-# src/projectdavid/clients/computer.py
+# src/projectdavid/clients/computer_client.py
 #
 import time
 from typing import Any, Dict, Optional
@@ -73,6 +73,8 @@ class ComputerClient(BaseAPIClient):
                     time.sleep(2**attempt)
                 else:
                     raise ComputerClientError(f"Network error: {exc}") from exc
+
+        raise ComputerClientError(f"Request failed after {retries} retries")
 
     # ------------------------------------------------------------------ #
     #  COMPUTER / SESSION CAPABILITIES

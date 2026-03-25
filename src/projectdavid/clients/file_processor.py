@@ -5,7 +5,7 @@ import re
 import textwrap
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:  # Python 3.11+
     from typing import LiteralString
@@ -32,9 +32,9 @@ class FileProcessor:
 
         # Lazy-initialized attributes
         self._requested_chunk_size = chunk_size
-        self._max_seq_length = None
-        self._effective_max_length = None
-        self._chunk_size = None
+        self._max_seq_length: Optional[int] = None
+        self._effective_max_length: Optional[int] = None
+        self._chunk_size: Optional[int] = None
 
         log.info("Initialized Lazy-Loaded FileProcessor")
 
@@ -54,7 +54,7 @@ class FileProcessor:
                 # Ported Limit Calculations
                 self._max_seq_length = self._embedding_model.get_max_seq_length()
                 special_tokens_count = 2
-                self._effective_max_length = self._max_seq_length - special_tokens_count
+                self._effective_max_length = self._max_seq_length - special_tokens_count  # type: ignore[operator]
                 self._chunk_size = min(
                     self._requested_chunk_size, self._effective_max_length * 4
                 )
@@ -80,17 +80,22 @@ class FileProcessor:
 
         return self._embedding_model
 
-    # Properties to maintain access to derived attributes
     @property
-    def chunk_size(self):
+    def chunk_size(self) -> int:
         if self._chunk_size is None:
             self._ensure_model()
+        if self._chunk_size is None:
+            raise RuntimeError("chunk_size unavailable: model failed to initialise")
         return self._chunk_size
 
     @property
-    def effective_max_length(self):
+    def effective_max_length(self) -> int:
         if self._effective_max_length is None:
             self._ensure_model()
+        if self._effective_max_length is None:
+            raise RuntimeError(
+                "effective_max_length unavailable: model failed to initialise"
+            )
         return self._effective_max_length
 
     # ------------------------------------------------------------------ #
@@ -176,7 +181,9 @@ class FileProcessor:
         self.validate_file(file_path)
         ftype = self._detect_file_type(file_path)
 
-        dispatch_map = {
+        from typing import Awaitable, Callable
+
+        dispatch_map: Dict[str, Callable[[Path], Awaitable[Dict[str, Any]]]] = {
             "pdf": self._process_pdf,
             "text": self._process_text,
             "csv": self._process_csv,
@@ -192,7 +199,7 @@ class FileProcessor:
     #  PDF
     # ------------------------------------------------------------------ #
     async def _process_pdf(self, file_path: Path) -> Dict[str, Any]:
-        page_chunks, doc_meta = await self._extract_text(file_path)
+        page_chunks, doc_meta = await self._extract_pdf(file_path)
         all_chunks, line_data = [], []
 
         for page_text, page_num, line_nums in page_chunks:
@@ -236,13 +243,12 @@ class FileProcessor:
     #  Plain-text / code / markup
     # ------------------------------------------------------------------ #
     async def _process_text(self, file_path: Path) -> Dict[str, Any]:
-        text, extra_meta, _ = await self._extract_text(file_path)
+        text = await self._extract_plain_text(file_path)
         chunks = self._chunk_text(text)
         vectors = await asyncio.gather(*[self._encode_chunk_async(c) for c in chunks])
         return {
             "content": text,
             "metadata": {
-                **extra_meta,
                 "source": str(file_path),
                 "chunks": len(chunks),
                 "type": "text",
@@ -326,23 +332,25 @@ class FileProcessor:
     # ------------------------------------------------------------------ #
     #  Shared helpers
     # ------------------------------------------------------------------ #
-    async def _extract_text(self, file_path: Path) -> Union[
-        Tuple[List[Tuple[str, int, List[int]]], Dict[str, Any]],
-        Tuple[str, Dict[str, Any], List[int]],
-    ]:
+    async def _extract_pdf(
+        self, file_path: Path
+    ) -> Tuple[List[Tuple[str, int, List[int]]], Dict[str, Any]]:
         loop = asyncio.get_event_loop()
-        if file_path.suffix.lower() == ".pdf":
-            return await loop.run_in_executor(
-                self._executor, self._extract_pdf_text, file_path
-            )
-        else:
-            text = await loop.run_in_executor(
-                self._executor, self._read_text_file, file_path
-            )
-            return text, {}, []
+        return await loop.run_in_executor(
+            self._executor, self._extract_pdf_text, file_path
+        )
 
-    def _extract_pdf_text(self, file_path: Path):
-        page_chunks, meta = [], {}
+    async def _extract_plain_text(self, file_path: Path) -> str:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            self._executor, self._read_text_file, file_path
+        )
+
+    def _extract_pdf_text(
+        self, file_path: Path
+    ) -> Tuple[List[Tuple[str, int, List[int]]], Dict[str, Any]]:
+        page_chunks: List[Tuple[str, int, List[int]]] = []
+        meta: Dict[str, Any] = {}
         with pdfplumber.open(file_path) as pdf:
             meta.update(
                 {
@@ -371,11 +379,11 @@ class FileProcessor:
             return file_path.read_text(encoding="latin-1")
 
     def _read_docx(self, path: Path) -> str:
-        doc = Document(path)
+        doc = Document(str(path))
         return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
     def _read_pptx(self, path: Path) -> str:
-        prs = Presentation(path)
+        prs = Presentation(str(path))
         slides = []
         for slide in prs.slides:
             chunks = [sh.text for sh in slide.shapes if hasattr(sh, "text")]
@@ -410,7 +418,9 @@ class FileProcessor:
             chunks.append(" ".join(buf))
         return chunks
 
-    def _split_oversized_chunk(self, chunk: str, tokens: List[str] = None) -> List[str]:
+    def _split_oversized_chunk(
+        self, chunk: str, tokens: Optional[List[str]] = None
+    ) -> List[str]:
         model = self._ensure_model()  # Ensure model is loaded to access tokenizer
         if tokens is None:
             tokens = model.tokenizer.tokenize(chunk)

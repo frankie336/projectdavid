@@ -188,7 +188,7 @@ class VectorStoreClient:
     ) -> ValidationInterface.VectorStoreRead:
         shared_id = self.identifier_service.generate_vector_id()
         self.vector_manager.create_store(
-            collection_name=shared_id,
+            store_name=shared_id,
             vector_size=vector_size,
             distance=distance_metric.upper(),
         )
@@ -212,7 +212,7 @@ class VectorStoreClient:
     ) -> ValidationInterface.VectorStoreRead:
         shared_id = self.identifier_service.generate_vector_id()
         self.vector_manager.create_store(
-            collection_name=shared_id,
+            store_name=shared_id,
             vector_size=vector_size,
             distance=distance_metric.upper(),
         )
