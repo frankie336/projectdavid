@@ -1,13 +1,25 @@
 # projectdavid — Python SDK
 
-[![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml)
-[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![PyPI](https://img.shields.io/pypi/v/projectdavid)](https://pypi.org/project/projectdavid/)
+[![Downloads](https://static.pepy.tech/badge/projectdavid)](https://pepy.tech/project/projectdavid)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Lint, Test, Tag, Publish Status](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml/badge.svg)](https://github.com/frankie336/projectdavid/actions/workflows/test_tag_release.yml)
+
+---
+
+
+
 
 **The Python SDK for Project David — the open source, GDPR compliant successor to the OpenAI Assistants API.**
 
 Same primitives. Every model. Your infrastructure.
+
+
+
+
+
+
 
 ---
 
@@ -23,6 +35,19 @@ Project David is a full-scale, containerized LLM orchestration platform built ar
 > **Project Uni5** — the next milestone. `transformers`, GGUF, and vLLM adapters that mean a model straight off a training run has a full orchestration platform in minutes. From the lab to enterprise grade orchestration — instantly.
 
 ---
+
+
+### Project Activity & Reach
+
+| Metric | Status |
+| :--- | :--- |
+| **Total Downloads** | ![Total Downloads](https://static.pepy.tech/badge/projectdavid) |
+| **Monthly Reach** | ![Monthly](https://img.shields.io/pypi/dm/projectdavid?color=blue&label=pypi%20downloads) |
+| **Open Source Activity** | ![GitHub last commit](https://img.shields.io/github/last-commit/frankie336/projectdavid) |
+| **Analytics** | [View Live Download Trends on ClickPy →](https://clickpy.clickhouse.com/dashboard/projectdavid) |
+
+---
+
 
 ## Installation
 
@@ -108,7 +133,7 @@ See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_doc
 | GDPR compliant | ❌ | N/A | ✅ |
 | Security audited | N/A | N/A | ✅ |
 | Open source | ❌ | ✅ | ✅ |
-
+| **Community Adoption** | Proprietary | High | ![Total Downloads](https://static.pepy.tech/badge/projectdavid) |
 ---
 
 ## Supported Inference Providers
@@ -163,8 +188,6 @@ Works with any OpenAI-compatible endpoint out of the box — including Ollama fo
 | [entities_cook_book](https://github.com/project-david-ai/entities_cook_book) | Minimal tested examples — streaming, tools, search, stateful logic |
 
 ---
-
-
 
 
 ---
