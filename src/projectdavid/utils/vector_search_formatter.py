@@ -1,9 +1,13 @@
 from typing import Any, Dict, List
 
 from projectdavid_common import UtilsInterface
-from projectdavid_common.validation import (AssistantMessage, FileCitation,
-                                            FileSearchCall, FileSearchEnvelope,
-                                            OutputText)
+from projectdavid_common.validation import (
+    AssistantMessage,
+    FileCitation,
+    FileSearchCall,
+    FileSearchEnvelope,
+    OutputText,
+)
 
 _id = UtilsInterface.IdentifierService()
 
