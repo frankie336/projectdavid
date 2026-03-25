@@ -365,13 +365,13 @@ class SynchronousInferenceStream:
                     LOG.warning(f"[SDK] Stage 1 Healing failed for args: {raw_args}")
 
             return ToolCallRequestEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 tool_name=chunk.get("tool", "unknown_tool"),
                 args=raw_args,
                 action_id=chunk.get("action_id"),
                 tool_call_id=chunk.get("tool_call_id"),
-                thread_id=self.thread_id,
-                assistant_id=self.assistant_id,
+                thread_id=str(self.thread_id or ""),
+                assistant_id=str(self.assistant_id or ""),
                 _runs_client=self.runs_client,
                 _actions_client=self.actions_client,
                 _messages_client=self.messages_client,
@@ -383,19 +383,29 @@ class SynchronousInferenceStream:
                 # this via submit_tool_output; xterm has it via WebSocket.
                 LOG.debug("[SyncStream] Suppressing shell envelope 'content' chunk.")
                 return None
-            return ContentEvent(run_id=run_id, content=chunk.get("content", ""))
+            return ContentEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "reasoning":
-            return ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
+            return ReasoningEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "decision":
-            return DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
+            return DecisionEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "plan":
-            return PlanEvent(run_id=run_id, content=chunk.get("content", ""))
+            return PlanEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "hot_code":
-            return HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
+            return HotCodeEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "hot_code_output":
             return CodeExecutionOutputEvent(
