@@ -35,3 +35,9 @@ classifiers = [
     "License :: Other/Proprietary License",
     "Operating System :: OS Independent"
 ]
+
+[tool.setuptools.package-data]
+"projectdavid" = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
