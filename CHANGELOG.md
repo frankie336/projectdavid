@@ -1,3 +1,20 @@
+# [1.91.0](https://github.com/project-david-ai/projectdavid/compare/v1.90.3...v1.91.0) (2026-03-25)
+
+
+### Bug Fixes
+
+* **bandit:** replace assert with RuntimeError raises in file_processor properties ([d6883f6](https://github.com/project-david-ai/projectdavid/commit/d6883f6c9197568899666ecd2030942466b0e369))
+* **ci:** install pytest explicitly before running test suite ([15a3566](https://github.com/project-david-ai/projectdavid/commit/15a3566d247c9f17d51fc5fa1ef2892e84a16c89))
+* **ci:** update TestPyPI upload URL to legacy endpoint ([d0d7783](https://github.com/project-david-ai/projectdavid/commit/d0d7783c691d0eff04597eb1808ec959b83af6f6))
+* **mypy:** resolve remaining CI type errors across clients ([364aca8](https://github.com/project-david-ai/projectdavid/commit/364aca8c67a945cf3f793077c47bb87c03536a52))
+* **typer:** Continue to resolve typer CI issues ([372ea61](https://github.com/project-david-ai/projectdavid/commit/372ea61e9980a19dddfebe8e718b233c2ef66d74))
+* **typer:** Continue to resolve typer CI issues ([120af65](https://github.com/project-david-ai/projectdavid/commit/120af6548e965ec7972d116315a63e979c49ddcc))
+
+
+### Features
+
+* **types:** implement strict type safety and PEP 561 support ([5d9150e](https://github.com/project-david-ai/projectdavid/commit/5d9150e9e0338b502bba11c6aa204fad24f3ce72))
+
 ## [1.90.3](https://github.com/project-david-ai/projectdavid/compare/v1.90.2...v1.90.3) (2026-03-25)
 
 
