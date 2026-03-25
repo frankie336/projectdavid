@@ -715,7 +715,9 @@ class RunsClient(BaseAPIClient):
         headers = self.client.headers
 
         def _listen_and_handle():
-            resp = requests.get(url, headers=headers, stream=True)
+
+            resp = requests.get(url, headers=headers, stream=True, timeout=(10, 60))
+
             resp.raise_for_status()
 
             # Wrap the line‑iterator in SSEClient

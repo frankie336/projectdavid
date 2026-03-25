@@ -83,27 +83,30 @@ class UsersClient(BaseAPIClient):
             return validated_user
 
         except httpx.HTTPStatusError as e:
+
+            # 1. Default to the raw response text as a fallback
+
             error_detail = e.response.text
-            try:  # Try to parse JSON detail from error response
+
+            try:
+
+                # 2. Attempt to parse JSON for more structured error details
+
                 error_detail = e.response.json()
-            except:
+
+            except (ValueError, AttributeError):
+
+                # 3. If it's not JSON (ValueError) or response is missing (AttributeError),
+
+                # we just stick with the raw text assigned above.
+
                 pass
+
             logging_utility.error(
                 f"HTTP error occurred while creating user ({e.response.status_code}): {error_detail}"
             )
-            raise  # Re-raise the original exception
-        except ValidationError as e:  # Error validating the server's RESPONSE
-            logging_utility.error(
-                f"Server response validation error for created user: {e.json()}"
-            )
-            raise ValueError(f"Invalid user data received from server: {e}") from e
-        except Exception as e:
-            logging_utility.error(
-                f"An unexpected error occurred while creating user: {e}", exc_info=True
-            )
-            raise RuntimeError(
-                f"An unexpected error occurred during user creation: {e}"
-            ) from e
+
+            raise  # Re-raise the original exception so the caller can handle it
 
     def retrieve_user(self, user_id: str) -> ent_validator.UserRead:
         """Retrieves a specific user by their ID."""
@@ -118,15 +121,20 @@ class UsersClient(BaseAPIClient):
             logging_utility.info("User retrieved successfully: %s", user_id)
             return validated_user
         except httpx.HTTPStatusError as e:
+            # 1. Start with the raw text as the safest fallback
             error_detail = e.response.text
             try:
+                # 2. Attempt to parse JSON for more structured details
                 error_detail = e.response.json()
-            except:
+            except (ValueError, AttributeError):
+                # 3. If parsing fails, we already have the text in error_detail
                 pass
+
             logging_utility.error(
                 f"HTTP error occurred while retrieving user {user_id} ({e.response.status_code}): {error_detail}"
             )
-            raise e
+            # 4. Use 'raise' instead of 'raise e' to preserve the original stack trace
+            raise
         except ValidationError as e:
             logging_utility.error(
                 f"Server response validation error for retrieved user {user_id}: {e.json()}"
@@ -206,53 +214,85 @@ class UsersClient(BaseAPIClient):
             return validated_user
 
         except httpx.HTTPStatusError as e:
+
+            # 1. Fallback to raw text
+
             error_detail = e.response.text
+
             try:
+
+                # 2. Upgrade to JSON if possible
+
                 error_detail = e.response.json()
-            except:
+
+            except (ValueError, AttributeError):
+
+                # 3. Catch specific errors to satisfy Bandit and handle non-JSON responses
+
                 pass
+
             logging_utility.error(
-                f"HTTP error occurred while updating user {user_id} ({e.response.status_code}): {error_detail}"
+                f"HTTP error occurred while deleting user {user_id} ({e.response.status_code}): {error_detail}"
             )
-            raise e
+
+            # 4. Use 'raise' (not 'raise e') to preserve the full stack trace
+
+            raise
+
         except ValidationError as e:
+
             logging_utility.error(
-                f"Server response validation error for updated user {user_id}: {e.json()}"
+                f"Server response validation error for deleted user {user_id}: {e.json()}"
             )
+
             raise ValueError(
-                f"Invalid user data received from server after update: {e}"
+                f"Invalid response received from server after deletion: {e}"
             ) from e
+
         except Exception as e:
+
             logging_utility.error(
-                f"An error occurred while updating user {user_id}: {e}", exc_info=True
+                f"An error occurred while deleting user {user_id}: {e}", exc_info=True
             )
+
             raise RuntimeError(
-                f"An unexpected error occurred updating user {user_id}: {e}"
+                f"An unexpected error occurred deleting user {user_id}: {e}"
             ) from e
 
     def delete_user(self, user_id: str) -> ent_validator.UserDeleteResponse:
         """Deletes a specific user by their ID."""
         logging_utility.info("Attempting to delete user with id: %s", user_id)
+
         if not user_id:
             raise ValueError("user_id cannot be empty.")
+
         try:
             response = self.client.delete(f"/v1/users/{user_id}")
             response.raise_for_status()
             result_json = response.json()
-            # Assuming UserDeleteResponse exists and has fields like { "id": "...", "deleted": true }
+
+            # Validate the response using the expected model
             validated_result = ent_validator.UserDeleteResponse(**result_json)
             logging_utility.info("User deleted successfully: %s", user_id)
             return validated_result
+
         except httpx.HTTPStatusError as e:
+            # 1. Start with raw response text as a safe fallback
             error_detail = e.response.text
             try:
+                # 2. Attempt to parse JSON for structured error details
                 error_detail = e.response.json()
-            except:
+            except (ValueError, AttributeError):
+                # 3. Standardized fix for Bandit B110:
+                # Catch specific exceptions to handle non-JSON or missing responses.
                 pass
+
             logging_utility.error(
                 f"HTTP error occurred while deleting user {user_id} ({e.response.status_code}): {error_detail}"
             )
-            raise e
+            # 4. Use 'raise' (not 'raise e') to preserve the original traceback
+            raise
+
         except ValidationError as e:
             logging_utility.error(
                 f"Server response validation error for deleted user {user_id}: {e.json()}"
@@ -260,6 +300,7 @@ class UsersClient(BaseAPIClient):
             raise ValueError(
                 f"Invalid delete confirmation received from server: {e}"
             ) from e
+
         except Exception as e:
             logging_utility.error(
                 f"An error occurred while deleting user {user_id}: {e}", exc_info=True
