@@ -26,10 +26,11 @@ class DatasetsClient(BaseAPIClient):
     ):
         super().__init__(base_url=base_url, api_key=api_key)
         # Ensure training_url is stripped of trailing slashes for clean joining
-        raw_training_url = training_url or os.getenv(
-            "TRAINING_BASE_URL", "http://localhost:9001"
+
+        resolved_url = (
+            training_url or os.getenv("TRAINING_BASE_URL") or "http://localhost:9001"
         )
-        self.training_url = raw_training_url.rstrip("/")
+        self.training_url = resolved_url.rstrip("/")
 
         self._file_client = FileClient(base_url=base_url, api_key=api_key)
 

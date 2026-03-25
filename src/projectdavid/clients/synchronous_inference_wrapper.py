@@ -66,10 +66,10 @@ class SynchronousInferenceStream:
         self.api_key: Optional[str] = None
         self.meta_data: Optional[Dict[str, Any]] = None
 
-        self.runs_client: Any = None
-        self.actions_client: Any = None
-        self.messages_client: Any = None
-        self.assistants_client: Any = None
+        self.runs_client: Any | None = None
+        self.actions_client: Any | None = None
+        self.messages_client: Any | None = None
+        self.assistants_client: Any | None = None
 
         self.validator = ToolValidator()
 
