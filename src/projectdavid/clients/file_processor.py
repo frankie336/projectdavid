@@ -80,19 +80,22 @@ class FileProcessor:
 
         return self._embedding_model
 
-    # Properties to maintain access to derived attributes
     @property
     def chunk_size(self) -> int:
         if self._chunk_size is None:
             self._ensure_model()
-        assert self._chunk_size is not None
+        if self._chunk_size is None:
+            raise RuntimeError("chunk_size unavailable: model failed to initialise")
         return self._chunk_size
 
     @property
     def effective_max_length(self) -> int:
         if self._effective_max_length is None:
             self._ensure_model()
-        assert self._effective_max_length is not None
+        if self._effective_max_length is None:
+            raise RuntimeError(
+                "effective_max_length unavailable: model failed to initialise"
+            )
         return self._effective_max_length
 
     # ------------------------------------------------------------------ #
