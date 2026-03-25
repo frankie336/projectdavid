@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 env:
-  TEST_PYPI_URL: https://test.pypi.org/simple/
+  TEST_PYPI_URL: https://test.pypi.org/legacy/
   PROD_PYPI_URL: https://upload.pypi.org/legacy/
 
 jobs:
