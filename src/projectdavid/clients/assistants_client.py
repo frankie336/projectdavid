@@ -73,12 +73,16 @@ class AssistantsClient(BaseAPIClient):
             ids.extend(fs_res.get("vector_store_ids", []))
 
         # preserve source-order but drop dupes
-        seen = set()
-        ordered_unique = [i for i in ids if not (i in seen or seen.add(i))]
+        seen: set = set()
+        ordered_unique: List[str] = []
+        for i in ids:
+            if i not in seen:
+                seen.add(i)
+                ordered_unique.append(i)
         return ordered_unique
 
     @staticmethod
-    def _parse_response(response: httpx.Response):
+    def _parse_response(response: httpx.Response) -> Any:
         try:
             return response.json()
         except httpx.DecodingError:
@@ -100,6 +104,8 @@ class AssistantsClient(BaseAPIClient):
                     time.sleep(2**attempt)
                 else:
                     raise
+
+        raise AssistantsClientError(f"Request failed after {retries} retries")
 
     # ------------------------------------------------------------------ #
     #  CRUD

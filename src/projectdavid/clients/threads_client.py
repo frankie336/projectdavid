@@ -63,7 +63,7 @@ class ThreadsClient(BaseAPIClient):
 
         logging_utility.info(
             "Creating thread (participants=%s)",
-            "default-user" if participant_ids in (None, []) else len(participant_ids),
+            "default-user" if not participant_ids else len(participant_ids),
         )
 
         try:

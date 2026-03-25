@@ -66,10 +66,10 @@ class SynchronousInferenceStream:
         self.api_key: Optional[str] = None
         self.meta_data: Optional[Dict[str, Any]] = None
 
-        self.runs_client: Any = None
-        self.actions_client: Any = None
-        self.messages_client: Any = None
-        self.assistants_client: Any = None
+        self.runs_client: Any | None = None
+        self.actions_client: Any | None = None
+        self.messages_client: Any | None = None
+        self.assistants_client: Any | None = None
 
         self.validator = ToolValidator()
 
@@ -365,13 +365,13 @@ class SynchronousInferenceStream:
                     LOG.warning(f"[SDK] Stage 1 Healing failed for args: {raw_args}")
 
             return ToolCallRequestEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 tool_name=chunk.get("tool", "unknown_tool"),
                 args=raw_args,
                 action_id=chunk.get("action_id"),
                 tool_call_id=chunk.get("tool_call_id"),
-                thread_id=self.thread_id,
-                assistant_id=self.assistant_id,
+                thread_id=str(self.thread_id or ""),
+                assistant_id=str(self.assistant_id or ""),
                 _runs_client=self.runs_client,
                 _actions_client=self.actions_client,
                 _messages_client=self.messages_client,
@@ -383,28 +383,38 @@ class SynchronousInferenceStream:
                 # this via submit_tool_output; xterm has it via WebSocket.
                 LOG.debug("[SyncStream] Suppressing shell envelope 'content' chunk.")
                 return None
-            return ContentEvent(run_id=run_id, content=chunk.get("content", ""))
+            return ContentEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "reasoning":
-            return ReasoningEvent(run_id=run_id, content=chunk.get("content", ""))
+            return ReasoningEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "decision":
-            return DecisionEvent(run_id=run_id, content=chunk.get("content", ""))
+            return DecisionEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "plan":
-            return PlanEvent(run_id=run_id, content=chunk.get("content", ""))
+            return PlanEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "hot_code":
-            return HotCodeEvent(run_id=run_id, content=chunk.get("content", ""))
+            return HotCodeEvent(
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
+            )
 
         elif c_type == "hot_code_output":
             return CodeExecutionOutputEvent(
-                run_id=run_id, content=chunk.get("content", "")
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
             )
 
         elif c_type == "scratchpad_status":
             return ScratchpadEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 operation=chunk.get("operation", "unknown"),
                 state=chunk.get("state", "in_progress"),
                 activity=chunk.get("activity"),
@@ -424,12 +434,12 @@ class SynchronousInferenceStream:
                 return None
             # Bare computer_output (non-shell path) still routes normally.
             return ComputerExecutionOutputEvent(
-                run_id=run_id, content=chunk.get("content", "")
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
             )
 
         elif c_type == "code_status":
             return CodeStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
                 tool=chunk.get("tool"),
@@ -439,7 +449,7 @@ class SynchronousInferenceStream:
             # Always arrives bare (no stream_type wrapper) so
             # _from_shell_envelope is always False here — routes normally.
             return ShellStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
                 tool=chunk.get("tool"),
@@ -447,70 +457,70 @@ class SynchronousInferenceStream:
 
         elif c_type == "code_interpreter_file":
             return CodeExecutionGeneratedFileEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 filename=chunk.get("filename", "unknown"),
-                file_id=chunk.get("file_id"),
-                base64_data=chunk.get("base64"),
-                mime_type=chunk.get("mime_type", "application/octet-stream"),
-                url=chunk.get("url"),
+                file_id=str(chunk.get("file_id") or ""),
+                base64_data=str(chunk.get("base64") or ""),
+                mime_type=str(chunk.get("mime_type", "application/octet-stream")),
+                url=str(chunk.get("url") or ""),
             )
 
         elif c_type == "computer_file":
             # The only shell inner type that MUST survive the envelope —
             # provides file download links rendered in the frontend.
             return ComputerGeneratedFileEvent(
-                run_id=run_id,
-                filename=chunk.get("filename", "unknown"),
-                file_id=chunk.get("file_id"),
-                mime_type=chunk.get("mime_type", "application/octet-stream"),
-                url=chunk.get("url"),
-                base64_data=chunk.get("base64"),
-                context=chunk.get("context"),
+                run_id=str(self.run_id or ""),
+                filename=str(chunk.get("filename", "unknown")),
+                file_id=str(chunk.get("file_id") or ""),
+                mime_type=str(chunk.get("mime_type", "application/octet-stream")),
+                url=str(chunk.get("url") or ""),
+                base64_data=str(chunk.get("base64") or ""),
+                context=str(chunk.get("context") or ""),
             )
 
         elif c_type == "research_status":
             return ResearchStatusEvent(
-                run_id=run_id,
-                activity=chunk.get("activity", ""),
-                state=chunk.get("state", "in_progress"),
-                tool=chunk.get("tool"),
+                run_id=str(self.run_id or ""),
+                activity=str(chunk.get("activity", "")),
+                state=str(chunk.get("state", "in_progress")),
+                tool=str(chunk.get("tool") or ""),
             )
 
         elif c_type == "web_status":
             return WebStatusEvent(
-                run_id=run_id,
-                status=chunk.get("status", "running"),
-                tool=chunk.get("tool"),
-                message=chunk.get("message"),
+                run_id=str(self.run_id or ""),
+                status=str(chunk.get("status", "running")),
+                tool=str(chunk.get("tool") or ""),
+                message=str(chunk.get("message") or ""),
             )
 
         elif c_type == "engineer_status":
             return EngineerStatusEvent(
-                run_id=run_id,
-                activity=chunk.get("activity") or chunk.get("message", ""),
-                state=chunk.get("state") or chunk.get("status", "in_progress"),
-                tool=chunk.get("tool"),
+                run_id=str(self.run_id or ""),
+                activity=str(chunk.get("activity") or chunk.get("message", "")),
+                state=str(chunk.get("state") or chunk.get("status", "in_progress")),
+                tool=str(chunk.get("tool") or ""),
             )
 
         elif c_type == "tool_intercept":
             return ToolInterceptEvent(
-                run_id=run_id,
-                tool_name=chunk.get("tool_name", ""),
-                args=chunk.get("args", {}),
-                action_id=chunk.get("action_id"),
-                origin=chunk.get("origin"),
-                thread_id=chunk.get("thread_id"),
-                tool_call_id=chunk.get("tool_call_id"),
-                origin_run_id=chunk.get("origin_run_id"),
-                origin_assistant_id=chunk.get("origin_assistant_id"),
+                run_id=str(self.run_id or ""),
+                tool_name=str(chunk.get("tool_name", "")),
+                args=dict(chunk.get("args", {})),
+                action_id=str(chunk.get("action_id") or ""),
+                origin=str(chunk.get("origin") or ""),
+                thread_id=str(chunk.get("thread_id") or ""),
+                tool_call_id=str(chunk.get("tool_call_id") or ""),
+                origin_run_id=str(chunk.get("origin_run_id") or ""),
+                origin_assistant_id=str(chunk.get("origin_assistant_id") or ""),
             )
 
         elif c_type == "error":
             return WebStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 status="failed",
-                tool=chunk.get("tool"),
-                message=chunk.get("error") or chunk.get("message"),
+                tool=str(chunk.get("tool")),
+                message=str(chunk.get("error") or chunk.get("message")),
             )
 
         return None

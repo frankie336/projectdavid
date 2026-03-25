@@ -35,9 +35,9 @@ class BaseAPIClient:
         # ------------------------------------------------------------------
         # Resolve configuration
         # ------------------------------------------------------------------
-        self.base_url = (
-            base_url or os.getenv("ENTITIES_BASE_URL", "http://localhost:80")
-        ).rstrip("/")
+        raw_url = base_url or os.getenv("ENTITIES_BASE_URL") or "http://localhost:80"
+        self.base_url = raw_url.rstrip("/")
+
         self.api_key = api_key or os.getenv("ENTITIES_API_KEY")
 
         if not self.base_url:

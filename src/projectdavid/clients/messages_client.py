@@ -29,7 +29,7 @@ class MessagesClient(BaseAPIClient):
         self.message_chunks: Dict[str, List[str]] = {}
 
         # Lazy-loaded FileClient so we only instantiate it if multimodal content is passed
-        self._file_client = None
+        self._file_client: Optional[Any] = None
 
         logging_utility.info("MessagesClient initialized using BaseAPIClient.")
 
@@ -108,7 +108,7 @@ class MessagesClient(BaseAPIClient):
             return content, []
 
         text_blocks = []
-        image_tasks = []
+        image_tasks: List[Tuple[str, int]] = []
         attachments = []
 
         # 1. Parse the array and separate Text vs Images
@@ -120,10 +120,13 @@ class MessagesClient(BaseAPIClient):
 
             elif block_type in ("image_url", "input_image"):
                 img_data = block.get("image_url")
-                url = img_data.get("url") if isinstance(img_data, dict) else img_data
+                raw_url = (
+                    img_data.get("url") if isinstance(img_data, dict) else img_data
+                )
 
-                # Queue the upload task for concurrent batching
-                image_tasks.append((url, i))
+                if raw_url is not None:
+                    # Queue the upload task for concurrent batching
+                    image_tasks.append((str(raw_url), i))
 
             elif block_type == "image_file":
                 # If the user already uploaded it and passed a file_id directly
@@ -272,7 +275,7 @@ class MessagesClient(BaseAPIClient):
             limit,
             order,
         )
-        params = {"limit": limit, "order": order}
+        params: Dict[str, Union[str, int]] = {"limit": limit, "order": order}
         try:
             response = self.client.get(
                 f"/v1/threads/{thread_id}/messages", params=params

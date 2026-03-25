@@ -29,10 +29,11 @@ class ModelsClient(BaseAPIClient):
         training_url: Optional[str] = None,
     ):
         super().__init__(base_url=base_url, api_key=api_key)
-        raw_training_url = training_url or os.getenv(
-            "TRAINING_BASE_URL", "http://localhost:9001"
+
+        resolved_url = (
+            training_url or os.getenv("TRAINING_BASE_URL") or "http://localhost:9001"
         )
-        self.training_url = raw_training_url.rstrip("/")
+        self.training_url = resolved_url.rstrip("/")
 
     # ──────────────────────────────────────────────────────────────────────────
     # REGISTRY MANAGEMENT (Metadata CRUD)
