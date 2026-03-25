@@ -409,12 +409,12 @@ class SynchronousInferenceStream:
 
         elif c_type == "hot_code_output":
             return CodeExecutionOutputEvent(
-                run_id=run_id, content=chunk.get("content", "")
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
             )
 
         elif c_type == "scratchpad_status":
             return ScratchpadEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 operation=chunk.get("operation", "unknown"),
                 state=chunk.get("state", "in_progress"),
                 activity=chunk.get("activity"),
@@ -434,12 +434,12 @@ class SynchronousInferenceStream:
                 return None
             # Bare computer_output (non-shell path) still routes normally.
             return ComputerExecutionOutputEvent(
-                run_id=run_id, content=chunk.get("content", "")
+                run_id=str(self.run_id or ""), content=chunk.get("content", "")
             )
 
         elif c_type == "code_status":
             return CodeStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
                 tool=chunk.get("tool"),
@@ -449,7 +449,7 @@ class SynchronousInferenceStream:
             # Always arrives bare (no stream_type wrapper) so
             # _from_shell_envelope is always False here — routes normally.
             return ShellStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
                 tool=chunk.get("tool"),
@@ -457,7 +457,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "code_interpreter_file":
             return CodeExecutionGeneratedFileEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 filename=chunk.get("filename", "unknown"),
                 file_id=chunk.get("file_id"),
                 base64_data=chunk.get("base64"),
@@ -469,7 +469,7 @@ class SynchronousInferenceStream:
             # The only shell inner type that MUST survive the envelope —
             # provides file download links rendered in the frontend.
             return ComputerGeneratedFileEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 filename=chunk.get("filename", "unknown"),
                 file_id=chunk.get("file_id"),
                 mime_type=chunk.get("mime_type", "application/octet-stream"),
@@ -480,7 +480,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "research_status":
             return ResearchStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity", ""),
                 state=chunk.get("state", "in_progress"),
                 tool=chunk.get("tool"),
@@ -488,7 +488,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "web_status":
             return WebStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 status=chunk.get("status", "running"),
                 tool=chunk.get("tool"),
                 message=chunk.get("message"),
@@ -496,7 +496,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "engineer_status":
             return EngineerStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 activity=chunk.get("activity") or chunk.get("message", ""),
                 state=chunk.get("state") or chunk.get("status", "in_progress"),
                 tool=chunk.get("tool"),
@@ -504,7 +504,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "tool_intercept":
             return ToolInterceptEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 tool_name=chunk.get("tool_name", ""),
                 args=chunk.get("args", {}),
                 action_id=chunk.get("action_id"),
@@ -517,7 +517,7 @@ class SynchronousInferenceStream:
 
         elif c_type == "error":
             return WebStatusEvent(
-                run_id=run_id,
+                run_id=str(self.run_id or ""),
                 status="failed",
                 tool=chunk.get("tool"),
                 message=chunk.get("error") or chunk.get("message"),
