@@ -1,3 +1,13 @@
+## [1.90.2-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.1...v1.90.2-dev.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* add [@property](https://github.com/property) decorator and missing return to Entity.registry ([d0241eb](https://github.com/project-david-ai/projectdavid/commit/d0241eb334bff2137889abcb255fa2186be292b0))
+* bump projectdavid_common version to 0.60.0 ([06334fb](https://github.com/project-david-ai/projectdavid/commit/06334fbe3e707dddc370cb96c7bd5f2198f01c09))
+* refactor HTTP error handling to avoid bare excepts" ([972078d](https://github.com/project-david-ai/projectdavid/commit/972078d2d3b868c9eb7feab05c46bb0471ca3796))
+* **security:** resolve final Bandit security warnings in user client and runs ([54c64df](https://github.com/project-david-ai/projectdavid/commit/54c64dfda669006b7f499b77c022f6e11a23523e))
+
 ## [1.90.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.0...v1.90.1) (2026-03-24)
 
 
