@@ -1,3 +1,121 @@
+## [1.90.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.0...v1.90.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* add [@property](https://github.com/property) decorator and missing return to Entity.registry ([ac19bcb](https://github.com/project-david-ai/projectdavid/commit/ac19bcb1ab895e5b56ff7f854829b2fb79559af1))
+* bump projectdavid_common version to 0.60.0 ([3278c97](https://github.com/project-david-ai/projectdavid/commit/3278c97a8641e616c65c0ba364e6e2ab000f3cc3))
+
+# [1.90.0](https://github.com/project-david-ai/projectdavid/compare/v1.89.1...v1.90.0) (2026-03-23)
+
+
+### Features
+
+* Add stream bool ([152c90b](https://github.com/project-david-ai/projectdavid/commit/152c90be3acbf0629443fba811e603fd307326d7))
+
+## [1.89.1](https://github.com/project-david-ai/projectdavid/compare/v1.89.0...v1.89.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* bump projectdavid_common version to 0.60.0 ([028cbc9](https://github.com/project-david-ai/projectdavid/commit/028cbc9743fdb3022b21e9e0b7c79bae1c6a33d0))
+
+# [1.89.0](https://github.com/project-david-ai/projectdavid/compare/v1.88.0...v1.89.0) (2026-03-23)
+
+
+### Features
+
+* wire tensor_parallel_size into activation endpoints ([3b31fc5](https://github.com/project-david-ai/projectdavid/commit/3b31fc5d066b07c41b5b9dae174e025778853cbb))
+
+# [1.88.0](https://github.com/project-david-ai/projectdavid/compare/v1.87.0...v1.88.0) (2026-03-22)
+
+
+### Features
+
+* bump projectdavid_common==0.58.0 ([5bb91ea](https://github.com/project-david-ai/projectdavid/commit/5bb91ea9158e3267819f0ed76bc3fdf9d86590da))
+
+# [1.87.0](https://github.com/project-david-ai/projectdavid/compare/v1.86.0...v1.87.0) (2026-03-21)
+
+
+### Features
+
+* add activate_base ([5c11bfd](https://github.com/project-david-ai/projectdavid/commit/5c11bfd728218d038065e9fe4aef50723472d653))
+* add activate_base ([0301844](https://github.com/project-david-ai/projectdavid/commit/030184435565065a59d4271d474a62a7985433c5))
+
+# [1.86.0](https://github.com/project-david-ai/projectdavid/compare/v1.85.0...v1.86.0) (2026-03-21)
+
+
+### Features
+
+* bump projectdavid_common version to 0.57.0 in dependencies ([3ec5ffa](https://github.com/project-david-ai/projectdavid/commit/3ec5ffa1f8563ea7613ded82ae9994c7020dc940))
+
+# [1.85.0](https://github.com/project-david-ai/projectdavid/compare/v1.84.2...v1.85.0) (2026-03-20)
+
+
+### Features
+
+* add `deactivate_all` method to `ModelsClient` for deactivating fine-tuned models ([257b6a2](https://github.com/project-david-ai/projectdavid/commit/257b6a27685065289dcdef9064db6d37c05a4606))
+
+## [1.84.2](https://github.com/project-david-ai/projectdavid/compare/v1.84.1...v1.84.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* bump `projectdavid_common` to v0.56.0 in dependencies ([8370828](https://github.com/project-david-ai/projectdavid/commit/8370828933d6dd860fc456756afaefb0037640a1))
+
+## [1.84.1](https://github.com/project-david-ai/projectdavid/compare/v1.84.0...v1.84.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* bump `projectdavid_common` to v0.56.0 in dependencies ([c7405ad](https://github.com/project-david-ai/projectdavid/commit/c7405adcb782a2209342991e5a02ff17570d9dcd))
+
+# [1.84.0](https://github.com/project-david-ai/projectdavid/compare/v1.83.0...v1.84.0) (2026-03-20)
+
+
+### Features
+
+* add `activate` method to `ModelsClient` for activating fine-tuned models ([e87e103](https://github.com/project-david-ai/projectdavid/commit/e87e103a215093d778b86273cd85340f3f2e5b45))
+
+# [1.83.0](https://github.com/project-david-ai/projectdavid/compare/v1.82.5...v1.83.0) (2026-03-20)
+
+
+### Features
+
+* add `ModelsClient` with fine-tuning support and integrate into `entity.py` ([bc6c1ab](https://github.com/project-david-ai/projectdavid/commit/bc6c1ab79dda4f01d2d42bda87830814086169cb))
+
+## [1.82.5](https://github.com/project-david-ai/projectdavid/compare/v1.82.4...v1.82.5) (2026-03-20)
+
+
+### Bug Fixes
+
+* update projectdavid_common dependency to 0.55.0 ([6db9f0f](https://github.com/project-david-ai/projectdavid/commit/6db9f0fef367701c84486555f32ed59ef4247936))
+
+## [1.82.4](https://github.com/project-david-ai/projectdavid/compare/v1.82.3...v1.82.4) (2026-03-19)
+
+
+### Bug Fixes
+
+* update projectdavid_common dependency to 0.55.0 ([b5015c4](https://github.com/project-david-ai/projectdavid/commit/b5015c433ff4c3e10cd3336a6d23b00532db38c9))
+* update projectdavid_common dependency to 0.55.0 ([200a7de](https://github.com/project-david-ai/projectdavid/commit/200a7de3bf525a33ad292ff4bae1a0ae70e8bb40))
+
+## [1.82.3](https://github.com/project-david-ai/projectdavid/compare/v1.82.2...v1.82.3) (2026-03-19)
+
+
+### Bug Fixes
+
+* bump `projectdavid_common` to v0.54.0 in dependencies ([0f24cc8](https://github.com/project-david-ai/projectdavid/commit/0f24cc8ba5babfef169af3218dd3aeea00ca232b))
+
+## [1.82.2](https://github.com/project-david-ai/projectdavid/compare/v1.82.1...v1.82.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* add `_version.py` file ([22823c7](https://github.com/project-david-ai/projectdavid/commit/22823c7fddb4ad5b91ec9f2607ac19f5c59e00a6))
+* bump `projectdavid_common` to v0.51.0 in dependencies ([e6d25d8](https://github.com/project-david-ai/projectdavid/commit/e6d25d8e8be2507326e261f3760afc3ada0abc78))
+* bump `projectdavid_common` to v0.52.0 in dependencies ([78c9a02](https://github.com/project-david-ai/projectdavid/commit/78c9a02f38e84466b40db0b1908f4b35cb8c3a8a))
+* bump `projectdavid_common` to v0.53.0 in dependencies ([804ffb3](https://github.com/project-david-ai/projectdavid/commit/804ffb312f8386412b4ca6dd9c487010f5836e83))
+
 ## [1.82.1](https://github.com/project-david-ai/projectdavid/compare/v1.82.0...v1.82.1) (2026-03-19)
 
 

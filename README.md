@@ -164,19 +164,8 @@ Works with any OpenAI-compatible endpoint out of the box — including Ollama fo
 
 ---
 
-## Project Uni5 — Roadmap
 
-The next major milestone extends Project David to every model deployment scenario:
 
-```
-Got freshly trained weights?     →  transformers adapter     (Phase 1)
-Got a quantized GGUF model?      →  GGUF / llama.cpp adapter (Phase 2)
-Got a GPU cluster?               →  vLLM adapter             (Phase 3)
-Want a hosted provider?          →  already works
-Running Ollama locally?          →  already works
-```
-
-Five scenarios. One platform. **From the lab to enterprise grade orchestration — instantly.**
 
 ---
 
