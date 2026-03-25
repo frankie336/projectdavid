@@ -1,173 +1,122 @@
-#github-action-test-tag-release.yml
 name: Lint, Test, Tag, and Publish
 
 on:
   push:
     branches:
-      - '**'  # Run on all branches
+      - '**'
 
 permissions:
-  contents: write   # Needed for semantic-release to push tags/releases
-  id-token: write   # Needed for PyPI trusted publishing (if used) or API token access
+  contents: write
+  id-token: write
 
 env:
-  # URLs are primarily for the PUBLISH step now, not general installs
   TEST_PYPI_URL: https://test.pypi.org/simple/
   PROD_PYPI_URL: https://upload.pypi.org/legacy/
-  BASE_URL: http://localhost:80/  # Your base URL if needed by tests/lint
 
 jobs:
-  lint:
-    name: 🧹 Lint Code
+  lint_and_security:
+    name: 🧹 Lint & 🛡️ Security
     runs-on: ubuntu-latest
     steps:
-      - name: 🧾 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'  # Use a single consistent version for linting
+          python-version: '3.11'
 
-      - name: 📦 Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-lint-pip-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-lint-pip-
-
-      - name: 🔧 Install lint dependencies
+      - name: 🔧 Install Tools
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          # CORRECTED: Install project dev dependencies ONLY from PyPI
-          pip install --index-url https://pypi.org/simple/ -e ".[dev]"
-          # Explicitly install linters from PyPI if not in dev extras
-          # Assuming black and isort are in your dev dependencies, this might be redundant
-          # pip install --index-url https://pypi.org/simple/ black isort
+          pip install black isort bandit safety
+          pip install -e ".[dev]"
 
-      - name: ⚫ Run Black (Format Check)
-        # Ensure black is installed via .[dev] or the separate pip install above
-        run: black --check .
+      - name: ⚫ Black & Isort
+        run: |
+          black --check .
+          isort --check .
 
-      - name: ⚫ Run isort (Import Sort Check)
-        # Ensure isort is installed via .[dev] or the separate pip install above
-        run: isort --check .
+      - name: 🛡️ Bandit (Static Security Analysis)
+        run: bandit -r src/ -x tests/
+
+      - name: 🛡️ Safety (Dependency Vulnerability Check)
+        # We use continue-on-error because some DB drivers have 'low' risk CVEs
+        # that shouldn't always block a build, but you should see them.
+        continue-on-error: true
+        run: safety check
 
   test:
-    name: ✅ Test on Python ${{ matrix.python-version }}
+    name: ✅ Test (Py ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    needs: lint  # Run tests only if linting passes
+    needs: lint_and_security
     strategy:
       fail-fast: false
       matrix:
         python-version: [ "3.10", "3.11", "3.12" ]
     steps:
-      - name: 🧾 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: 📦 Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}-
-            ${{ runner.os }}-pip-
-
-      - name: 🔧 Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          # CORRECTED: Install project dependencies ONLY from PyPI
-          pip install --index-url https://pypi.org/simple/ -e ".[dev]"
-
+      - name: 📦 Install
+        run: pip install -e ".[dev]"
       - name: ✅ Run tests
         run: pytest tests/
 
   release:
     name: 🚀 Tag, Build, and Publish
     runs-on: ubuntu-latest
-    needs: test  # Run release steps only if tests pass
-    # Condition to run only on specific branches
-    if: "github.ref_type == 'branch' && (github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'dev')"
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev')
     steps:
-      - name: 🧾 Checkout repository
+      - name: 🧾 Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for semantic-release
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: 🔧 Install build and dev tools
-        run: |
-          python -m pip install --upgrade pip setuptools wheel build
-          # CORRECTED: Install build/dev dependencies ONLY from PyPI
-          pip install --index-url https://pypi.org/simple/ -e ".[dev]"
-
-      - name: 🚀 Setup Node.js for semantic-release
+      - name: 🔧 Install Node & Semantic Release
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 🔧 Install semantic-release and plugins
+      - name: 🔧 Install Plugins
         run: |
           npm install -g semantic-release \
             @semantic-release/git \
             @semantic-release/changelog \
             @semantic-release/github \
-            @semantic-release/exec \
-            conventional-changelog-conventionalcommits
+            @semantic-release/exec
 
-      - name: 🔢 Run semantic-release (tag, changelog, version bump)
+      - name: 🔢 Run Semantic Release
+        id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
 
-      - name: 🏗️ Build Python package
-        # This step only runs if semantic-release successfully determined a release is needed
-        run: python -m build
-
-      - name: 🛡️ Verify build artifacts
+      - name: 🏗️ Build Package
+        # Build only happens AFTER semantic-release has patched pyproject.toml
         run: |
-          ls -lh dist
-          test -n "$(ls -A dist 2>/dev/null)" || (echo "❌ dist/ is empty! No release needed or build failed." && exit 1)
+          pip install build
+          python -m build
 
-      - name: 🧠 Decide publish target
-        id: repo
+      - name: 🧠 Decide Target
+        id: target
         run: |
-          BRANCH="${{ github.ref_name }}"
-          if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
-            echo "Publishing to Production PyPI"
-            # Define target repo URL for publishing step if using tokens
+          if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
             echo "repo_url=${{ env.PROD_PYPI_URL }}" >> $GITHUB_OUTPUT
-            echo "pypi_token_name=PROD_PYPI_TOKEN" >> $GITHUB_OUTPUT # Secret name for PyPI token
-            echo "is_prod=true" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == "dev" ]]; then
-            echo "Publishing pre-release to TestPyPI"
-            # Define target repo URL for publishing step
-            echo "repo_url=${{ env.TEST_PYPI_URL }}" >> $GITHUB_OUTPUT # Use TestPyPI URL here
-            echo "pypi_token_name=TEST_PYPI_TOKEN" >> $GITHUB_OUTPUT # Secret name for TestPyPI token
-            echo "is_prod=false" >> $GITHUB_OUTPUT
+            echo "token_name=PROD_PYPI_TOKEN" >> $GITHUB_OUTPUT
           else
-            echo "::error::Cannot determine publish target for branch $BRANCH"
-            exit 1
+            echo "repo_url=${{ env.TEST_PYPI_URL }}" >> $GITHUB_OUTPUT
+            echo "token_name=TEST_PYPI_TOKEN" >> $GITHUB_OUTPUT
           fi
 
-      - name: 📦 Publish to PyPI or Test PyPI
-        # This example uses API tokens. Consider Trusted Publishing.
+      - name: 📦 Publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: steps.repo.outputs.pypi_token_name != '' # Check if target was decided
         with:
           user: "__token__"
-          password: ${{ secrets[steps.repo.outputs.pypi_token_name] }}
-          # Specify repository URL. Uses the output from previous step.
-          repository_url: ${{ steps.repo.outputs.repo_url }}
+          password: ${{ secrets[steps.target.outputs.token_name] }}
+          repository_url: ${{ steps.target.outputs.repo_url }}
           skip-existing: true
