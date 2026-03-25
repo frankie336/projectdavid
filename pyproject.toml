@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "projectdavid"
 version = "1.90.1"
@@ -23,11 +19,11 @@ dependencies = [
     "qdrant-client>=1.0.0,<2.0.0",
     "pdfplumber>=0.11.0,<0.12.0",
     "validators>=0.29.0,<0.35.0",
-    "sseclient-py",
-    "requests",
-    "python-docx",
-    "python-pptx",
-    "nest-asyncio>=1.6.0",
+    "nest-asyncio>=1.6.0,<2.0",
+    "requests>=2.31.0,<3.0",
+    "sseclient-py>=1.7.2,<2.0",
+    "python-docx>=1.1.0,<2.0",
+    "python-pptx>=1.0.0,<2.0",
 ]
 
 classifiers = [
@@ -36,39 +32,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent"
 ]
-
-[project.optional-dependencies]
-
-dev = [
-    "black>=23.3",
-    "isort>=5.12",
-    "pytest>=7.2",
-    "mypy>=1.0",
-    "build",
-    "twine"
-]
-
-# TEXT-ONLY embeddings (your current FileProcessor requirement)
-text-embeddings = [
-    "sentence-transformers>=3.4.0,<5.0",
-    "torch>=2.0.0"
-]
-
-# Vision / multimodal pipelines (future CLIP / OCR / image embedding)
-vision-embeddings = [
-    "sentence-transformers>=3.4.0,<5.0",
-    "torch>=2.0.0",
-    "torchvision>=0.15.0"
-]
-
-# Backward-compat meta extra (DO NOT break existing installs)
-embeddings = [
-    "projectdavid[text-embeddings]",
-    "projectdavid[vision-embeddings]"
-]
-
-[tool.isort]
-profile = "black"

@@ -3,14 +3,11 @@
 from typing import List, Optional
 
 import httpx
-
 # Make sure schemas are correctly imported from your common library
-from projectdavid_common.schemas.api_key_schemas import (
-    ApiKeyCreateRequest,
-    ApiKeyCreateResponse,
-    ApiKeyDetails,
-    ApiKeyListResponse,
-)
+from projectdavid_common.schemas.api_key_schemas import (ApiKeyCreateRequest,
+                                                         ApiKeyCreateResponse,
+                                                         ApiKeyDetails,
+                                                         ApiKeyListResponse)
 from projectdavid_common.utilities.logging_service import LoggingUtility
 
 logging_utility = LoggingUtility()
