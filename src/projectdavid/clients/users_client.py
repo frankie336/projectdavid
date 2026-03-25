@@ -314,46 +314,60 @@ class UsersClient(BaseAPIClient):
     ) -> List[ent_validator.AssistantRead]:
         """Retrieves a list of assistants associated with a specific user."""
         logging_utility.info("Retrieving assistants for user with id: %s", user_id)
+
         if not user_id:
             raise ValueError("user_id cannot be empty.")
+
         try:
             response = self.client.get(f"/v1/users/{user_id}/assistants")
             response.raise_for_status()
             assistants_json = response.json()
-            # Ensure the response is a list
+
+            # 1. Structural Validation: Ensure the response is a list
             if not isinstance(assistants_json, list):
                 logging_utility.error(
-                    f"API response for user assistants is not a list: {assistants_json}"
+                    "API response for user assistants is not a list: %s",
+                    assistants_json,
                 )
                 raise ValueError(
                     "Invalid response format received from server: expected a list."
                 )
 
+            # 2. Schema Validation: Map list to Pydantic models
             validated_assistants = [
                 ent_validator.AssistantRead(**assistant)
                 for assistant in assistants_json
             ]
+
             logging_utility.info(
                 "Assistants retrieved successfully for user id: %s (%d found)",
                 user_id,
                 len(validated_assistants),
             )
             return validated_assistants
+
         except httpx.HTTPStatusError as e:
+            # 3. Security Fix (Bandit B110): Use raw text fallback and catch specific exceptions
             error_detail = e.response.text
             try:
+                # Attempt to upgrade to JSON for structured error info
                 error_detail = e.response.json()
-            except:
+            except (ValueError, AttributeError):
+                # If it's not JSON, we keep the raw text in error_detail
                 pass
+
             logging_utility.error(
                 f"HTTP error retrieving assistants for user {user_id} ({e.response.status_code}): {error_detail}"
             )
-            raise e
+            # 4. Use 'raise' (not 'raise e') to preserve the full original traceback
+            raise
+
         except ValidationError as e:
             logging_utility.error(
                 f"Server response validation error for user assistants {user_id}: {e.json()}"
             )
             raise ValueError(f"Invalid assistant data received from server: {e}") from e
+
         except Exception as e:
             logging_utility.error(
                 f"An error occurred while retrieving assistants for user {user_id}: {e}",
