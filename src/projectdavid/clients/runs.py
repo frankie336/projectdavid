@@ -2,7 +2,7 @@
 import json
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import httpx
 import requests
@@ -230,7 +230,7 @@ class RunsClient(BaseAPIClient):
         target_run_state = StatusEnum.pending_action.value
 
         while (time.time() - start_time) < timeout:
-            action_to_handle: Optional[Dict[str, Any]] = None  # FIXED SYNTAX HERE
+            action_to_handle: Optional[Dict[str, Any]] = None
 
             try:
                 current_run = self.retrieve_run(run_id)
@@ -257,6 +257,15 @@ class RunsClient(BaseAPIClient):
                 tool_name = action_to_handle.get("tool_name")
                 tool_call_id = action_to_handle.get("tool_call_id")
                 arguments = action_to_handle.get("function_arguments")
+
+                # Validate required fields before calling tool_executor
+                if not isinstance(tool_name, str):
+                    logging_utility.error(
+                        "[SDK Helper] action missing valid tool_name: %r", tool_name
+                    )
+                    break
+                if not isinstance(arguments, dict):
+                    arguments = {}
 
                 try:
                     actions_client.update_action(
@@ -412,7 +421,10 @@ class RunsClient(BaseAPIClient):
         t.join()
 
     def list_runs(self, thread_id: str, limit: int = 20, order: str = "asc") -> Any:
-        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        params: Dict[str, Union[str, int]] = {
+            "limit": limit,
+            "order": order if order in ("asc", "desc") else "asc",
+        }
         resp = self.client.get(f"/v1/threads/{thread_id}/runs", params=params)
         resp.raise_for_status()
         payload = resp.json()
@@ -422,7 +434,10 @@ class RunsClient(BaseAPIClient):
         return ent_validator.RunListResponse(object="list", data=runs, has_more=False)
 
     def list_all_runs(self, limit: int = 20, order: str = "asc") -> Any:
-        params = {"limit": limit, "order": order if order in ("asc", "desc") else "asc"}
+        params: Dict[str, Union[str, int]] = {
+            "limit": limit,
+            "order": order if order in ("asc", "desc") else "asc",
+        }
         resp = self.client.get("/v1/runs", params=params)
         resp.raise_for_status()
         payload = resp.json()

@@ -43,9 +43,18 @@ class ToolsClient(BaseAPIClient):
     def _parse_response(response: httpx.Response) -> Dict[str, Any]:
         try:
             return response.json()
-        except httpx.DecodingError:
+        except (httpx.DecodingError, ValueError) as e:
+            # Catching both covers almost all JSON parsing failures
             LOG.error("Failed to decode JSON response: %s", response.text)
-            raise ToolsClientError("Invalid JSON response from API.")
+            raise ToolsClientError(f"Invalid JSON response from API: {e}")
+        except Exception as e:
+            # Catching any other unexpected error to ensure we never "fall through"
+            LOG.error("Unexpected error parsing response: %s", str(e))
+            raise ToolsClientError(f"Unexpected error parsing API response: {e}")
+
+        # This line is technically unreachable due to the raises above,
+        # but it satisfies Mypy's "Infrastructure Grade" requirements.
+        return {}
 
     def _request_with_retries(self, method: str, url: str, **kwargs) -> httpx.Response:
         """
