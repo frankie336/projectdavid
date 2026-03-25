@@ -1,3 +1,10 @@
+## [1.90.2-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.90.2-dev.1...v1.90.2-dev.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* **ci:** update TestPyPI upload URL to legacy endpoint ([fe108d8](https://github.com/project-david-ai/projectdavid/commit/fe108d852d3a8413cf346a38a463cd3936e14408))
+
 ## [1.90.2-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.1...v1.90.2-dev.1) (2026-03-25)
 
 
