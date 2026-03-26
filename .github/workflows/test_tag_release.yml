@@ -29,9 +29,10 @@ jobs:
       - name: 🔧 Install Lint & Security Tools
         run: |
           python -m pip install --upgrade pip
-          # Install the specific security and linting tools
-          pip install black isort bandit safety mypy
-          # Install the SDK in editable mode with all dev dependencies
+          # PIN VERSIONS TO MATCH .pre-commit-config.yaml FOR STABILITY
+          pip install black==24.1.1 isort==5.13.2 bandit safety mypy
+          # Install the SDK and any type stubs
+          pip install types-requests types-aiofiles
           pip install -e ".[dev]"
 
       - name: ⚫ Black (Format Check)
@@ -41,21 +42,14 @@ jobs:
         run: isort --check .
 
       - name: 🛡️ Mypy (Static Type Analysis)
-        # This ensures your PEP 561 (py.typed) support is accurate for IDEs
         run: mypy src/projectdavid
 
       - name: 🛡️ Bandit (Static Security Analysis)
-        # Scans for common security issues (hardcoded keys, missing timeouts, etc.)
         run: bandit -r src/ -x tests/
 
       - name: 🛡️ Safety (Dependency Vulnerability Check)
-        # Scans your dependency tree for known CVEs.
-        # We use continue-on-error to avoid blocking releases for low-risk warnings,
-        # but the results will still appear in your GitHub Action logs.
         continue-on-error: true
         run: safety check
-
-
 
   test:
     name: ✅ Test (Py ${{ matrix.python-version }})
@@ -115,7 +109,6 @@ jobs:
         run: npx semantic-release
 
       - name: 🏗️ Build Package
-        # Build only happens AFTER semantic-release has patched pyproject.toml
         run: |
           pip install build
           python -m build
