@@ -17,7 +17,7 @@ If you discover a security-related bug in Project David, please report it privat
 
 ### Disclosure Process
 
-1. **Email:** Send your report to [francis.neequaye@projectdavid.co.uk](mailto:engineering@projectdavid.co.uk).
+1. **Email:** Send your report to [engineering.@projectdavid.co.uk](mailto:engineering@projectdavid.co.uk).
 2. **Details:** Include a summary of the issue, a proof-of-concept (if possible), and the version of the SDK you are using.
 3. **Acknowledgment:** You will receive an acknowledgment of your report within 48 hours.
 4. **Resolution:** We will coordinate a fix and a release. We ask that you do not disclose the issue publicly until a patched version has been released to PyPI.
