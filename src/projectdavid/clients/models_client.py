@@ -158,9 +158,7 @@ class ModelsClient(BaseAPIClient):
         Emergency Stop: Deactivate any currently active model (Base or LoRA).
         Reverts the cluster to an idle/factory state.
         """
-        logging_utility.warning(
-            "⚠️ Requesting global cluster reset (deactivate-all)..."
-        )
+        logging_utility.warning("⚠️ Requesting global cluster reset (deactivate-all)...")
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/deactivate-all"
         )

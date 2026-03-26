@@ -26,4 +26,3 @@ sseclient-py
 projectdavid_common>=0.17.14
 projectdavid
 black
-
