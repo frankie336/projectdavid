@@ -1755,7 +1755,7 @@
 
 There  are some major changes and enhancements to vector store creation and life cycle management (RAG).
  Creating a vector store
-No longer requires you manually pass the user id into the creaction method 
+No longer requires you manually pass the user id into the creaction method
 
 ```python
 vs = client.vectors.create_vector_store(
@@ -1769,7 +1769,7 @@ Becomes:
 ```python
 vs = client.vectors.create_vector_store(
     name="movielens-complete-demo",
-    
+
 )
 ```
 
@@ -1777,7 +1777,7 @@ vs = client.vectors.create_vector_store(
 
 Several new search method have been added:
 vector_file_search_raw
-Search hits are returned in a raw format with similarity scoring. There is no further post processing, formatting or ranking. This is most appropriate where you need to apply custom or third party ranking and or post processing.  
+Search hits are returned in a raw format with similarity scoring. There is no further post processing, formatting or ranking. This is most appropriate where you need to apply custom or third party ranking and or post processing.
 
 **Example:**
 
@@ -1792,7 +1792,7 @@ hits = client.vectors.vector_file_search_raw(
 
 **Simple_vector_file_search**
 
-Search hits are returned wrapped in an envelope that provides anotation and citations per hit. This is most appropriate for bodies of text where you might need the assistant to provide authorities and citations; a legal document for example. 
+Search hits are returned wrapped in an envelope that provides anotation and citations per hit. This is most appropriate for bodies of text where you might need the assistant to provide authorities and citations; a legal document for example.
 
 **Example**
 
@@ -1806,7 +1806,7 @@ hits = client.vectors.simple_vector_file_search(
 
 **attended_file_search**
 
-Search results are synthesized by an integrated agent; results are passed to the Large Language model. The output comes with AI insights and organization. Additionally, result rankings are enhanced by a second pass through a ranking model. Suited for cumilitative research (deep research) and multi agent   tasks.   
+Search results are synthesized by an integrated agent; results are passed to the Large Language model. The output comes with AI insights and organization. Additionally, result rankings are enhanced by a second pass through a ranking model. Suited for cumilitative research (deep research) and multi agent   tasks.
 
 **Example:**
 
@@ -3035,7 +3035,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Moved `EntitiesEventHandler` logic from Flask backend into internal API and SDK boundary.
-- enties_common package is now an auto installed dependency. No meed to install it directly. 
+- enties_common package is now an auto installed dependency. No meed to install it directly.
 
 ---
 
