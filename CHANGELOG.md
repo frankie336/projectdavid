@@ -1,4 +1,4 @@
-# [1.91.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.2-dev.2...v1.91.0-dev.1) (2026-03-25)
+# [1.91.0](https://github.com/project-david-ai/projectdavid/compare/v1.90.3...v1.91.0) (2026-03-25)
 
 
 ### Bug Fixes
@@ -15,12 +15,14 @@
 
 * **types:** implement strict type safety and PEP 561 support ([5d9150e](https://github.com/project-david-ai/projectdavid/commit/5d9150e9e0338b502bba11c6aa204fad24f3ce72))
 
-## [1.90.2-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.90.2-dev.1...v1.90.2-dev.2) (2026-03-25)
+## [1.90.3](https://github.com/project-david-ai/projectdavid/compare/v1.90.2...v1.90.3) (2026-03-25)
 
 
 ### Bug Fixes
 
 * **ci:** update TestPyPI upload URL to legacy endpoint ([fe108d8](https://github.com/project-david-ai/projectdavid/commit/fe108d852d3a8413cf346a38a463cd3936e14408))
+* refactor HTTP error handling to avoid bare excepts" ([972078d](https://github.com/project-david-ai/projectdavid/commit/972078d2d3b868c9eb7feab05c46bb0471ca3796))
+* **security:** resolve final Bandit security warnings in user client and runs ([54c64df](https://github.com/project-david-ai/projectdavid/commit/54c64dfda669006b7f499b77c022f6e11a23523e))
 
 ## [1.90.2-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.90.1...v1.90.2-dev.1) (2026-03-25)
 
