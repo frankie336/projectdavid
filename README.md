@@ -115,7 +115,8 @@ for chunk in stream.stream_chunks(
         print(content, end="", flush=True)
 ```
 
-See the [Quick Start guide](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) for the event-driven interface, tool calling, and advanced usage.
+See the [Quick Start guide](https://docs.projectdavid.co.uk/docs/sdk-quick-start) for the event-driven interface, tool calling, and advanced usage.
+
 
 ---
 
@@ -157,19 +158,24 @@ Works with any OpenAI-compatible endpoint out of the box — including Ollama fo
 
 ## Documentation
 
+## Documentation
+
 | Topic | Link |
 |---|---|
-| Quick Start | [sdk-quick-start.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-quick-start.md) |
-| Assistants | [sdk-assistants.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-assistants.md) |
-| Threads | [sdk-threads.md](https://github.com/project-david-ai/docs/blob/main/src/pages/sdk/sdk-threads.md) |
-| Messages | [sdk-messages.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-messages.md) |
-| Runs | [sdk-runs.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-runs.md) |
-| Inference | [sdk-inference.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-inference.md) |
-| Tools | [sdk-tools.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-tools.md) |
-| Function Calls | [function-calling-and-tool-execution.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-function-calls.md) |
-| Code Interpreter | [sdk-code-interpreter.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/platform-tools/sdk-code-interpreter.md) |
-| Files | [sdk-files.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-files.md) |
-| Vector Store | [sdk-vector-store.md](https://github.com/project-david-ai/projectdavid_docs/blob/master/src/pages/sdk/sdk-vector-store.md) |
+| Full Documentation | [docs.projectdavid.co.uk](https://docs.projectdavid.co.uk/docs) |
+| Quick Start | [docs.projectdavid.co.uk/docs/sdk-quick-start](https://docs.projectdavid.co.uk/docs/sdk-quick-start) |
+| Assistants | [docs.projectdavid.co.uk/docs/sdk-assistants](https://docs.projectdavid.co.uk/docs/sdk-assistants) |
+| Threads | [docs.projectdavid.co.uk/docs/sdk-threads](https://docs.projectdavid.co.uk/docs/sdk-threads) |
+| Messages | [docs.projectdavid.co.uk/docs/sdk-messages](https://docs.projectdavid.co.uk/docs/sdk-messages) |
+| Runs | [docs.projectdavid.co.uk/docs/sdk-runs](https://docs.projectdavid.co.uk/docs/sdk-runs) |
+| Inference | [docs.projectdavid.co.uk/docs/sdk-inference](https://docs.projectdavid.co.uk/docs/sdk-inference) |
+| Tools | [docs.projectdavid.co.uk/docs/sdk-tools](https://docs.projectdavid.co.uk/docs/sdk-tools) |
+| Function Calls | [docs.projectdavid.co.uk/docs/sdk-function-calls](https://docs.projectdavid.co.uk/docs/12_sdk-function-calls) |
+| Code Interpreter | [docs.projectdavid.co.uk/docs/sdk-code-interpreter](https://docs.projectdavid.co.uk/docs/sdk-code-interpreter) |
+| Files | [docs.projectdavid.co.uk/docs/sdk-files](https://docs.projectdavid.co.uk/docs/10_sdk-files) |
+| Vector Store | [docs.projectdavid.co.uk/docs/sdk-vector-store](https://docs.projectdavid.co.uk/docs/11_sdk-vector-store) |
+| Stream Contract | [docs.projectdavid.co.uk/docs/sdk-stream-contract](https://docs.projectdavid.co.uk/docs/sdk-stream-contract) |
+| Providers | [docs.projectdavid.co.uk/docs/providers](https://docs.projectdavid.co.uk/docs/providers) |
 
 [Full SDK documentation →](https://github.com/project-david-ai/projectdavid_docs/tree/master/src/pages/sdk)
 
@@ -181,12 +187,11 @@ Works with any OpenAI-compatible endpoint out of the box — including Ollama fo
 
 | Repo | Description |
 |---|---|
-| [platform](https://github.com/project-david-ai/platform) | Core orchestration engine |
-| [entities-common](https://github.com/project-david-ai/entities-common) | Shared utilities and validation |
-| [david-core](https://github.com/project-david-ai/david-core) | Docker orchestration layer |
-| [reference-frontend](https://github.com/project-david-ai/reference-frontend) | Reference streaming frontend |
-| [entities_cook_book](https://github.com/project-david-ai/entities_cook_book) | Minimal tested examples — streaming, tools, search, stateful logic |
-
+| [projectdavid-core](https://github.com/project-david-ai/projectdavid-core) | Runtime API engine |
+| [projectdavid-platform](https://github.com/project-david-ai/projectdavid-platform) | Docker orchestration layer |
+| [projectdavid-common](https://github.com/project-david-ai/projectdavid-common) | Shared utilities and validation |
+| [projectdavid-docs](https://github.com/project-david-ai/projectdavid-docs) | Documentation site |
+| [entities_cook_book](https://github.com/project-david-ai/entities_cook_book) | Minimal tested examples |
 ---
 
 
