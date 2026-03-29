@@ -1,3 +1,11 @@
+# [1.94.0](https://github.com/project-david-ai/projectdavid/compare/v1.93.0...v1.94.0) (2026-03-29)
+
+
+### Features
+
+* add max_tokens parameter to create_assistant client method ([ebbf696](https://github.com/project-david-ai/projectdavid/commit/ebbf69649437a77afcb172f10d714e48babffc54))
+* integrate max_tokens parameter into create_assistant client method & bump to projectdavid_common==0.61.5 ([c8ab9f5](https://github.com/project-david-ai/projectdavid/commit/c8ab9f54e497d383015715026101a01ec32c2e00))
+
 # [1.93.0](https://github.com/project-david-ai/projectdavid/compare/v1.92.0...v1.93.0) (2026-03-28)
 
 
