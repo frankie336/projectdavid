@@ -1,4 +1,3 @@
-# src/projectdavid/clients/assistants.py
 import time
 from typing import Any, Dict, List, Optional
 
@@ -14,7 +13,6 @@ from projectdavid.clients.vectors import VectorStoreClient
 
 ent_validator = ValidationInterface()
 
-# Load environment variables
 load_dotenv()
 logging_utility = UtilsInterface.LoggingUtility()
 
@@ -24,9 +22,7 @@ class AssistantsClientError(Exception):
 
 
 class AssistantsClient(BaseAPIClient):
-    # ------------------------------------------------------------------ #
-    #  INIT / SESSION
-    # ------------------------------------------------------------------ #
+
     def __init__(
         self,
         base_url: Optional[str] = None,
@@ -49,19 +45,11 @@ class AssistantsClient(BaseAPIClient):
     def close(self):
         self.client.close()
 
-    # ------------------------------------------------------------------ #
-    #  INTERNAL HELPERS
-    # ------------------------------------------------------------------ #
     def _collect_vector_store_ids(
         self,
         tools: Optional[List[Dict[str, Any]]],
         tool_resources: Optional[Dict[str, Dict[str, Any]]],
     ) -> List[str]:
-        """
-        Return a de-duplicated, ordered list of vector_store_ids found in:
-          • tools[*]['vector_store_ids']
-          • tool_resources['file_search']['vector_store_ids']
-        """
         ids: List[str] = []
 
         if tools:
@@ -72,7 +60,6 @@ class AssistantsClient(BaseAPIClient):
             fs_res = tool_resources.get("file_search", {})
             ids.extend(fs_res.get("vector_store_ids", []))
 
-        # preserve source-order but drop dupes
         seen: set = set()
         ordered_unique: List[str] = []
         for i in ids:
@@ -107,9 +94,6 @@ class AssistantsClient(BaseAPIClient):
 
         raise AssistantsClientError(f"Request failed after {retries} retries")
 
-    # ------------------------------------------------------------------ #
-    #  CRUD
-    # ------------------------------------------------------------------ #
     def create_assistant(
         self,
         *,
@@ -123,22 +107,15 @@ class AssistantsClient(BaseAPIClient):
         top_p: float = 1.0,
         temperature: float = 1.0,
         response_format: str = "auto",
-        # --- Agentic Parameters (Level 3) ---
+        max_tokens: Optional[int] = None,
         max_turns: int = 1,
         agent_mode: bool = False,
         web_access: bool = False,
         deep_research: bool = False,
         engineer: bool = False,
         decision_telemetry: bool = False,
-        # ------------------------------
         assistant_id: Optional[str] = None,
     ) -> ent_validator.AssistantRead:
-        """
-        Create an assistant and automatically:
-
-        • associate legacy DB tools
-        • attach vector stores referenced by file-search tools/resources
-        """
         assistant_data = {
             "id": assistant_id,
             "name": name,
@@ -151,6 +128,7 @@ class AssistantsClient(BaseAPIClient):
             "top_p": top_p,
             "temperature": temperature,
             "response_format": response_format,
+            "max_tokens": max_tokens,
             "max_turns": max_turns,
             "agent_mode": agent_mode,
             "web_access": web_access,
@@ -160,7 +138,6 @@ class AssistantsClient(BaseAPIClient):
         }
 
         try:
-            # ── 1. validate & POST ──────────────────────────────────────
             validated = ent_validator.AssistantCreate(**assistant_data)
             logging_utility.info("Creating assistant name=%s model=%s", name, model)
 
@@ -172,7 +149,6 @@ class AssistantsClient(BaseAPIClient):
             assistant_id = validated_resp.id
             logging_utility.info("Assistant created with id=%s", assistant_id)
 
-            # ── 2. attach any referenced vector stores ─────────────────
             vs_ids = self._collect_vector_store_ids(tools, tool_resources)
             if vs_ids:
                 vectors_client = VectorStoreClient(
@@ -211,14 +187,8 @@ class AssistantsClient(BaseAPIClient):
     def update_assistant(
         self, assistant_id: str, **updates
     ) -> ent_validator.AssistantRead:
-        """
-        Update an assistant.
-        Supported kwargs include: model, name, instructions, tools,
-        agent_mode, web_access, deep_research, engineer, etc.
-        """
         logging_utility.info("Updating assistant id=%s", assistant_id)
 
-        # Never allow primary key overwrite
         updates.pop("id", None)
         updates.pop("assistant_id", None)
 
@@ -235,26 +205,15 @@ class AssistantsClient(BaseAPIClient):
             logging_utility.error("Validation error: %s", e.json())
             raise AssistantsClientError(f"Validation error: {e}") from e
 
-    # ------------------------------------------------------------------ #
-    #  LIST
-    # ------------------------------------------------------------------ #
     def list(self) -> List[ent_validator.AssistantRead]:
-        """Return every assistant owned by *this* API key."""
         logging_utility.info("Listing assistants")
         resp = self._request_with_retries("GET", "/v1/assistants")
         raw = self._parse_response(resp)
         return [ent_validator.AssistantRead(**a) for a in raw]
 
     def list_assistants(self) -> List[ent_validator.AssistantRead]:
-        """
-        Alias for :meth:`list` — mirrors the name expected by the
-        compliance test suite and any callers that use the explicit name.
-        """
         return self.list()
 
-    # ------------------------------------------------------------------ #
-    #  USER ASSOCIATIONS
-    # ------------------------------------------------------------------ #
     def associate_assistant_with_user(
         self, user_id: str, assistant_id: str
     ) -> Dict[str, Any]:
@@ -276,14 +235,6 @@ class AssistantsClient(BaseAPIClient):
     def delete_assistant(
         self, assistant_id: str, permanent: bool = False
     ) -> Dict[str, Any]:
-        """
-        Delete an assistant.
-
-        :param assistant_id: The ID of the assistant.
-        :param permanent:
-            If False (default): Soft delete (recoverable).
-            If True: Hard delete (irreversible/GDPR).
-        """
         action = "PERMANENTLY" if permanent else "soft"
         logging_utility.info("%s deleting assistant id=%s", action, assistant_id)
 
