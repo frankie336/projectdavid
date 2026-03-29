@@ -1,3 +1,11 @@
+# [1.93.0](https://github.com/project-david-ai/projectdavid/compare/v1.92.0...v1.93.0) (2026-03-28)
+
+
+### Features
+
+* **registry:** add registry client and finalize formatting ([acfa158](https://github.com/project-david-ai/projectdavid/commit/acfa1583ec1e02653a413248462971d4fc16c5ee))
+* **registry:** implement registry client and project maintenance ([201868e](https://github.com/project-david-ai/projectdavid/commit/201868e0c8ea2c71cd25fd803bd6d0a711bae011))
+
 # [1.92.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.91.0...v1.92.0-dev.1) (2026-03-26)
 
 
