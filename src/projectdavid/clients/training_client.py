@@ -18,8 +18,14 @@ class TrainingClient(BaseAPIClient):
     ):
         super().__init__(base_url=base_url, api_key=api_key)
 
+        # Training routes are behind the same nginx proxy as the core API.
+        # Use base_url as the default — no separate training_url needed
+        # unless explicitly overridden via TRAINING_BASE_URL.
         resolved_url = (
-            training_url or os.getenv("TRAINING_BASE_URL") or "http://localhost:9001"
+            training_url
+            or os.getenv("TRAINING_BASE_URL")
+            or base_url
+            or "http://localhost:80"
         )
         self.training_url = resolved_url.rstrip("/")
 
