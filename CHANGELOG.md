@@ -1,3 +1,10 @@
+# [1.95.0](https://github.com/project-david-ai/projectdavid/compare/v1.94.1...v1.95.0) (2026-03-30)
+
+
+### Features
+
+* route training clients through nginx proxy, align base_url defaults ([3df61a0](https://github.com/project-david-ai/projectdavid/commit/3df61a020cdd660e437e16a746a0eba71fab5e7b))
+
 ## [1.94.1](https://github.com/project-david-ai/projectdavid/compare/v1.94.0...v1.94.1) (2026-03-30)
 
 
