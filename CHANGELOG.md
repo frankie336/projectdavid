@@ -1,3 +1,10 @@
+## [1.94.1](https://github.com/project-david-ai/projectdavid/compare/v1.94.0...v1.94.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* trigger release build for max_tokens inference parameter support ([42273da](https://github.com/project-david-ai/projectdavid/commit/42273daeb25713a8bf44fd78c3c164a5c9ede231))
+
 # [1.94.0](https://github.com/project-david-ai/projectdavid/compare/v1.93.0...v1.94.0) (2026-03-29)
 
 
