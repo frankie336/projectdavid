@@ -1,5 +1,6 @@
 # projectdavid/clients/registry_client.py
 
+import os
 from typing import Optional
 
 import httpx
@@ -30,10 +31,15 @@ class RegistryClient(BaseAPIClient):
         training_url: Optional[str] = None,
     ):
         super().__init__(base_url=base_url, api_key=api_key)
-        import os
 
+        # Training routes are behind the same nginx proxy as the core API.
+        # Use base_url as the default — no separate training_url needed
+        # unless explicitly overridden via TRAINING_BASE_URL.
         resolved_url = (
-            training_url or os.getenv("TRAINING_BASE_URL") or "http://localhost:9001"
+            training_url
+            or os.getenv("TRAINING_BASE_URL")
+            or base_url
+            or "http://localhost:80"
         )
         self.training_url = resolved_url.rstrip("/")
 
@@ -53,23 +59,6 @@ class RegistryClient(BaseAPIClient):
         parameter_count: Optional[str] = None,
         is_multimodal: bool = False,
     ) -> validator.BaseModelRead:
-        """
-        Register a HuggingFace base model in the catalog.
-
-        Idempotent — re-registering the same HF path returns the
-        existing record without error.
-
-        Args:
-            hf_model_id:     HuggingFace model path,
-                             e.g. 'unsloth/qwen2.5-1.5b-instruct-unsloth-bnb-4bit'
-            name:            Human-readable display name.
-            family:          Model family, e.g. 'qwen', 'llama', 'mistral'.
-            parameter_count: Parameter count string, e.g. '1.5B', '7B'.
-            is_multimodal:   True if the model accepts image inputs.
-
-        Returns:
-            BaseModelRead — the registered (or existing) model record.
-        """
         logging_utility.info("RegistryClient: registering base model: %s", hf_model_id)
         payload = validator.BaseModelRegisterRequest(
             hf_model_id=hf_model_id,
@@ -110,16 +99,6 @@ class RegistryClient(BaseAPIClient):
         limit: int = 50,
         offset: int = 0,
     ) -> validator.BaseModelList:
-        """
-        Return a paginated list of all registered base models.
-
-        Args:
-            limit:  Page size (1–200).
-            offset: Pagination offset.
-
-        Returns:
-            BaseModelList — items, total, limit, offset.
-        """
         logging_utility.info(
             "RegistryClient: listing base models (limit=%d offset=%d)", limit, offset
         )
@@ -150,16 +129,6 @@ class RegistryClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def retrieve(self, model_ref: str) -> validator.BaseModelRead:
-        """
-        Fetch a base model by its bm_... prefixed ID or HF model path.
-
-        Args:
-            model_ref: Either a bm_... ID or an HF path such as
-                       'unsloth/qwen2.5-1.5b-instruct-unsloth-bnb-4bit'.
-
-        Returns:
-            BaseModelRead — the matched model record.
-        """
         logging_utility.info("RegistryClient: retrieving base model: %s", model_ref)
         try:
             response = self.client.get(
@@ -190,18 +159,6 @@ class RegistryClient(BaseAPIClient):
     # ------------------------------------------------------------------
 
     def deregister(self, model_id: str) -> validator.BaseModelDeleted:
-        """
-        Remove a base model from the catalog by its bm_... prefixed ID.
-
-        Admin only — the server will return 403 if the caller does not
-        have admin privileges.
-
-        Args:
-            model_id: The bm_... prefixed ID of the model to remove.
-
-        Returns:
-            BaseModelDeleted — confirmation payload with status and model_id.
-        """
         logging_utility.warning(
             "RegistryClient: deregistering base model: %s", model_id
         )

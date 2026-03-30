@@ -1,3 +1,41 @@
+# [1.95.0](https://github.com/project-david-ai/projectdavid/compare/v1.94.1...v1.95.0) (2026-03-30)
+
+
+### Features
+
+* route training clients through nginx proxy, align base_url defaults ([3df61a0](https://github.com/project-david-ai/projectdavid/commit/3df61a020cdd660e437e16a746a0eba71fab5e7b))
+
+## [1.94.1](https://github.com/project-david-ai/projectdavid/compare/v1.94.0...v1.94.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* trigger release build for max_tokens inference parameter support ([42273da](https://github.com/project-david-ai/projectdavid/commit/42273daeb25713a8bf44fd78c3c164a5c9ede231))
+
+# [1.94.0](https://github.com/project-david-ai/projectdavid/compare/v1.93.0...v1.94.0) (2026-03-29)
+
+
+### Features
+
+* add max_tokens parameter to create_assistant client method ([ebbf696](https://github.com/project-david-ai/projectdavid/commit/ebbf69649437a77afcb172f10d714e48babffc54))
+* integrate max_tokens parameter into create_assistant client method & bump to projectdavid_common==0.61.5 ([c8ab9f5](https://github.com/project-david-ai/projectdavid/commit/c8ab9f54e497d383015715026101a01ec32c2e00))
+
+# [1.93.0](https://github.com/project-david-ai/projectdavid/compare/v1.92.0...v1.93.0) (2026-03-28)
+
+
+### Features
+
+* **registry:** add registry client and finalize formatting ([acfa158](https://github.com/project-david-ai/projectdavid/commit/acfa1583ec1e02653a413248462971d4fc16c5ee))
+* **registry:** implement registry client and project maintenance ([201868e](https://github.com/project-david-ai/projectdavid/commit/201868e0c8ea2c71cd25fd803bd6d0a711bae011))
+
+# [1.92.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.91.0...v1.92.0-dev.1) (2026-03-26)
+
+
+### Features
+
+* **registry:** add registry client and finalize formatting ([acfa158](https://github.com/project-david-ai/projectdavid/commit/acfa1583ec1e02653a413248462971d4fc16c5ee))
+* **registry:** implement registry client and project maintenance ([201868e](https://github.com/project-david-ai/projectdavid/commit/201868e0c8ea2c71cd25fd803bd6d0a711bae011))
+
 # [1.91.0](https://github.com/project-david-ai/projectdavid/compare/v1.90.3...v1.91.0) (2026-03-25)
 
 

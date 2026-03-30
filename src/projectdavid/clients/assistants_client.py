@@ -123,6 +123,7 @@ class AssistantsClient(BaseAPIClient):
         top_p: float = 1.0,
         temperature: float = 1.0,
         response_format: str = "auto",
+        max_tokens: Optional[int] = None,  # ← ADDED
         # --- Agentic Parameters (Level 3) ---
         max_turns: int = 1,
         agent_mode: bool = False,
@@ -151,6 +152,7 @@ class AssistantsClient(BaseAPIClient):
             "top_p": top_p,
             "temperature": temperature,
             "response_format": response_format,
+            "max_tokens": max_tokens,  # ← ADDED
             "max_turns": max_turns,
             "agent_mode": agent_mode,
             "web_access": web_access,
