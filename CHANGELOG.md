@@ -1,3 +1,10 @@
+# [1.96.0](https://github.com/project-david-ai/projectdavid/compare/v1.95.0...v1.96.0) (2026-03-31)
+
+
+### Features
+
+* trigger publish — ModelsClient nginx routing fix ([096c62d](https://github.com/project-david-ai/projectdavid/commit/096c62dc734d90be8049df8554344d700d1251ab))
+
 # [1.95.0](https://github.com/project-david-ai/projectdavid/compare/v1.94.1...v1.95.0) (2026-03-30)
 
 
