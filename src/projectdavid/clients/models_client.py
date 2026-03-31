@@ -48,6 +48,32 @@ class ModelsClient(BaseAPIClient):
         response.raise_for_status()
         return validator.FineTunedModelList.model_validate(response.json())
 
+    def list_base_models(
+        self, limit: int = 50, offset: int = 0
+    ) -> validator.BaseModelList:
+        """
+        List base models registered in the cluster catalog.
+        Only models present in the cluster's HuggingFace cache are registered
+        here — fine-tuning jobs and base deployments must use one of these IDs.
+        """
+        response = self.client.get(
+            f"{self.training_url}/v1/registry/base-models",
+            params={"limit": limit, "offset": offset},
+        )
+        response.raise_for_status()
+        return validator.BaseModelList.model_validate(response.json())
+
+    def retrieve_base_model(self, model_ref: str) -> validator.BaseModelRead:
+        """
+        Fetch a single base model by its bm_... ID or HuggingFace path.
+        e.g. 'unsloth/qwen2.5-1.5b-instruct-unsloth-bnb-4bit'
+        """
+        response = self.client.get(
+            f"{self.training_url}/v1/registry/base-models/{model_ref}"
+        )
+        response.raise_for_status()
+        return validator.BaseModelRead.model_validate(response.json())
+
     def retrieve(self, model_id: str) -> validator.FineTunedModelRead:
         """Fetch metadata for a specific fine-tuned model."""
         response = self.client.get(
