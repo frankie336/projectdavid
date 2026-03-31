@@ -1,3 +1,10 @@
+## [1.96.1](https://github.com/project-david-ai/projectdavid/compare/v1.96.0...v1.96.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* ModelsClient training_url defaults to base_url via nginx instead of direct port 9001 ([440c598](https://github.com/project-david-ai/projectdavid/commit/440c598b72a83378e2fc00dd54091c4c731d615c))
+
 # [1.96.0](https://github.com/project-david-ai/projectdavid/compare/v1.95.0...v1.96.0) (2026-03-31)
 
 
