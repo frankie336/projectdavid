@@ -1,3 +1,10 @@
+## [1.96.3](https://github.com/project-david-ai/projectdavid/compare/v1.96.2...v1.96.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* **deps:** Add _version.py ([5ab9fef](https://github.com/project-david-ai/projectdavid/commit/5ab9fef2116a6b0ee2ac2e8a76b538cdc9fcb303))
+
 ## [1.96.2](https://github.com/project-david-ai/projectdavid/compare/v1.96.1...v1.96.2) (2026-04-02)
 
 
