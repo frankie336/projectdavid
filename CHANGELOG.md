@@ -1,3 +1,10 @@
+## [1.96.5](https://github.com/project-david-ai/projectdavid/compare/v1.96.4...v1.96.5) (2026-04-04)
+
+
+### Bug Fixes
+
+* **release:** bump projectdavid-common to 0.64.1 ([e5bd86a](https://github.com/project-david-ai/projectdavid/commit/e5bd86aa0e658aad70e43e1f6a3d4e7b795d425d))
+
 ## [1.96.4](https://github.com/project-david-ai/projectdavid/compare/v1.96.3...v1.96.4) (2026-04-04)
 
 
