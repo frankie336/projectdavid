@@ -1,3 +1,10 @@
+## [1.96.4](https://github.com/project-david-ai/projectdavid/compare/v1.96.3...v1.96.4) (2026-04-04)
+
+
+### Bug Fixes
+
+* **pyproject:** add missing comma in dependencies array ([8421950](https://github.com/project-david-ai/projectdavid/commit/84219505094072a1c527b6d721cf9c3c2cdb20bc))
+
 ## [1.96.3](https://github.com/project-david-ai/projectdavid/compare/v1.96.2...v1.96.3) (2026-04-02)
 
 
