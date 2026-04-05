@@ -1,3 +1,10 @@
+## [1.96.6](https://github.com/project-david-ai/projectdavid/compare/v1.96.5...v1.96.6) (2026-04-05)
+
+
+### Bug Fixes
+
+* **deps:** relax projectdavid_common pin to minimum version constraint ([1966a6a](https://github.com/project-david-ai/projectdavid/commit/1966a6a9b73588e896563bd26cb3e456ba1d6c5b))
+
 ## [1.96.5](https://github.com/project-david-ai/projectdavid/compare/v1.96.4...v1.96.5) (2026-04-04)
 
 
