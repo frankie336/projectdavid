@@ -1,3 +1,11 @@
+# [1.97.0](https://github.com/project-david-ai/projectdavid/compare/v1.96.6...v1.97.0) (2026-04-09)
+
+
+### Features
+
+* **sdk:** add DeploymentsClient and deprecate ModelsClient activation methods ([d4171ae](https://github.com/project-david-ai/projectdavid/commit/d4171ae5899b92e28846dbae6df7210479496bb1))
+* **sdk:** add DeploymentsClient and deprecate ModelsClient activation methods ([d649deb](https://github.com/project-david-ai/projectdavid/commit/d649deb6f89f7c7aeaa956b55c936093480fe20b))
+
 ## [1.96.6](https://github.com/project-david-ai/projectdavid/compare/v1.96.5...v1.96.6) (2026-04-05)
 
 
