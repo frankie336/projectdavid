@@ -10,6 +10,7 @@ from .clients.api_key_client import ApiKeysClient
 from .clients.assistants_client import AssistantsClient
 from .clients.computer_client import ComputerClient
 from .clients.datasets_client import DatasetsClient
+from .clients.deployments_client import DeploymentsClient
 from .clients.files_client import FileClient
 from .clients.inference_client import InferenceClient
 from .clients.messages_client import MessagesClient
@@ -84,6 +85,7 @@ class Entity:
         self._training_client: Optional[TrainingClient] = None
         self._registry_client: Optional[RegistryClient] = None
         self._models_client: Optional[ModelsClient] = None
+        self._deployments_client: Optional[DeploymentsClient] = None
 
         self._synchronous_inference_stream: Optional[SynchronousInferenceStream] = None
 
@@ -244,6 +246,15 @@ class Entity:
                 api_key=self.api_key,
             )
         return self._models_client
+
+    @property
+    def deployments(self) -> DeploymentsClient:
+        if self._deployments_client is None:
+            self._deployments_client = DeploymentsClient(
+                base_url=self.base_url,
+                api_key=self.api_key,
+            )
+        return self._deployments_client
 
     @property
     def keys(self) -> ApiKeysClient:
