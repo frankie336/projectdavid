@@ -1,4 +1,5 @@
 import os
+import warnings
 from typing import Any, Dict, Optional
 
 from projectdavid_common import UtilsInterface, ValidationInterface
@@ -8,18 +9,27 @@ from projectdavid.clients.base_client import BaseAPIClient
 logging_utility = UtilsInterface.LoggingUtility()
 validator = ValidationInterface()
 
+_DEPRECATION_NOTE = (
+    "This method is deprecated and will be removed in v3.0.0. "
+    "Use the DeploymentsClient instead: client.deployments.{method}(). "
+    "See https://docs.projectdavid.co.uk/docs/migration/v2-to-v3 for details."
+)
+
 
 class ModelsClient(BaseAPIClient):
     """
-    Client for managing the Fine-Tuned Model Registry and Cluster Deployments.
+    Client for managing Fine-Tuned Model metadata and cluster deployments.
+
+    .. deprecated::
+        Activation and deactivation methods on this client are deprecated.
+        Use ``client.deployments`` instead for all deployment lifecycle operations.
+        These methods will be removed in v3.0.0.
 
     Supports:
-      - Model CRUD (Metadata)
-      - Fine-Tuned Model Activation (LoRA)
-      - Base Model Activation (Standard Backbone)
-      - Surgical and Global Deactivation
-      - Hardware Node Pinning
-      - Tensor Parallel Inference Sharding
+      - Model CRUD (list, retrieve, delete)
+      - Fine-Tuned Model Activation [DEPRECATED — use client.deployments.activate_fine_tuned()]
+      - Base Model Activation       [DEPRECATED — use client.deployments.activate_base()]
+      - Deactivation                [DEPRECATED — use client.deployments.deactivate_*()]
     """
 
     def __init__(
@@ -30,9 +40,6 @@ class ModelsClient(BaseAPIClient):
     ):
         super().__init__(base_url=base_url, api_key=api_key)
 
-        # Training routes are behind the same nginx proxy as the core API.
-        # Use base_url as the default — no separate training_url needed
-        # unless explicitly overridden via TRAINING_BASE_URL.
         resolved_url = (
             training_url
             or os.getenv("TRAINING_BASE_URL")
@@ -43,6 +50,7 @@ class ModelsClient(BaseAPIClient):
 
     # ──────────────────────────────────────────────────────────────────────────
     # REGISTRY MANAGEMENT (Metadata CRUD)
+    # These methods are NOT deprecated — fine-tuned model CRUD stays here.
     # ──────────────────────────────────────────────────────────────────────────
 
     def list(self, limit: int = 50, offset: int = 0) -> validator.FineTunedModelList:
@@ -72,6 +80,7 @@ class ModelsClient(BaseAPIClient):
 
     # ──────────────────────────────────────────────────────────────────────────
     # FINE-TUNED MODEL LIFECYCLE (LoRA Adapters)
+    # DEPRECATED — use client.deployments.activate_fine_tuned() instead
     # ──────────────────────────────────────────────────────────────────────────
 
     def activate(
@@ -81,16 +90,21 @@ class ModelsClient(BaseAPIClient):
         tensor_parallel_size: int = 1,
     ) -> validator.ActivateModelResponse:
         """
-        Promote a fine-tuned model to 'Active' status on the cluster.
+        Promote a fine-tuned model to Active status on the cluster.
 
-        Args:
-            model_id: The ftm_... ID of the model.
-            node_id: Optional. Pin to a specific GPU node in the mesh.
-            tensor_parallel_size: Number of GPUs to shard the model across
-                using vLLM tensor parallelism. Default 1 = single GPU.
-                Pass N > 1 for models that exceed single-GPU VRAM capacity.
+        .. deprecated::
+            Use ``client.deployments.activate_fine_tuned(model_id=...)`` instead.
+            This method will be removed in v3.0.0.
         """
-        logging_utility.info("🚀 Requesting activation for model: %s", model_id)
+        warnings.warn(
+            f"ModelsClient.activate() is deprecated. "
+            f"{_DEPRECATION_NOTE.format(method='activate_fine_tuned')}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logging_utility.warning(
+            "⚠️  DEPRECATED: ModelsClient.activate() — use client.deployments.activate_fine_tuned()"
+        )
         params: Dict[str, Any] = {"tensor_parallel_size": tensor_parallel_size}
         if node_id:
             params["node_id"] = node_id
@@ -105,9 +119,20 @@ class ModelsClient(BaseAPIClient):
     def deactivate(self, model_id: str) -> dict:
         """
         Surgically shut down a specific fine-tuned model deployment.
-        Releases VRAM on the hosting node.
+
+        .. deprecated::
+            Use ``client.deployments.deactivate_fine_tuned(model_id=...)`` instead.
+            This method will be removed in v3.0.0.
         """
-        logging_utility.info("🛑 Deactivating fine-tuned model: %s", model_id)
+        warnings.warn(
+            f"ModelsClient.deactivate() is deprecated. "
+            f"{_DEPRECATION_NOTE.format(method='deactivate_fine_tuned')}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logging_utility.warning(
+            "⚠️  DEPRECATED: ModelsClient.deactivate() — use client.deployments.deactivate_fine_tuned()"
+        )
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/{model_id}/deactivate"
         )
@@ -116,6 +141,7 @@ class ModelsClient(BaseAPIClient):
 
     # ──────────────────────────────────────────────────────────────────────────
     # BASE MODEL LIFECYCLE (Factory Backbones)
+    # DEPRECATED — use client.deployments.activate_base() instead
     # ──────────────────────────────────────────────────────────────────────────
 
     def activate_base(
@@ -127,14 +153,19 @@ class ModelsClient(BaseAPIClient):
         """
         Deploy a standard backbone model (no LoRA) to the mesh.
 
-        Args:
-            base_model_id: e.g. 'unsloth/Llama-3.2-1B-Instruct-bnb-4bit'
-            node_id: Optional. Target a specific machine in the mesh.
-            tensor_parallel_size: Number of GPUs to shard the model across
-                using vLLM tensor parallelism. Default 1 = single GPU.
-                Pass N > 1 for models that exceed single-GPU VRAM capacity.
+        .. deprecated::
+            Use ``client.deployments.activate_base(base_model_id=...)`` instead.
+            This method will be removed in v3.0.0.
         """
-        logging_utility.info("🚀 Requesting base model deployment: %s", base_model_id)
+        warnings.warn(
+            f"ModelsClient.activate_base() is deprecated. "
+            f"{_DEPRECATION_NOTE.format(method='activate_base')}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logging_utility.warning(
+            "⚠️  DEPRECATED: ModelsClient.activate_base() — use client.deployments.activate_base()"
+        )
         params: Dict[str, Any] = {"tensor_parallel_size": tensor_parallel_size}
         if node_id:
             params["node_id"] = node_id
@@ -147,8 +178,22 @@ class ModelsClient(BaseAPIClient):
         return response.json()
 
     def deactivate_base(self, base_model_id: str) -> dict:
-        """Shut down a specific standard backbone deployment."""
-        logging_utility.info("🛑 Deactivating base model: %s", base_model_id)
+        """
+        Shut down a specific standard backbone deployment.
+
+        .. deprecated::
+            Use ``client.deployments.deactivate_base(base_model_id=...)`` instead.
+            This method will be removed in v3.0.0.
+        """
+        warnings.warn(
+            f"ModelsClient.deactivate_base() is deprecated. "
+            f"{_DEPRECATION_NOTE.format(method='deactivate_base')}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logging_utility.warning(
+            "⚠️  DEPRECATED: ModelsClient.deactivate_base() — use client.deployments.deactivate_base()"
+        )
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/base/{base_model_id}/deactivate"
         )
@@ -157,14 +202,26 @@ class ModelsClient(BaseAPIClient):
 
     # ──────────────────────────────────────────────────────────────────────────
     # CLUSTER MAINTENANCE
+    # DEPRECATED — use client.deployments.deactivate_all() instead
     # ──────────────────────────────────────────────────────────────────────────
 
     def deactivate_all(self) -> dict:
         """
-        Emergency Stop: Deactivate any currently active model (Base or LoRA).
-        Reverts the cluster to an idle/factory state.
+        Emergency Stop: Deactivate any currently active model.
+
+        .. deprecated::
+            Use ``client.deployments.deactivate_all()`` instead.
+            This method will be removed in v3.0.0.
         """
-        logging_utility.warning("⚠️ Requesting global cluster reset (deactivate-all)...")
+        warnings.warn(
+            f"ModelsClient.deactivate_all() is deprecated. "
+            f"{_DEPRECATION_NOTE.format(method='deactivate_all')}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logging_utility.warning(
+            "⚠️  DEPRECATED: ModelsClient.deactivate_all() — use client.deployments.deactivate_all()"
+        )
         response = self.client.post(
             f"{self.training_url}/v1/fine-tuned-models/deactivate-all"
         )

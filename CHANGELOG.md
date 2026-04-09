@@ -1,4 +1,4 @@
-## [1.96.6-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.96.5...v1.96.6-dev.1) (2026-04-05)
+## [1.96.6](https://github.com/project-david-ai/projectdavid/compare/v1.96.5...v1.96.6) (2026-04-05)
 
 
 ### Bug Fixes
