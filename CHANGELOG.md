@@ -1,11 +1,4 @@
-# [1.98.0](https://github.com/project-david-ai/projectdavid/compare/v1.97.0...v1.98.0) (2026-04-10)
-
-
-### Features
-
-* **sdk:** Delete _version.py ([fdc3964](https://github.com/project-david-ai/projectdavid/commit/fdc396459bb46d27b0720c380bb946ce4c209aaa))
-
-# [1.97.0](https://github.com/project-david-ai/projectdavid/compare/v1.96.6...v1.97.0) (2026-04-09)
+# [1.97.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.96.6...v1.97.0-dev.1) (2026-04-09)
 
 
 ### Features
