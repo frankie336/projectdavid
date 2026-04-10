@@ -182,7 +182,7 @@ class DeploymentsClient(BaseAPIClient):
         logging_utility.info("DeploymentsClient: listing active deployments")
         try:
             response = self.client.get(
-                f"{self.training_url}/v1/deployments",
+                f"{self.training_url}/v1/deployments/",
             )
             response.raise_for_status()
             return DeploymentListResponse.model_validate(response.json())
@@ -218,11 +218,14 @@ class DeploymentsClient(BaseAPIClient):
             "DeploymentsClient: deactivating base model: %s", base_model_id
         )
         try:
+
             response = self.client.delete(
                 f"{self.training_url}/v1/deployments/base/{base_model_id}",
             )
+
             response.raise_for_status()
             return DeploymentDeactivationResponse.model_validate(response.json())
+
         except httpx.HTTPStatusError as e:
             logging_utility.error(
                 "HTTP %d deactivating base model %s: %s",
@@ -279,7 +282,7 @@ class DeploymentsClient(BaseAPIClient):
         )
         try:
             response = self.client.delete(
-                f"{self.training_url}/v1/deployments",
+                f"{self.training_url}/v1/deployments/",
             )
             response.raise_for_status()
             return DeactivateAllResponse.model_validate(response.json())
