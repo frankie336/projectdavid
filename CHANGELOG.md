@@ -1,3 +1,10 @@
+# [1.97.0-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.97.0-dev.1...v1.97.0-dev.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **deployments:** add trailing slash to list and deactivate_all endpoints ([761f8a7](https://github.com/project-david-ai/projectdavid/commit/761f8a78c4cc07fc26375d9aae35e0a53a198dc3))
+
 # [1.97.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.96.6...v1.97.0-dev.1) (2026-04-09)
 
 
