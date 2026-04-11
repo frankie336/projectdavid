@@ -183,6 +183,13 @@ class SynchronousInferenceStream:
                     LOG.error(f"[SyncStream] Streaming error: {exc}", exc_info=True)
                     break
         finally:
+            # Explicitly close the async generator to prevent
+            # "Task was destroyed but it is pending" warnings from
+            # dangling aiter_bytes coroutines.
+            try:
+                active_loop.run_until_complete(agen.aclose())
+            except Exception:  # nosec B110 — best-effort cleanup, failure is non-fatal
+                pass
             if is_new_loop and active_loop:
                 try:
                     pending = asyncio.all_tasks(active_loop)
