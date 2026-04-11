@@ -1,3 +1,10 @@
+## [1.98.2-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.1...v1.98.2-dev.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* **stream:** explicitly close async generator in stream_chunks finally block — prevents Task destroyed RuntimeWarning from dangling aiter_bytes coroutines ([238ac3a](https://github.com/project-david-ai/projectdavid/commit/238ac3a7b4b15d64a46a1873612eff55370ea0a7))
+
 ## [1.98.2-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.98.1...v1.98.2-dev.1) (2026-04-11)
 
 
