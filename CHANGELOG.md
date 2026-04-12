@@ -1,3 +1,11 @@
+# [1.99.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.3...v1.99.0-dev.1) (2026-04-12)
+
+
+### Features
+
+* **sdk:** align DeploymentsClient with hyperparam API ([df73a9d](https://github.com/project-david-ai/projectdavid/commit/df73a9d55241ad9222026cfed3f97b3c933e5b26))
+* **sdk:** align DeploymentsClient with hyperparam API ([ad2d894](https://github.com/project-david-ai/projectdavid/commit/ad2d894675bb015049bad9dc6c443f9e0d449dc4))
+
 ## [1.98.2-dev.3](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.2...v1.98.2-dev.3) (2026-04-12)
 
 
