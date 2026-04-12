@@ -1,3 +1,10 @@
+## [1.98.2-dev.3](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.2...v1.98.2-dev.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* **stream:** explicitly close aiter_lines in finally block — prevents Task destroyed RuntimeWarning from dangling aiter_raw coroutines ([2245446](https://github.com/project-david-ai/projectdavid/commit/2245446dfe3af75f926fff376c0045a2dca36394))
+
 ## [1.98.2-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.1...v1.98.2-dev.2) (2026-04-11)
 
 
