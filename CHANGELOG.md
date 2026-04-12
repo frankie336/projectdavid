@@ -1,3 +1,10 @@
+# [1.99.0-dev.2](https://github.com/project-david-ai/projectdavid/compare/v1.99.0-dev.1...v1.99.0-dev.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **sdk:** remove unused DeploymentUpdateRequest import, fix update() payload to use dict comprehension with exclude-None ([26ae725](https://github.com/project-david-ai/projectdavid/commit/26ae7251f3552d6e4375909ab5e9aaecfa7c3403))
+
 # [1.99.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.3...v1.99.0-dev.1) (2026-04-12)
 
 
