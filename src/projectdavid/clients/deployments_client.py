@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import httpx
 from projectdavid_common import UtilsInterface
@@ -41,6 +41,7 @@ class DeploymentsClient(BaseAPIClient):
             gpu_memory_utilization=0.95,
             max_model_len=8192,
             limit_mm_per_prompt={"image": 2},
+            mm_processor_kwargs={"min_pixels": 784, "max_pixels": 50176},
         )
 
         # Activate a fine-tuned model
@@ -54,6 +55,7 @@ class DeploymentsClient(BaseAPIClient):
             deployment_id="dep_abc123",
             max_model_len=4096,
             enforce_eager=True,
+            mm_processor_kwargs={"min_pixels": 784, "max_pixels": 200704},
         )
 
         # List active deployments
@@ -101,6 +103,7 @@ class DeploymentsClient(BaseAPIClient):
         dtype: Optional[str] = None,
         enforce_eager: Optional[bool] = None,
         limit_mm_per_prompt: Optional[Dict[str, int]] = None,
+        mm_processor_kwargs: Optional[Dict[str, Any]] = None,
     ) -> DeploymentActivationResponse:
         """
         Schedule a base model (no LoRA adapter) for inference deployment.
@@ -122,7 +125,10 @@ class DeploymentsClient(BaseAPIClient):
             quantization:            e.g. 'awq_marlin', 'gptq'. None = full precision.
             dtype:                   e.g. 'float16', 'bfloat16'. None = float16.
             enforce_eager:           Disable CUDA graphs. None = False.
-            limit_mm_per_prompt:     e.g. {'image': 2}. None = vLLM default.
+            limit_mm_per_prompt:     e.g. {'image': 2}. None = family registry default.
+            mm_processor_kwargs:     Processor-level resolution caps. None = family registry default.
+                                     Qwen2.5-VL  : {'min_pixels': 784, 'max_pixels': 50176}
+                                     Phi-3.5-Vision: {'num_crops': 4}
 
         Returns:
             DeploymentActivationResponse with deployment ID, node, and serve route.
@@ -141,6 +147,7 @@ class DeploymentsClient(BaseAPIClient):
             dtype=dtype,
             enforce_eager=enforce_eager,
             limit_mm_per_prompt=limit_mm_per_prompt,
+            mm_processor_kwargs=mm_processor_kwargs,
         ).model_dump(exclude_none=True)
 
         try:
@@ -172,6 +179,7 @@ class DeploymentsClient(BaseAPIClient):
         dtype: Optional[str] = None,
         enforce_eager: Optional[bool] = None,
         limit_mm_per_prompt: Optional[Dict[str, int]] = None,
+        mm_processor_kwargs: Optional[Dict[str, Any]] = None,
     ) -> DeploymentActivationResponse:
         """
         Schedule a fine-tuned model (base + LoRA adapter) for inference deployment.
@@ -189,7 +197,8 @@ class DeploymentsClient(BaseAPIClient):
             quantization:            e.g. 'awq_marlin', 'gptq'. None = full precision.
             dtype:                   e.g. 'float16', 'bfloat16'. None = float16.
             enforce_eager:           Disable CUDA graphs. None = False.
-            limit_mm_per_prompt:     e.g. {'image': 2}. None = vLLM default.
+            limit_mm_per_prompt:     e.g. {'image': 2}. None = family registry default.
+            mm_processor_kwargs:     Processor-level resolution caps. None = family registry default.
 
         Returns:
             DeploymentActivationResponse with deployment ID, node, and serve route.
@@ -208,6 +217,7 @@ class DeploymentsClient(BaseAPIClient):
             dtype=dtype,
             enforce_eager=enforce_eager,
             limit_mm_per_prompt=limit_mm_per_prompt,
+            mm_processor_kwargs=mm_processor_kwargs,
         ).model_dump(exclude_none=True)
 
         try:
@@ -240,6 +250,7 @@ class DeploymentsClient(BaseAPIClient):
         dtype: Optional[str] = None,
         enforce_eager: Optional[bool] = None,
         limit_mm_per_prompt: Optional[Dict[str, int]] = None,
+        mm_processor_kwargs: Optional[Dict[str, Any]] = None,
         tensor_parallel_size: Optional[int] = None,
     ) -> dict:
         """
@@ -249,12 +260,13 @@ class DeploymentsClient(BaseAPIClient):
         retain their current DB values. Changes are picked up by the
         InferenceReconciler on its next poll cycle.
 
-        Use this to tune a running deployment without reactivating it:
+        Use this to tune a running deployment without reactivating it::
 
             client.deployments.update(
                 deployment_id="dep_abc123",
                 max_model_len=8192,
                 gpu_memory_utilization=0.95,
+                mm_processor_kwargs={"min_pixels": 784, "max_pixels": 200704},
             )
 
         Args:
@@ -266,6 +278,7 @@ class DeploymentsClient(BaseAPIClient):
             dtype:                   New compute dtype.
             enforce_eager:           Enable/disable CUDA graphs.
             limit_mm_per_prompt:     New per-modality token cap.
+            mm_processor_kwargs:     New processor-level resolution caps.
             tensor_parallel_size:    New GPU shard count.
 
         Returns:
@@ -286,6 +299,7 @@ class DeploymentsClient(BaseAPIClient):
                 "dtype": dtype,
                 "enforce_eager": enforce_eager,
                 "limit_mm_per_prompt": limit_mm_per_prompt,
+                "mm_processor_kwargs": mm_processor_kwargs,
                 "tensor_parallel_size": tensor_parallel_size,
             }.items()
             if v is not None
