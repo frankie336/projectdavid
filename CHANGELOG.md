@@ -1,3 +1,10 @@
+# [1.100.0](https://github.com/project-david-ai/projectdavid/compare/v1.99.0...v1.100.0) (2026-04-12)
+
+
+### Features
+
+* **deployments_client:** add mm_processor_kwargs to all activation and update methods ([e508217](https://github.com/project-david-ai/projectdavid/commit/e508217d6bd483197b61d097231e01fba5e63e71))
+
 # [1.99.0](https://github.com/project-david-ai/projectdavid/compare/v1.98.1...v1.99.0) (2026-04-12)
 
 
