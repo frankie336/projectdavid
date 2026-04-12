@@ -10,7 +10,6 @@ from projectdavid_common.schemas.deployment_schemas import (
     DeploymentActivationResponse,
     DeploymentDeactivationResponse,
     DeploymentListResponse,
-    DeploymentUpdateRequest,
 )
 
 from projectdavid.clients.base_client import BaseAPIClient
@@ -277,16 +276,20 @@ class DeploymentsClient(BaseAPIClient):
         )
 
         # Build payload — only include fields the caller explicitly passed
-        payload = DeploymentUpdateRequest(
-            gpu_memory_utilization=gpu_memory_utilization,
-            max_model_len=max_model_len,
-            max_num_seqs=max_num_seqs,
-            quantization=quantization,
-            dtype=dtype,
-            enforce_eager=enforce_eager,
-            limit_mm_per_prompt=limit_mm_per_prompt,
-            tensor_parallel_size=tensor_parallel_size,
-        ).model_dump(exclude_unset=True)
+        payload = {
+            k: v
+            for k, v in {
+                "gpu_memory_utilization": gpu_memory_utilization,
+                "max_model_len": max_model_len,
+                "max_num_seqs": max_num_seqs,
+                "quantization": quantization,
+                "dtype": dtype,
+                "enforce_eager": enforce_eager,
+                "limit_mm_per_prompt": limit_mm_per_prompt,
+                "tensor_parallel_size": tensor_parallel_size,
+            }.items()
+            if v is not None
+        }
 
         try:
             response = self.client.patch(
