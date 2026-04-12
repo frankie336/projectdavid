@@ -187,9 +187,6 @@ class InferenceClient(BaseAPIClient):
 
         # ── PATH B: STREAMING ─────────────────────────────────────────────────
         # SSE connection — yield each chunk as it arrives.
-        # aiter_lines() is explicitly closed in a finally block to prevent
-        # "Task was destroyed but it is pending" warnings from dangling
-        # aiter_raw coroutines when the generator is abandoned mid-stream.
         async with httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout, connect=10.0),
@@ -200,23 +197,20 @@ class InferenceClient(BaseAPIClient):
                     "POST", "/v1/completions", json=payload
                 ) as response:
                     response.raise_for_status()
-                    aiter = response.aiter_lines()
-                    try:
-                        async for line in aiter:
-                            line = line.strip()
-                            if not line or not line.startswith("data:"):
-                                continue
 
-                            data_str = line[len("data:") :].strip()
-                            if data_str == "[DONE]":
-                                break
+                    async for line in response.aiter_lines():
+                        line = line.strip()
+                        if not line or not line.startswith("data:"):
+                            continue
 
-                            try:
-                                yield json.loads(data_str)
-                            except json.JSONDecodeError:
-                                continue
-                    finally:
-                        await aiter.aclose()  # nosec B110 — best-effort cleanup, failure is non-fatal
+                        data_str = line[len("data:") :].strip()
+                        if data_str == "[DONE]":
+                            break
+
+                        try:
+                            yield json.loads(data_str)
+                        except json.JSONDecodeError:
+                            continue
 
             except httpx.HTTPStatusError as e:
                 logging_utility.error(
