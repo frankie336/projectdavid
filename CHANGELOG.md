@@ -1,3 +1,19 @@
+# [1.99.0](https://github.com/project-david-ai/projectdavid/compare/v1.98.1...v1.99.0) (2026-04-12)
+
+
+### Bug Fixes
+
+* **deployments:** add trailing slash to list and deactivate_all endpoints ([761f8a7](https://github.com/project-david-ai/projectdavid/commit/761f8a78c4cc07fc26375d9aae35e0a53a198dc3))
+* **sdk:** remove unused DeploymentUpdateRequest import, fix update() payload to use dict comprehension with exclude-None ([26ae725](https://github.com/project-david-ai/projectdavid/commit/26ae7251f3552d6e4375909ab5e9aaecfa7c3403))
+* **stream:** explicitly close aiter_lines in finally block — prevents Task destroyed RuntimeWarning from dangling aiter_raw coroutines ([2245446](https://github.com/project-david-ai/projectdavid/commit/2245446dfe3af75f926fff376c0045a2dca36394))
+* **stream:** explicitly close async generator in stream_chunks finally block — prevents Task destroyed RuntimeWarning from dangling aiter_bytes coroutines ([238ac3a](https://github.com/project-david-ai/projectdavid/commit/238ac3a7b4b15d64a46a1873612eff55370ea0a7))
+
+
+### Features
+
+* **sdk:** align DeploymentsClient with hyperparam API ([df73a9d](https://github.com/project-david-ai/projectdavid/commit/df73a9d55241ad9222026cfed3f97b3c933e5b26))
+* **sdk:** align DeploymentsClient with hyperparam API ([ad2d894](https://github.com/project-david-ai/projectdavid/commit/ad2d894675bb015049bad9dc6c443f9e0d449dc4))
+
 # [1.99.0-dev.1](https://github.com/project-david-ai/projectdavid/compare/v1.98.2-dev.3...v1.99.0-dev.1) (2026-04-12)
 
 
