@@ -1,3 +1,10 @@
+# [1.101.0](https://github.com/project-david-ai/projectdavid/compare/v1.100.0...v1.101.0) (2026-04-13)
+
+
+### Features
+
+* **vision:** Force rebuild ([b455079](https://github.com/project-david-ai/projectdavid/commit/b45507911b50da44d3d06e808dff04309e6b2221))
+
 # [1.100.0](https://github.com/project-david-ai/projectdavid/compare/v1.99.0...v1.100.0) (2026-04-12)
 
 
