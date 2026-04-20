@@ -34,13 +34,25 @@ class TrainingClient(BaseAPIClient):
         dataset_id: str,
         base_model: str,
         framework: str = "unsloth",
-        config: dict | None = None,
+        config: validator.TrainingConfig | dict | None = None,
     ) -> validator.TrainingJobRead:
+        """
+        Create and queue a training job.
+
+        `config` accepts either a dict of raw parameters or a TrainingConfig
+        instance (recommended — gets IDE autocomplete + local Pydantic
+        validation before the HTTP round-trip).
+        """
+        if isinstance(config, validator.TrainingConfig):
+            config_payload = config.model_dump(exclude_none=True)
+        else:
+            config_payload = config or {}
+
         payload = {
             "dataset_id": dataset_id,
             "base_model": base_model,
             "framework": framework,
-            "config": config or {},
+            "config": config_payload,
         }
         response = self.client.post(
             f"{self.training_url}/v1/training-jobs/", json=payload
@@ -53,10 +65,29 @@ class TrainingClient(BaseAPIClient):
         response.raise_for_status()
         return validator.TrainingJobRead.model_validate(response.json())
 
+    def cancel(self, job_id: str) -> validator.TrainingJobCancelResponse:
+        """
+        Cancel a training job.
+
+        Idempotent — calling cancel on a job in a terminal state (completed,
+        failed, cancelled) returns the current status without error.
+
+        For in-progress jobs, cancellation is asynchronous. The response status
+        will be 'cancelling'; poll retrieve(job_id) to observe the transition
+        to 'cancelled' after the worker unwinds the subprocess (typically
+        within 30 seconds).
+
+        Partial training artifacts are discarded on cancellation.
+        """
+        response = self.client.post(
+            f"{self.training_url}/v1/training-jobs/{job_id}/cancel"
+        )
+        response.raise_for_status()
+        return validator.TrainingJobCancelResponse.model_validate(response.json())
+
     # ------------------------------------------------------------------
     # DIAGNOSTIC PEEK (Secure Multi-tenant Gateway)
     # ------------------------------------------------------------------
-
     def peek_queue(self) -> validator.TrainingQueueList:
         """
         Securely check the remote Redis queue via the Training API to see
