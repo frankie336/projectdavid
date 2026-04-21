@@ -1,3 +1,10 @@
+# [1.102.0](https://github.com/project-david-ai/projectdavid/compare/v1.101.0...v1.102.0) (2026-04-21)
+
+
+### Features
+
+* **sdk:** add training.cancel() and typed TrainingConfig support ([97344d6](https://github.com/project-david-ai/projectdavid/commit/97344d6363cf0572e1dd44c6c42d7898cb7409bc))
+
 # [1.101.0](https://github.com/project-david-ai/projectdavid/compare/v1.100.0...v1.101.0) (2026-04-13)
 
 

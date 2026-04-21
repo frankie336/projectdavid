@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "projectdavid"
-version = "1.101.0"
+version = "1.102.0"
 description = "Python SDK for interacting with the Project David Platform Assistant API."
 readme = "README.md"
 authors = [
