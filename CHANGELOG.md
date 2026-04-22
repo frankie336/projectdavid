@@ -1,3 +1,10 @@
+## [1.102.1](https://github.com/project-david-ai/projectdavid/compare/v1.102.0...v1.102.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **schemas:** TrainingConfig from entities_common ([22e191f](https://github.com/project-david-ai/projectdavid/commit/22e191fc776dd46370791ad1ff4cba0dce743afa))
+
 # [1.102.0](https://github.com/project-david-ai/projectdavid/compare/v1.101.0...v1.102.0) (2026-04-21)
 
 
