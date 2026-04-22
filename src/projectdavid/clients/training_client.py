@@ -93,6 +93,7 @@ class TrainingClient(BaseAPIClient):
         job_id: str,
         *,
         on_progress=None,
+        on_poll=None,
         poll_interval: float = 10.0,
         timeout: float = 7200.0,
     ) -> validator.TrainingJobRead:
@@ -101,16 +102,32 @@ class TrainingClient(BaseAPIClient):
 
         Terminal states: 'completed', 'failed', 'cancelled'.
 
-        An optional `on_progress` callback receives every distinct metrics
-        snapshot as it arrives (keyed by the 'step' field). Use it to drive
-        live progress display without coupling the SDK to any particular
-        output format.
+        Two optional callbacks, independent of each other:
 
-        Example:
+        on_progress(metrics_dict)
+            Fires only when a NEW metrics snapshot arrives (detected by a
+            change in the 'step' field). Use this to display training
+            dynamics — loss, learning rate, current step — as they update.
+
+        on_poll(job)
+            Fires on EVERY poll cycle, regardless of whether metrics changed.
+            Use this for heartbeat output — a status line on each tick so the
+            caller can see the job is still alive between metric emissions.
+            Receives the full TrainingJobRead.
+
+        Example (both callbacks):
             def show(m):
                 print(f"step={m.get('step')} loss={m.get('loss')}")
 
-            job = client.training.wait_for_completion(job.id, on_progress=show)
+            def beat(j):
+                print(f"  [{j.status.upper()}] output={j.output_path or '—'}")
+
+            job = client.training.wait_for_completion(
+                job.id,
+                on_progress=show,
+                on_poll=beat,
+                poll_interval=3.0,
+            )
 
         Raises TimeoutError if the job has not reached a terminal state
         within `timeout` seconds. Does NOT raise on a 'failed' or 'cancelled'
@@ -142,6 +159,17 @@ class TrainingClient(BaseAPIClient):
 
             if job.status in TERMINAL_STATES:
                 return job
+
+            # Heartbeat — fires every poll, even when metrics haven't moved.
+            if on_poll is not None:
+                try:
+                    on_poll(job)
+                except Exception as cb_err:
+                    logging_utility.warning(
+                        "on_poll callback raised %s: %s",
+                        type(cb_err).__name__,
+                        cb_err,
+                    )
 
             time.sleep(poll_interval)
 
