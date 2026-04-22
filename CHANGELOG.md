@@ -1,3 +1,10 @@
+# [1.104.0](https://github.com/project-david-ai/projectdavid/compare/v1.103.0...v1.104.0) (2026-04-22)
+
+
+### Features
+
+* **sdk:** add on_poll heartbeat callback to wait_for_completion ([13cdc6c](https://github.com/project-david-ai/projectdavid/commit/13cdc6cd0602547c6602d8254ad32e1eee650c07))
+
 # [1.103.0](https://github.com/project-david-ai/projectdavid/compare/v1.102.1...v1.103.0) (2026-04-22)
 
 
