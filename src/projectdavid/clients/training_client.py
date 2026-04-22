@@ -86,6 +86,68 @@ class TrainingClient(BaseAPIClient):
         return validator.TrainingJobCancelResponse.model_validate(response.json())
 
     # ------------------------------------------------------------------
+    # WAIT FOR COMPLETION
+    # ------------------------------------------------------------------
+    def wait_for_completion(
+        self,
+        job_id: str,
+        *,
+        on_progress=None,
+        poll_interval: float = 10.0,
+        timeout: float = 7200.0,
+    ) -> validator.TrainingJobRead:
+        """
+        Block until the training job reaches a terminal state.
+
+        Terminal states: 'completed', 'failed', 'cancelled'.
+
+        An optional `on_progress` callback receives every distinct metrics
+        snapshot as it arrives (keyed by the 'step' field). Use it to drive
+        live progress display without coupling the SDK to any particular
+        output format.
+
+        Example:
+            def show(m):
+                print(f"step={m.get('step')} loss={m.get('loss')}")
+
+            job = client.training.wait_for_completion(job.id, on_progress=show)
+
+        Raises TimeoutError if the job has not reached a terminal state
+        within `timeout` seconds. Does NOT raise on a 'failed' or 'cancelled'
+        job — callers inspect the returned job.status themselves, since a
+        failed job is often still interesting (last_error, partial metrics).
+        """
+        import time  # local import keeps top-of-file imports minimal
+
+        TERMINAL_STATES = {"completed", "failed", "cancelled"}
+        deadline = time.monotonic() + timeout
+        last_step = -1
+
+        while time.monotonic() < deadline:
+            job = self.retrieve(job_id)
+
+            metrics = getattr(job, "metrics", None) or {}
+            step = metrics.get("step")
+            if on_progress is not None and step is not None and step != last_step:
+                last_step = step
+                try:
+                    on_progress(metrics)
+                except Exception as cb_err:
+                    # Callback failures must not break polling.
+                    logging_utility.warning(
+                        "on_progress callback raised %s: %s",
+                        type(cb_err).__name__,
+                        cb_err,
+                    )
+
+            if job.status in TERMINAL_STATES:
+                return job
+
+            time.sleep(poll_interval)
+
+        raise TimeoutError(f"Training job {job_id} did not complete within {timeout}s")
+
+    # ------------------------------------------------------------------
     # DIAGNOSTIC PEEK (Secure Multi-tenant Gateway)
     # ------------------------------------------------------------------
     def peek_queue(self) -> validator.TrainingQueueList:
