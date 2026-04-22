@@ -1,3 +1,10 @@
+# [1.103.0](https://github.com/project-david-ai/projectdavid/compare/v1.102.1...v1.103.0) (2026-04-22)
+
+
+### Features
+
+* **sdk:** add wait_until_ready and wait_for_completion helpers ([67a7c70](https://github.com/project-david-ai/projectdavid/commit/67a7c709aa0200af80f320c9a0fbbbfaa529fdbe))
+
 ## [1.102.1](https://github.com/project-david-ai/projectdavid/compare/v1.102.0...v1.102.1) (2026-04-22)
 
 
